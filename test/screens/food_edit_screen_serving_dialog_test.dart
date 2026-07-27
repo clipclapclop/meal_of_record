@@ -43,15 +43,22 @@ void main() {
     // Verify dialog is open
     expect(find.text('Add Serving'), findsOneWidget);
 
-    // Verify UnitSelectField is used (look for dropdown arrow or InputDecorator)
-    // UnitSelectField launches in Dropdown mode by default if value is empty/null,
-    // or if the value is known. Here value starts empty, so it defaults to 'serving'.
-    // 'serving' is known, so it should be a dropdown.
-    expect(find.byType(UnitSelectField), findsOneWidget);
-    expect(find.text('serving'), findsOneWidget);
+    // The screen also has a primary-serving UnitSelectField. Verify and use the
+    // separate field inside this dialog rather than relying on a global count.
+    final dialog = find.byType(AlertDialog);
+    final dialogUnitField = find.descendant(
+      of: dialog,
+      matching: find.byType(UnitSelectField),
+    );
+    final dialogServingOption = find.descendant(
+      of: dialog,
+      matching: find.text('serving'),
+    );
+    expect(dialogUnitField, findsOneWidget);
+    expect(dialogServingOption, findsOneWidget);
 
     // Change to custom unit
-    await tester.tap(find.text('serving').last); // Open dropdown
+    await tester.tap(dialogServingOption); // Open dropdown
     await tester.pumpAndSettle();
     await tester.tap(find.text('Custom...').last); // Select Custom
     await tester.pumpAndSettle();

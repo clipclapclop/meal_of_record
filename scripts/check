@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repository_root"
+
+if ! command -v flutter >/dev/null 2>&1; then
+  echo "flutter is required but was not found on PATH" >&2
+  exit 1
+fi
+
+echo "==> Resolving locked dependencies"
+flutter pub get --enforce-lockfile
+
+echo "==> Analyzing (errors are fatal; existing warnings are reported)"
+flutter analyze --no-pub --no-fatal-infos --no-fatal-warnings
+
+echo "==> Running Flutter tests"
+flutter test --no-pub
