@@ -172,6 +172,7 @@ class _RecipeSearchViewState extends State<RecipeSearchView> {
                   final bool isUpdate = existingIndex != -1;
 
                   return FutureBuilder<model_recipe.Recipe>(
+                    key: ValueKey('recipe_${food.id}'),
                     future: db.getRecipeById(food.id),
                     builder: (context, snapshot) {
                       final recipe = snapshot.data;

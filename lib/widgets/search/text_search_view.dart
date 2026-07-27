@@ -79,7 +79,8 @@ class _TextSearchViewState extends State<TextSearchView> {
             final isUpdate = existingIndex != -1;
 
             return SlidableSearchResult(
-              key: ValueKey('${food.id}_${food.source}'),
+              // OFF results all share id 0/source 'off'; barcode keeps keys unique
+              key: ValueKey('${food.id}_${food.source}_${food.sourceBarcode ?? ''}'),
               food: food,
               isUpdate: isUpdate,
               note: searchProvider.displayNotes[food.id],

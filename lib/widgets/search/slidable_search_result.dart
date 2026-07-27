@@ -29,7 +29,7 @@ class SlidableSearchResult extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Slidable(
-      key: ValueKey('${food.id}_${food.source}'),
+      key: ValueKey('${food.id}_${food.source}_${food.sourceBarcode ?? ''}'),
       startActionPane: (onEdit != null || onCopy != null)
           ? ActionPane(
               motion: const ScrollMotion(),

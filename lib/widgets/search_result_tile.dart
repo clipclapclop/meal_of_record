@@ -39,6 +39,30 @@ class SearchResultTileState extends State<SearchResultTile> {
   @override
   void initState() {
     super.initState();
+    _initializeServings();
+
+    if (widget.food.id != 0) {
+      _loadLastLoggedInfo();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant SearchResultTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // The list view recycles State objects. When this tile is reused for a
+    // different food (notably OFF results, which all share id 0/source 'off'),
+    // rebuild the serving dropdown so it doesn't show the previous food's units.
+    final oldFood = oldWidget.food;
+    final newFood = widget.food;
+    if (!_isSameFood(oldFood, newFood)) {
+      _initializeServings();
+      if (newFood.id != 0) {
+        _loadLastLoggedInfo();
+      }
+    }
+  }
+
+  void _initializeServings() {
     _availableServings = List.of(widget.food.servings);
 
     // Default to first non-g serving (the "primary serving")
@@ -51,25 +75,28 @@ class SearchResultTileState extends State<SearchResultTile> {
       ),
     );
     _displayQuantity = _selectedUnit.quantity;
+  }
 
-    if (widget.food.id != 0) {
-      _loadLastLoggedInfo();
-    }
+  bool _isSameFood(Food first, Food second) {
+    return first.id == second.id &&
+        first.source == second.source &&
+        first.sourceBarcode == second.sourceBarcode;
   }
 
   Future<void> _loadLastLoggedInfo() async {
+    final food = widget.food;
     try {
       final LastLoggedInfo? lastInfo;
-      if (widget.food.source == 'recipe') {
+      if (food.source == 'recipe') {
         lastInfo = await DatabaseService.instance.getLastLoggedInfoForRecipe(
-          widget.food.id,
+          food.id,
         );
       } else {
-        lastInfo = await DatabaseService.instance.getLastLoggedInfo(
-          widget.food.id,
-        );
+        lastInfo = await DatabaseService.instance.getLastLoggedInfo(food.id);
       }
-      if (lastInfo != null && mounted) {
+      if (!mounted || !_isSameFood(food, widget.food)) return;
+
+      if (lastInfo != null) {
         final info = lastInfo;
         final servingIndex = _availableServings.indexWhere(
           (s) => s.unit == info.unit,
