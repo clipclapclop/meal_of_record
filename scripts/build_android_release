@@ -110,8 +110,8 @@ properties_path.write_text(
 )
 PY
 
-rm -rf "$repository_root/build/app/outputs"
-exec "$repository_root/android/gradlew" \
+rm -rf "$repository_root/build/app/outputs" "$repository_root/build/release"
+"$repository_root/android/gradlew" \
   -p "$repository_root/android" \
   assembleRelease \
   -Ptarget-platform=android-arm64 \
@@ -120,3 +120,12 @@ exec "$repository_root/android/gradlew" \
   -Ptarget=lib/main.dart \
   -Pbase-application-name=android.app.Application \
   "$@"
+
+gradle_apk="$repository_root/build/app/outputs/apk/release/app-release.apk"
+release_apk="$repository_root/build/release/meal-of-record-arm64-v8a.apk"
+if [[ ! -f "$gradle_apk" ]]; then
+  echo "Gradle did not produce the expected release APK." >&2
+  exit 1
+fi
+install -D -m 600 "$gradle_apk" "$release_apk"
+printf 'Signed arm64-v8a APK: %s\n' "$release_apk"

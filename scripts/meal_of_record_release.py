@@ -959,7 +959,7 @@ class ReleaseAdapter:
                 signing_link.unlink()
         if result.returncode != 0:
             raise ReleaseError("The exact Android release build failed.")
-        output = self.source_directory / "build" / "app" / "outputs" / "apk" / "release" / "app-release.apk"
+        output = self.source_directory / "build" / "release" / "meal-of-record-arm64-v8a.apk"
         if not output.is_file():
             raise ReleaseError("The Android release build did not produce the expected arm64-v8a APK.")
         shutil.copyfile(output, self.apk_path)
