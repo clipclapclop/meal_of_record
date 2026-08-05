@@ -6,6 +6,7 @@ import tempfile
 import types
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 MODULE_PATH = Path(__file__).parents[2] / "scripts" / "meal_of_record_release.py"
@@ -119,6 +120,19 @@ class ArchiveTest(unittest.TestCase):
             with self.assertRaises(release.ReleaseError):
                 release.safe_extract_tar(archive, root / "source")
 
+    def test_rejects_archive_that_expands_beyond_limit(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            archive = root / "source.tar.gz"
+            with tarfile.open(archive, "w:gz") as bundle:
+                data = b"large"
+                member = tarfile.TarInfo("repository/file")
+                member.size = len(data)
+                bundle.addfile(member, io.BytesIO(data))
+            with mock.patch.object(release, "SOURCE_EXTRACT_LIMIT", len(data) - 1):
+                with self.assertRaises(release.ReleaseError):
+                    release.safe_extract_tar(archive, root / "source")
+
 
 class ReleaseOrderingTest(unittest.TestCase):
     class FakeApi:
@@ -182,13 +196,34 @@ class ReleaseMetadataTest(unittest.TestCase):
             "draft": False,
             "prerelease": False,
             "name": "Meal of Record 1.2.3",
+            "body": "expected notes",
         }
         self.adapter(references)._verify_release_metadata(
             forgejo_release,
             "v1.2.3",
             release.parse_pubspec("version: 1.2.3+43\n"),
             False,
+            "expected notes",
         )
+
+    def test_rejects_changed_release_body(self):
+        references = [{"ref": "refs/tags/v1.2.3", "object": {"sha": "a" * 40}}]
+        forgejo_release = {
+            "tag_name": "v1.2.3",
+            "target_commitish": "a" * 40,
+            "draft": False,
+            "prerelease": False,
+            "name": "Meal of Record 1.2.3",
+            "body": "changed notes",
+        }
+        with self.assertRaises(release.ReleaseError):
+            self.adapter(references)._verify_release_metadata(
+                forgejo_release,
+                "v1.2.3",
+                release.parse_pubspec("version: 1.2.3+43\n"),
+                False,
+                "expected notes",
+            )
 
     def test_rejects_ambiguous_tag_response(self):
         forgejo_release = {
@@ -197,6 +232,7 @@ class ReleaseMetadataTest(unittest.TestCase):
             "draft": False,
             "prerelease": False,
             "name": "Meal of Record 1.2.3",
+            "body": "expected notes",
         }
         with self.assertRaises(release.ReleaseError):
             self.adapter([])._verify_release_metadata(
@@ -204,6 +240,7 @@ class ReleaseMetadataTest(unittest.TestCase):
                 "v1.2.3",
                 release.parse_pubspec("version: 1.2.3+43\n"),
                 False,
+                "expected notes",
             )
 
 

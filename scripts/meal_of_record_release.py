@@ -27,6 +27,8 @@ from typing import Any, BinaryIO
 APP_ID = "com.clipclapclop.meal_of_record"
 ASSET_LIMIT = 500 * 1024 * 1024
 SOURCE_LIMIT = 100 * 1024 * 1024
+SOURCE_EXTRACT_LIMIT = 500 * 1024 * 1024
+SOURCE_MEMBER_LIMIT = 100_000
 RELEASE_FILES = {"CHANGELOG.md", "pubspec.yaml"}
 VERSION_RE = re.compile(
     r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)"
@@ -324,8 +326,18 @@ def safe_extract_tar(archive: Path, destination: Path) -> Path:
         shutil.rmtree(destination)
     destination.mkdir(parents=True, mode=0o700)
     root_name: str | None = None
+    extracted_size = 0
+    member_count = 0
     with tarfile.open(archive, "r:gz") as bundle:
         for member in bundle:
+            member_count += 1
+            if member_count > SOURCE_MEMBER_LIMIT:
+                raise ReleaseError("The Forgejo source archive contains too many entries.")
+            if member.size < 0:
+                raise ReleaseError("The Forgejo source archive contains an invalid entry size.")
+            extracted_size += member.size
+            if extracted_size > SOURCE_EXTRACT_LIMIT:
+                raise ReleaseError("The Forgejo source archive expands beyond the allowed size.")
             pure = PurePosixPath(member.name)
             if pure.is_absolute() or ".." in pure.parts or not pure.parts:
                 raise ReleaseError("The Forgejo source archive contains an unsafe path.")
@@ -823,6 +835,7 @@ class ReleaseAdapter:
         tag: str,
         version: VersionInfo,
         prerelease: bool,
+        expected_body: str,
     ) -> None:
         if release.get("tag_name") != tag or release.get("target_commitish") != self.operation.revision:
             raise ReleaseError("The Forgejo release tag targets a different revision.")
@@ -844,6 +857,8 @@ class ReleaseAdapter:
             raise ReleaseError("The Forgejo release tag does not resolve to the merged revision.")
         if release.get("name") != f"Meal of Record {version.name}":
             raise ReleaseError("The Forgejo release title is incorrect.")
+        if release.get("body") != expected_body:
+            raise ReleaseError("The Forgejo release notes do not match the persisted release intent.")
 
     def _require_newest_version(self, version: VersionInfo, tag: str) -> None:
         published_floor = SemVer.parse(self.config.minimum_version_name)
@@ -940,13 +955,19 @@ class ReleaseAdapter:
         self._save(state)
 
         release = self._find_release(tag)
+        body: str | None = None
         if release is not None:
-            self._verify_release_metadata(release, tag, version, prerelease)
+            checksum = state.get("checksum_sha256")
+            if not isinstance(checksum, str):
+                raise ReleaseError("A Forgejo release exists without matching local recovery state.")
+            body = release_body(notes, version, asset_name, checksum)
+            if "release_body" in state and state["release_body"] != body:
+                raise ReleaseError("Release notes changed across a retry.")
+            state["release_body"] = body
+            self._save(state)
+            self._verify_release_metadata(release, tag, version, prerelease, body)
             asset = self._find_asset(release, asset_name)
             if asset is not None:
-                checksum = state.get("checksum_sha256")
-                if not isinstance(checksum, str):
-                    raise ReleaseError("A published release exists without matching local recovery state.")
                 remote = self.operation_directory / "published.apk"
                 self.api.download_asset(asset, remote)
                 info = inspect_apk(remote, self.config)
@@ -972,6 +993,10 @@ class ReleaseAdapter:
             self._save(state)
 
         body = release_body(notes, version, asset_name, state["checksum_sha256"])
+        if "release_body" in state and state["release_body"] != body:
+            raise ReleaseError("Release notes changed across a retry.")
+        state["release_body"] = body
+        self._save(state)
         if release is None:
             release = self.api.request_json(
                 "POST",
@@ -988,7 +1013,7 @@ class ReleaseAdapter:
             )
             if not isinstance(release, dict) or not isinstance(release.get("id"), int):
                 raise UncertainError("Forgejo returned invalid release creation metadata.")
-            self._verify_release_metadata(release, tag, version, prerelease)
+            self._verify_release_metadata(release, tag, version, prerelease, body)
             state["release_id"] = release["id"]
             self._save(state)
 
@@ -1005,7 +1030,7 @@ class ReleaseAdapter:
         release = self._find_release(tag)
         if release is None:
             raise UncertainError("The published Forgejo release could not be reconciled.")
-        self._verify_release_metadata(release, tag, version, prerelease)
+        self._verify_release_metadata(release, tag, version, prerelease, body)
         asset = self._find_asset(release, asset_name)
         if asset is None:
             raise UncertainError("The published Forgejo asset could not be reconciled.")
@@ -1024,7 +1049,15 @@ class ReleaseAdapter:
 
     def verify(self) -> dict[str, str]:
         state = self._state()
-        required = ("version_name", "version_code", "tag", "asset_name", "prerelease", "checksum_sha256")
+        required = (
+            "version_name",
+            "version_code",
+            "tag",
+            "asset_name",
+            "prerelease",
+            "checksum_sha256",
+            "release_body",
+        )
         if any(key not in state for key in required):
             raise ReleaseError("Release execution state is incomplete.")
         version = VersionInfo(
@@ -1035,7 +1068,13 @@ class ReleaseAdapter:
         release = self._find_release(str(state["tag"]))
         if release is None:
             raise ReleaseError("The Forgejo release is missing.")
-        self._verify_release_metadata(release, str(state["tag"]), version, bool(state["prerelease"]))
+        self._verify_release_metadata(
+            release,
+            str(state["tag"]),
+            version,
+            bool(state["prerelease"]),
+            str(state["release_body"]),
+        )
         asset = self._find_asset(release, str(state["asset_name"]))
         if asset is None:
             raise ReleaseError("The Forgejo release APK is missing.")
