@@ -39,6 +39,26 @@ class SemVerTest(unittest.TestCase):
                 release.SemVer.parse(value)
 
 
+class ForgejoAssetUrlTest(unittest.TestCase):
+    def test_accepts_authoritative_same_origin_asset_urls(self):
+        self.assertEqual(
+            release.validate_asset_url(
+                "https://forgejo.example.test",
+                "https://forgejo.example.test/custom/assets/file.apk?download=1#ignored",
+            ),
+            "https://forgejo.example.test/custom/assets/file.apk?download=1",
+        )
+
+    def test_rejects_cross_origin_asset_urls(self):
+        for url in (
+            "https://other.example.test/asset.apk",
+            "http://forgejo.example.test/asset.apk",
+            "https://user@forgejo.example.test/asset.apk",
+        ):
+            with self.subTest(url=url), self.assertRaises(release.ReleaseError):
+                release.validate_asset_url("https://forgejo.example.test", url)
+
+
 class AndroidBuildToolsTest(unittest.TestCase):
     def test_ignores_preview_build_tools_directories(self):
         with tempfile.TemporaryDirectory() as temporary:

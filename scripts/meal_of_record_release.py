@@ -230,6 +230,18 @@ class Config:
         return token
 
 
+def validate_asset_url(base_url: str, asset_url: str) -> str:
+    expected = urllib.parse.urlsplit(base_url)
+    actual = urllib.parse.urlsplit(asset_url)
+    if (
+        actual.scheme != expected.scheme
+        or actual.netloc != expected.netloc
+        or not actual.path.startswith("/")
+    ):
+        raise ReleaseError("Forgejo returned an unexpected release asset URL.")
+    return urllib.parse.urlunsplit((actual.scheme, actual.netloc, actual.path, actual.query, ""))
+
+
 def normalize_fingerprint(value: str) -> str:
     normalized = value.replace(":", "").strip().lower()
     if not re.fullmatch(r"[0-9a-f]{64}", normalized):
@@ -457,17 +469,7 @@ class ForgejoApi:
         url = asset.get("browser_download_url")
         if not isinstance(url, str):
             raise ReleaseError("Forgejo returned an invalid release asset URL.")
-        expected_origin = urllib.parse.urlsplit(self.base_url)
-        actual = urllib.parse.urlsplit(url)
-        if (
-            actual.scheme != expected_origin.scheme
-            or actual.netloc != expected_origin.netloc
-            or not actual.path.startswith("/attachments/")
-            or actual.query
-            or actual.fragment
-        ):
-            raise ReleaseError("Forgejo returned an unexpected release asset URL.")
-        self._download_url(url, destination, ASSET_LIMIT)
+        self._download_url(validate_asset_url(self.base_url, url), destination, ASSET_LIMIT)
 
     def _download_url(self, url: str, destination: Path, limit: int) -> None:
         request = urllib.request.Request(
