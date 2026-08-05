@@ -49,6 +49,11 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        if (providers.gradleProperty("mealOfRecordReleaseArm64").orNull == "true") {
+            ndk {
+                abiFilters += "arm64-v8a"
+            }
+        }
     }
 
     buildTypes {
@@ -60,9 +65,6 @@ android {
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
-            ndk {
-                abiFilters += "arm64-v8a"
-            }
         }
     }
 }

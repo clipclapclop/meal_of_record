@@ -116,6 +116,7 @@ exec "$repository_root/android/gradlew" \
   assembleRelease \
   -Ptarget-platform=android-arm64 \
   -Pdisable-abi-filtering=true \
+  -PmealOfRecordReleaseArm64=true \
   -Ptarget=lib/main.dart \
   -Pbase-application-name=android.app.Application \
   "$@"
