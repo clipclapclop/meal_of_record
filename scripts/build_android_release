@@ -64,7 +64,7 @@ print(value)
   echo "The Flutter SDK root could not be determined." >&2
   exit 1
 }
-flutter pub get --enforce-lockfile --offline
+flutter pub get --directory "$repository_root" --enforce-lockfile --offline
 
 python3 - "$repository_root" "$flutter_sdk" <<'PY'
 from pathlib import Path
