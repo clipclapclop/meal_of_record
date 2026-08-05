@@ -46,8 +46,11 @@ v0.1.0
 - initial release
 
 ## Install to phone
-# 1. Build the release APK
-flutter build apk --release
+# 1. Build the release APK with the protected local signing key
+./scripts/build_android_release
+
+See the [Android release signing recovery procedure](docs/android-release-signing.md)
+for key protection, backup verification, and disaster recovery.
 
 # 2. Get the device list
 > adb devices

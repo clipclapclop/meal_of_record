@@ -55,7 +55,6 @@ android {
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
-            // Signing with debug keys for now; replace with your own config later.
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -67,14 +66,4 @@ android {
 
 flutter {
     source = "../.."
-}
-
-tasks.register("printSigningConfig") {
-    doLast {
-        android.buildTypes.getByName("release").signingConfig?.let { config ->
-            println("Release signing config:")
-            println("  storeFile: ${config.storeFile}")
-            println("  keyAlias: ${config.keyAlias}")
-        } ?: println("No signing config found!")
-    }
 }

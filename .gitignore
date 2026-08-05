@@ -48,6 +48,7 @@ app.*.map.json
 problems-report.html
 
 *.jks
+*.keystore
 key.properties
 site/
 .env

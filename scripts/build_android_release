@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repository_root"
+
+if ! command -v java >/dev/null 2>&1; then
+  echo "Java is required but was not found on PATH." >&2
+  exit 1
+fi
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "python3 is required but was not found on PATH." >&2
+  exit 1
+fi
+
+python3 - "$repository_root" <<'PY'
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+properties_path = root / "android" / "key.properties"
+if not properties_path.is_file():
+    raise SystemExit("Local Android signing configuration is missing.")
+
+values = {}
+for line in properties_path.read_text().splitlines():
+    stripped = line.lstrip()
+    if stripped.startswith(("#", "!")) or "=" not in line:
+        continue
+    key, value = line.split("=", 1)
+    values[key.strip()] = value.strip()
+
+required = {"storeFile", "storePassword", "keyPassword", "keyAlias"}
+if missing := sorted(required - values.keys()):
+    raise SystemExit("Signing configuration is incomplete: " + ", ".join(missing))
+
+keystore = Path(values["storeFile"]).expanduser()
+if not keystore.is_absolute():
+    keystore = root / "android" / "app" / keystore
+keystore = keystore.resolve()
+if not keystore.is_file():
+    raise SystemExit("The configured Android keystore does not exist.")
+
+for path in (properties_path, keystore):
+    if path.stat().st_mode & 0o077:
+        raise SystemExit("Signing files must be owner-only (run chmod 600 on both files).")
+PY
+
+exec "$repository_root/android/gradlew" -p "$repository_root/android" assembleRelease "$@"

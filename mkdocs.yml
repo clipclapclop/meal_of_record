@@ -50,4 +50,6 @@ nav:
     - QR Sharing: reference/qr-sharing.md
   - Concepts:
     - Core Concepts: concepts.md
+  - Maintainer:
+    - Android Release Signing: android-release-signing.md
   - About: about.md
