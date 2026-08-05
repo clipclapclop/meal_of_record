@@ -854,10 +854,11 @@ class ReleaseAdapter:
         assets = release.get("assets", [])
         if not isinstance(assets, list):
             raise ReleaseError("Forgejo returned invalid release assets.")
-        matches = [asset for asset in assets if isinstance(asset, dict) and asset.get("name") == name]
-        if len(matches) > 1:
-            raise ReleaseError("The Forgejo release contains duplicate APK assets.")
-        return matches[0] if matches else None
+        if not assets:
+            return None
+        if len(assets) != 1 or not isinstance(assets[0], dict) or assets[0].get("name") != name:
+            raise ReleaseError("The Forgejo release must contain exactly the expected APK asset.")
+        return assets[0]
 
     def _verify_release_metadata(
         self,
@@ -958,7 +959,7 @@ class ReleaseAdapter:
                 signing_link.unlink()
         if result.returncode != 0:
             raise ReleaseError("The exact Android release build failed.")
-        output = self.source_directory / "build" / "app" / "outputs" / "flutter-apk" / "app-release.apk"
+        output = self.source_directory / "build" / "app" / "outputs" / "apk" / "release" / "app-release.apk"
         if not output.is_file():
             raise ReleaseError("The Android release build did not produce the expected arm64-v8a APK.")
         shutil.copyfile(output, self.apk_path)

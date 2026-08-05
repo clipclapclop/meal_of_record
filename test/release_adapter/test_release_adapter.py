@@ -201,6 +201,17 @@ class ReleaseMetadataTest(unittest.TestCase):
         adapter.operation = types.SimpleNamespace(revision="a" * 40)
         return adapter
 
+    def test_requires_exactly_one_expected_release_asset(self):
+        expected = {"name": "release.apk", "id": 1}
+        self.assertIsNone(release.ReleaseAdapter._find_asset({"assets": []}, "release.apk"))
+        self.assertEqual(
+            release.ReleaseAdapter._find_asset({"assets": [expected]}, "release.apk"),
+            expected,
+        )
+        for assets in ([{"name": "other.apk"}], [expected, {"name": "notes.txt"}]):
+            with self.subTest(assets=assets), self.assertRaises(release.ReleaseError):
+                release.ReleaseAdapter._find_asset({"assets": assets}, "release.apk")
+
     def test_verifies_exact_lightweight_tag(self):
         references = [{"ref": "refs/tags/v1.2.3", "object": {"sha": "a" * 40}}]
         forgejo_release = {
