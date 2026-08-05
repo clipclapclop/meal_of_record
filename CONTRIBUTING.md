@@ -10,6 +10,8 @@ Run the repository-owned aggregate check before proposing a change:
 
 The check resolves only versions allowed by `pubspec.lock`, reports all analyzer findings while treating analyzer errors as fatal, and runs the complete Flutter test suite. It was established with Flutter 3.44.0 and Dart 3.12.0. Upgrade the toolchain and resulting compatibility files deliberately rather than allowing an unrelated change to rewrite them.
 
+Dependency resolution runs offline so the same command works in Repflow's network-isolated exact-revision sandbox. Populate the trusted host's Pub cache deliberately with `flutter pub get --enforce-lockfile` before running the check when required; do not give the sandbox network access or credentials as a shortcut.
+
 Existing analyzer warnings and repository-wide formatting debt are tracked separately. Do not mix a bulk formatting pass into a behavioral change.
 
 ## Stale Flutter artifacts
