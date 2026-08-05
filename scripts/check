@@ -9,6 +9,14 @@ if ! command -v flutter >/dev/null 2>&1; then
   exit 1
 fi
 
+echo "==> Verifying Gradle wrapper"
+printf '%s  %s\n' \
+  '2db75c40782f5e8ba1fc278a5574bab070adccb2d21ca5a6e5ed840888448046' \
+  'android/gradle/wrapper/gradle-wrapper.jar' | sha256sum --check --status
+
+echo "==> Testing local release adapter"
+python3 -m unittest discover -s test/release_adapter -p 'test_*.py'
+
 echo "==> Resolving locked dependencies"
 flutter pub get --enforce-lockfile --offline
 

@@ -39,6 +39,14 @@ processes:
       includePolicyBody: true
       files: []
 
+  release:
+    authorization: manual
+    adapter:
+      command: ["/home/chad/.local/libexec/meal-of-record-release"]
+      verify: ["/home/chad/.local/libexec/meal-of-record-release"]
+      workingDirectory: /home/chad/.local/state/meal-of-record-release
+      timeoutSeconds: 3600
+
   merge:
     strategy: rebase
     authorization: manual
@@ -65,8 +73,11 @@ Give additional scrutiny to schema migrations, backup and restore behavior, pers
 - Existing live databases must migrate forward without silent data loss or reinterpretation.
 - Historical logged-food snapshots must retain their original nutritional meaning.
 - Backup and restore changes must preserve documented application state and must fail safely on malformed, incomplete, or incompatible input.
-- Release and deployment operations are unsupported until complete project-owned adapters are added through a separately reviewed policy change.
+- Releases require a dedicated merged version PR and separate manual authorization through the configured host-owned adapter; ordinary merged PRs are not released.
+- Deployment operations remain unsupported. `zapstore.yaml` is retained for metadata only and is not a supported publishing path.
 
 # Evidence
 
-`./scripts/check` is the repository-owned aggregate check. It resolves locked Flutter dependencies, runs analysis with errors fatal, and runs the complete Flutter test suite. Existing nonfatal analyzer findings are tracked separately and should not be hidden merely to satisfy the gate.
+`./scripts/check` is the repository-owned aggregate check. It runs release-adapter unit tests, resolves locked Flutter dependencies, runs analysis with errors fatal, and runs the complete Flutter test suite. Existing nonfatal analyzer findings are tracked separately and should not be hidden merely to satisfy the gate.
+
+The local Forgejo release contract, host setup, exact-revision checks, idempotent recovery behavior, and test-prerelease procedure are documented in `docs/forgejo-android-release.md`.

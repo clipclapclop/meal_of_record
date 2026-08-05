@@ -52,4 +52,5 @@ nav:
     - Core Concepts: concepts.md
   - Maintainer:
     - Android Release Signing: android-release-signing.md
+    - Forgejo Android Releases: forgejo-android-release.md
   - About: about.md

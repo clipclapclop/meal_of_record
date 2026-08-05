@@ -12,6 +12,10 @@ if ! command -v python3 >/dev/null 2>&1; then
   echo "python3 is required but was not found on PATH." >&2
   exit 1
 fi
+if ! command -v flutter >/dev/null 2>&1; then
+  echo "Flutter is required but was not found on PATH." >&2
+  exit 1
+fi
 
 python3 - "$repository_root" <<'PY'
 from pathlib import Path
@@ -46,4 +50,56 @@ for path in (properties_path, keystore):
         raise SystemExit("Signing files must be owner-only (run chmod 600 on both files).")
 PY
 
-exec "$repository_root/android/gradlew" -p "$repository_root/android" assembleRelease "$@"
+flutter pub get --enforce-lockfile --offline
+
+python3 - "$repository_root" "$(command -v flutter)" <<'PY'
+from pathlib import Path
+import os
+import re
+import sys
+
+root = Path(sys.argv[1])
+flutter_executable = Path(sys.argv[2]).resolve()
+pubspec = (root / "pubspec.yaml").read_text(encoding="utf-8")
+matches = re.findall(
+    r"(?m)^version:\s*((?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)"
+    r"(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?)\+([0-9]+)\s*$",
+    pubspec,
+)
+if len(matches) != 1:
+    raise SystemExit("pubspec.yaml must contain one semantic version and Android build number.")
+version_name, version_code = matches[0]
+if int(version_code) < 1:
+    raise SystemExit("The Android build number must be positive.")
+
+properties_path = root / "android" / "local.properties"
+values = {}
+if properties_path.is_file():
+    for line in properties_path.read_text(encoding="utf-8").splitlines():
+        if "=" in line and not line.lstrip().startswith(("#", "!")):
+            key, value = line.split("=", 1)
+            values[key.strip()] = value.strip()
+android_sdk = os.environ.get("ANDROID_SDK_ROOT") or os.environ.get("ANDROID_HOME")
+if android_sdk:
+    values["sdk.dir"] = str(Path(android_sdk).expanduser().resolve())
+values["flutter.sdk"] = str(flutter_executable.parents[1])
+values["flutter.buildMode"] = "release"
+values["flutter.versionName"] = version_name
+values["flutter.versionCode"] = version_code
+if "sdk.dir" not in values:
+    raise SystemExit("The Android SDK path is unavailable.")
+properties_path.write_text(
+    "".join(f"{key}={values[key]}\n" for key in sorted(values)),
+    encoding="utf-8",
+)
+PY
+
+rm -rf "$repository_root/build/app/outputs"
+exec "$repository_root/android/gradlew" \
+  -p "$repository_root/android" \
+  assembleRelease \
+  -Ptarget-platform=android-arm64 \
+  -Pdisable-abi-filtering=true \
+  -Ptarget=lib/main.dart \
+  -Pbase-application-name=android.app.Application \
+  "$@"
