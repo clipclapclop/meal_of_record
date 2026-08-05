@@ -2,6 +2,10 @@
 
 Fast, private, convenient macro tracking.
 
+## Repository
+
+The canonical source and issue tracker are hosted on [Forgejo](https://git.oorangy.com/chad/meal_of_record).
+
 ## Documentation
 
 You can view the full project documentation here:  
