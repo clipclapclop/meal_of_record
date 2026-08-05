@@ -873,8 +873,12 @@ class ReleaseAdapter:
         if release.get("draft") is not False or release.get("prerelease") is not prerelease:
             raise ReleaseError("The Forgejo release publication mode is incorrect.")
         encoded_ref = urllib.parse.quote(f"tags/{tag}", safe="/")
-        references = self.api.request_json("GET", f"/git/refs/{encoded_ref}")
-        if not isinstance(references, list):
+        reference_response = self.api.request_json("GET", f"/git/refs/{encoded_ref}")
+        if isinstance(reference_response, dict):
+            references = [reference_response]
+        elif isinstance(reference_response, list):
+            references = reference_response
+        else:
             raise ReleaseError("Forgejo returned invalid release-tag metadata.")
         exact_references = [
             reference

@@ -230,6 +230,24 @@ class ReleaseMetadataTest(unittest.TestCase):
             "expected notes",
         )
 
+    def test_accepts_singular_reference_response(self):
+        reference = {"ref": "refs/tags/v1.2.3", "object": {"sha": "a" * 40}}
+        forgejo_release = {
+            "tag_name": "v1.2.3",
+            "target_commitish": "a" * 40,
+            "draft": False,
+            "prerelease": False,
+            "name": "Meal of Record 1.2.3",
+            "body": "expected notes",
+        }
+        self.adapter(reference)._verify_release_metadata(
+            forgejo_release,
+            "v1.2.3",
+            release.parse_pubspec("version: 1.2.3+43\n"),
+            False,
+            "expected notes",
+        )
+
     def test_rejects_changed_release_body(self):
         references = [{"ref": "refs/tags/v1.2.3", "object": {"sha": "a" * 40}}]
         forgejo_release = {
