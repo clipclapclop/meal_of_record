@@ -38,6 +38,22 @@ class SemVerTest(unittest.TestCase):
                 release.SemVer.parse(value)
 
 
+class PullRequestMetadataTest(unittest.TestCase):
+    def test_uses_forgejo_merge_base_when_present(self):
+        self.assertEqual(
+            release.derive_merge_base({"merge_base": "A" * 40}, []),
+            "a" * 40,
+        )
+
+    def test_falls_back_to_first_pull_request_commit_parent(self):
+        commits = [{"sha": "b" * 40, "parents": [{"sha": "a" * 40}]}]
+        self.assertEqual(release.derive_merge_base({}, commits), "a" * 40)
+
+    def test_rejects_missing_or_invalid_base_evidence(self):
+        self.assertIsNone(release.derive_merge_base({}, []))
+        self.assertIsNone(release.derive_merge_base({"merge_base": "master"}, [{"parents": []}]))
+
+
 class MetadataTest(unittest.TestCase):
     def test_parses_pubspec_version_and_build_number(self):
         result = release.parse_pubspec("name: example\nversion: 1.2.3-rc.1+2042\n")

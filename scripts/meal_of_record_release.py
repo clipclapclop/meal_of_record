@@ -276,6 +276,21 @@ def validate_signing_inputs(properties_path: Path) -> None:
     require_private_file(keystore, "Android release keystore")
 
 
+def derive_merge_base(pull_request: dict[str, Any], commits: list[Any]) -> str | None:
+    merge_base = str(pull_request.get("merge_base", "")).lower()
+    if re.fullmatch(r"(?:[0-9a-f]{40}|[0-9a-f]{64})", merge_base):
+        return merge_base
+    if not commits or not isinstance(commits[0], dict):
+        return None
+    parents = commits[0].get("parents")
+    if not isinstance(parents, list) or not parents or not isinstance(parents[0], dict):
+        return None
+    parent = str(parents[0].get("sha", "")).lower()
+    if not re.fullmatch(r"(?:[0-9a-f]{40}|[0-9a-f]{64})", parent):
+        return None
+    return parent
+
+
 def parse_pubspec(text: str) -> VersionInfo:
     matches = re.findall(r"(?m)^version:\s*([^\s+#]+)(?:\+([0-9]+))?\s*$", text)
     if len(matches) != 1 or not matches[0][1]:
@@ -731,7 +746,19 @@ class ReleaseAdapter:
             raise ReleaseError("The release pull request changes too many files.")
         if files != RELEASE_FILES:
             raise ReleaseError("A release requires a dedicated pubspec.yaml and CHANGELOG.md version pull request.")
-        return pull_request
+        base_revision = derive_merge_base(pull_request, [])
+        if base_revision is None:
+            commits = self.api.request_json(
+                "GET", f"/pulls/{self.operation.pull_request}/commits", query={"page": 1, "limit": 50}
+            )
+            if not isinstance(commits, list):
+                raise ReleaseError("Forgejo returned an invalid pull-request commit list.")
+            base_revision = derive_merge_base(pull_request, commits)
+        if base_revision is None:
+            raise ReleaseError("Forgejo did not provide a verifiable pull-request base revision.")
+        result = dict(pull_request)
+        result["release_base_revision"] = base_revision
+        return result
 
     def _download_source(self, revision: str, archive: Path, destination: Path) -> Path:
         commit = self.api.request_json("GET", f"/git/commits/{revision}")
@@ -753,7 +780,7 @@ class ReleaseAdapter:
         version = parse_pubspec(pubspec_text)
         notes = changelog_notes(changelog_text, version.name)
 
-        base_revision = str(pull_request.get("merge_base", "")).lower()
+        base_revision = str(pull_request.get("release_base_revision", "")).lower()
         if not re.fullmatch(r"(?:[0-9a-f]{40}|[0-9a-f]{64})", base_revision):
             raise ReleaseError("Forgejo returned an invalid pull-request base revision.")
         base_archive = self.operation_directory / "base.tar.gz"
