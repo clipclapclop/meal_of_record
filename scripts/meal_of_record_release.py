@@ -658,6 +658,36 @@ def release_body(notes: str, version: VersionInfo, asset_name: str, checksum: st
     )
 
 
+def validate_release_state(state: dict[str, Any]) -> VersionInfo:
+    required = {
+        "version_name",
+        "version_code",
+        "tag",
+        "asset_name",
+        "prerelease",
+        "checksum_sha256",
+        "release_body",
+    }
+    if any(key not in state for key in required):
+        raise ReleaseError("Release execution state is incomplete.")
+    name = state["version_name"]
+    code = state["version_code"]
+    if not isinstance(name, str) or not isinstance(code, int) or isinstance(code, bool) or code < 1:
+        raise ReleaseError("Release execution state contains an invalid version.")
+    semver = SemVer.parse(name)
+    if state["tag"] != f"v{name}" or state["asset_name"] != f"meal-of-record-v{name}-arm64-v8a.apk":
+        raise ReleaseError("Release execution state contains inconsistent artifact names.")
+    if not isinstance(state["prerelease"], bool) or state["prerelease"] != bool(semver.prerelease):
+        raise ReleaseError("Release execution state contains an invalid publication mode.")
+    checksum = state["checksum_sha256"]
+    body = state["release_body"]
+    if not isinstance(checksum, str) or not re.fullmatch(r"[0-9a-f]{64}", checksum):
+        raise ReleaseError("Release execution state contains an invalid checksum.")
+    if not isinstance(body, str) or not body or len(body.encode("utf-8")) > 65536:
+        raise ReleaseError("Release execution state contains invalid release notes.")
+    return VersionInfo(name=name, code=code, semver=semver)
+
+
 @dataclass(frozen=True)
 class Operation:
     phase: str
@@ -1049,22 +1079,7 @@ class ReleaseAdapter:
 
     def verify(self) -> dict[str, str]:
         state = self._state()
-        required = (
-            "version_name",
-            "version_code",
-            "tag",
-            "asset_name",
-            "prerelease",
-            "checksum_sha256",
-            "release_body",
-        )
-        if any(key not in state for key in required):
-            raise ReleaseError("Release execution state is incomplete.")
-        version = VersionInfo(
-            name=str(state["version_name"]),
-            code=int(state["version_code"]),
-            semver=SemVer.parse(str(state["version_name"])),
-        )
+        version = validate_release_state(state)
         release = self._find_release(str(state["tag"]))
         if release is None:
             raise ReleaseError("The Forgejo release is missing.")

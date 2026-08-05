@@ -258,6 +258,35 @@ class ReleaseMetadataTest(unittest.TestCase):
 
 
 class StateTest(unittest.TestCase):
+    def valid_release_state(self):
+        return {
+            "version_name": "1.2.3-rc.1",
+            "version_code": 43,
+            "tag": "v1.2.3-rc.1",
+            "asset_name": "meal-of-record-v1.2.3-rc.1-arm64-v8a.apk",
+            "prerelease": True,
+            "checksum_sha256": "a" * 64,
+            "release_body": "expected notes",
+        }
+
+    def test_validates_persisted_release_state_types_and_consistency(self):
+        version = release.validate_release_state(self.valid_release_state())
+        self.assertEqual((version.name, version.code), ("1.2.3-rc.1", 43))
+
+    def test_rejects_corrupt_persisted_release_state(self):
+        for field, value in (
+            ("version_code", "43"),
+            ("version_code", True),
+            ("tag", "v1.2.4"),
+            ("prerelease", False),
+            ("checksum_sha256", "invalid"),
+            ("release_body", None),
+        ):
+            state = self.valid_release_state()
+            state[field] = value
+            with self.subTest(field=field, value=value), self.assertRaises(release.ReleaseError):
+                release.validate_release_state(state)
+
     def test_atomic_state_is_owner_only(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "operation" / "state.json"
