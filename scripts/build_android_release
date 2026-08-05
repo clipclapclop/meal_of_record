@@ -50,16 +50,32 @@ for path in (properties_path, keystore):
         raise SystemExit("Signing files must be owner-only (run chmod 600 on both files).")
 PY
 
+flutter_sdk="$({ flutter --version --machine 2>/dev/null || true; } | python3 -c '
+import json
+import sys
+try:
+    value = json.load(sys.stdin).get("flutterRoot", "")
+except (json.JSONDecodeError, AttributeError):
+    value = ""
+if not value:
+    raise SystemExit(1)
+print(value)
+')" || {
+  echo "The Flutter SDK root could not be determined." >&2
+  exit 1
+}
 flutter pub get --enforce-lockfile --offline
 
-python3 - "$repository_root" "$(command -v flutter)" <<'PY'
+python3 - "$repository_root" "$flutter_sdk" <<'PY'
 from pathlib import Path
 import os
 import re
 import sys
 
 root = Path(sys.argv[1])
-flutter_executable = Path(sys.argv[2]).resolve()
+flutter_sdk = Path(sys.argv[2]).resolve()
+if not (flutter_sdk / "bin" / "flutter").is_file():
+    raise SystemExit("The Flutter SDK root is invalid.")
 pubspec = (root / "pubspec.yaml").read_text(encoding="utf-8")
 matches = re.findall(
     r"(?m)^version:\s*((?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)"
@@ -82,7 +98,7 @@ if properties_path.is_file():
 android_sdk = os.environ.get("ANDROID_SDK_ROOT") or os.environ.get("ANDROID_HOME")
 if android_sdk:
     values["sdk.dir"] = str(Path(android_sdk).expanduser().resolve())
-values["flutter.sdk"] = str(flutter_executable.parents[1])
+values["flutter.sdk"] = str(flutter_sdk)
 values["flutter.buildMode"] = "release"
 values["flutter.versionName"] = version_name
 values["flutter.versionCode"] = version_code

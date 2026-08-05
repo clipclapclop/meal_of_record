@@ -39,6 +39,19 @@ class SemVerTest(unittest.TestCase):
                 release.SemVer.parse(value)
 
 
+class AndroidBuildToolsTest(unittest.TestCase):
+    def test_ignores_preview_build_tools_directories(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            sdk = Path(temporary)
+            stable = sdk / "build-tools" / "35.0.0"
+            preview = sdk / "build-tools" / "36.0.0-rc1"
+            for directory in (stable, preview):
+                directory.mkdir(parents=True)
+                (directory / "aapt").touch()
+                (directory / "apksigner").touch()
+            self.assertEqual(release.find_build_tools(sdk), (stable / "apksigner", stable / "aapt"))
+
+
 class PullRequestMetadataTest(unittest.TestCase):
     def test_uses_forgejo_merge_base_when_present(self):
         self.assertEqual(

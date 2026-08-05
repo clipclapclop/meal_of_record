@@ -559,8 +559,8 @@ def find_build_tools(android_sdk: Path) -> tuple[Path, Path]:
     candidates: list[tuple[tuple[int, ...], Path]] = []
     if root.is_dir():
         for child in root.iterdir():
-            if child.is_dir():
-                numbers = tuple(int(value) for value in re.findall(r"[0-9]+", child.name))
+            if child.is_dir() and re.fullmatch(r"[0-9]+(?:\.[0-9]+)+", child.name):
+                numbers = tuple(int(value) for value in child.name.split("."))
                 candidates.append((numbers, child))
     for _, directory in sorted(candidates, reverse=True):
         apksigner = directory / "apksigner"
