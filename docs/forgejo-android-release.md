@@ -20,7 +20,7 @@ meal-of-record-v<version>-arm64-v8a.apk
 
 A semantic prerelease suffix such as `-adapter-test.1` creates a Forgejo prerelease. A normal semantic version creates a normal release.
 
-The adapter refuses versions at or below the historical published APK floor. The historical GitHub asset tagged `v0.1.1` internally identifies itself as Android version name `1.0.0` and version code `2001`; the first future version PR must exceed both values. Every later version PR must also exceed its base revision and every semantic Forgejo release.
+The adapter refuses versions at or below the historical published APK floor. The historical GitHub asset tagged `v0.1.1` internally identifies itself as Android version name `1.0.0` and version code `2001`; the first future version PR must exceed both values. Semantic releases at or below that host-pinned floor are treated as legacy evidence and do not need the adapter's release-note footer. Every later version PR must also exceed its base revision and every newer semantic Forgejo release.
 
 ## Host-owned installation
 

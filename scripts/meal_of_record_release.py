@@ -819,6 +819,7 @@ class ReleaseAdapter:
             raise ReleaseError("The Forgejo release title is incorrect.")
 
     def _require_newest_version(self, version: VersionInfo, tag: str) -> None:
+        published_floor = SemVer.parse(self.config.minimum_version_name)
         for page in range(1, 11):
             releases = self.api.request_json("GET", "/releases", query={"page": page, "limit": 50})
             if not isinstance(releases, list):
@@ -834,6 +835,8 @@ class ReleaseAdapter:
                 try:
                     other_version = SemVer.parse(other_tag[1:])
                 except ReleaseError:
+                    continue
+                if other_version <= published_floor:
                     continue
                 body = release.get("body")
                 code_match = (

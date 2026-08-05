@@ -117,6 +117,7 @@ class ReleaseOrderingTest(unittest.TestCase):
     def adapter(self, releases):
         adapter = object.__new__(release.ReleaseAdapter)
         adapter.api = self.FakeApi(releases)
+        adapter.config = types.SimpleNamespace(minimum_version_name="1.0.0")
         return adapter
 
     def test_requires_version_and_code_after_existing_release(self):
@@ -132,6 +133,12 @@ class ReleaseOrderingTest(unittest.TestCase):
         existing = [{"tag_name": "v1.2.4", "body": "Android version code: `43`"}]
         self.adapter(existing)._require_newest_version(
             release.parse_pubspec("version: 1.2.4+43\n"), "v1.2.4"
+        )
+
+    def test_uses_pinned_floor_for_legacy_release_without_adapter_footer(self):
+        legacy = [{"tag_name": "v0.1.1", "body": ""}]
+        self.adapter(legacy)._require_newest_version(
+            release.parse_pubspec("version: 1.0.1+2002\n"), "v1.0.1"
         )
 
 
