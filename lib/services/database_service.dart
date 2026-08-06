@@ -417,6 +417,7 @@ class DatabaseService {
       await target.parent.create(recursive: true);
       await target.writeAsBytes(entry.value.content as List<int>, flush: true);
     }
+    await _validateReferencedImages(database, images);
 
     final preferences = _decodeBackupPreferences(settingsEntry);
 
@@ -658,6 +659,48 @@ class DatabaseService {
       }
     }
     return preferences;
+  }
+
+  Future<void> _validateReferencedImages(
+    File databaseFile,
+    Directory images,
+  ) async {
+    sqlite.Database? rawDatabase;
+    try {
+      rawDatabase = sqlite.sqlite3.open(databaseFile.path);
+      final rows = rawDatabase.select('''
+        SELECT thumbnail FROM foods WHERE thumbnail LIKE 'local:%'
+        UNION
+        SELECT thumbnail FROM recipes WHERE thumbnail LIKE 'local:%'
+        UNION
+        SELECT thumbnail FROM containers WHERE thumbnail LIKE 'local:%'
+      ''');
+      for (final row in rows) {
+        final reference = row['thumbnail']! as String;
+        final imageId = reference.substring(
+          ImageStorageService.localPrefix.length,
+        );
+        if (imageId.isEmpty || p.basename(imageId) != imageId) {
+          throw BackupRestoreException(
+            'the database contains an unsafe local image reference',
+          );
+        }
+        final image = File(p.join(images.path, '$imageId.jpg'));
+        if (!await image.exists() || await image.length() == 0) {
+          throw BackupRestoreException(
+            'the archive is incomplete: image $imageId.jpg is missing',
+          );
+        }
+      }
+    } catch (error) {
+      if (error is BackupRestoreException) rethrow;
+      throw BackupRestoreException(
+        'local image references could not be validated',
+        error,
+      );
+    } finally {
+      rawDatabase?.dispose();
+    }
   }
 
   Future<int> _validateDatabase(File databaseFile) async {

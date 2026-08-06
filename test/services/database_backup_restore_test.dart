@@ -221,18 +221,24 @@ void main() {
                   .singleWhere((entry) => entry.name == 'meal_of_record.db')
                   .content
               as List<int>;
+      final legacyEntries = <String, List<int>>{
+        'meal_of_record.db': databaseBytes,
+        'settings.json': utf8.encode(
+          jsonEncode({
+            'version': 1,
+            'goal_settings': _goalSettings,
+            'macro_targets': _macroTargets,
+          }),
+        ),
+      };
+      for (final entry in currentArchive.files) {
+        if (entry.name.startsWith('app_images/')) {
+          legacyEntries[entry.name] = entry.content as List<int>;
+        }
+      }
       final legacy = await _writeArchive(
         File('${tempDirectory.path}/legacy-v1.zip'),
-        <String, List<int>>{
-          'meal_of_record.db': databaseBytes,
-          'settings.json': utf8.encode(
-            jsonEncode({
-              'version': 1,
-              'goal_settings': _goalSettings,
-              'macro_targets': _macroTargets,
-            }),
-          ),
-        },
+        legacyEntries,
       );
 
       final prefs = await SharedPreferences.getInstance();
@@ -352,6 +358,27 @@ void main() {
       );
 
       await _expectSafeFailure(databaseService, malformedSettings, liveFile);
+    });
+
+    test('rejects a backup with a missing referenced image', () async {
+      final backup = await databaseService.exportBackupAsZip();
+      addTearDown(() async {
+        if (await backup.parent.exists()) {
+          await backup.parent.delete(recursive: true);
+        }
+      });
+      final archive = ZipDecoder().decodeBytes(await backup.readAsBytes());
+      final entries = <String, List<int>>{
+        for (final entry in archive.files)
+          if (entry.isFile && entry.name != 'app_images/food-image.jpg')
+            entry.name: entry.content as List<int>,
+      };
+      final missingImage = await _writeArchive(
+        File('${tempDirectory.path}/missing-image.zip'),
+        entries,
+      );
+
+      await _expectSafeFailure(databaseService, missingImage, liveFile);
     });
 
     test(
