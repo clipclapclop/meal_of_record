@@ -367,6 +367,37 @@ void main() {
       await _expectSafeFailure(databaseService, malformedSettings, liveFile);
     });
 
+    test('rejects a current schema with a required column missing', () async {
+      final backup = await databaseService.exportBackupAsZip();
+      addTearDown(() async {
+        if (await backup.parent.exists()) {
+          await backup.parent.delete(recursive: true);
+        }
+      });
+      final archive = ZipDecoder().decodeBytes(await backup.readAsBytes());
+      final entries = <String, List<int>>{
+        for (final entry in archive.files)
+          if (entry.isFile) entry.name: entry.content as List<int>,
+      };
+      final malformedDatabase = File(
+        '${tempDirectory.path}/missing-recipe-link.db',
+      );
+      await malformedDatabase.writeAsBytes(entries['meal_of_record.db']!);
+      final rawDatabase = sqlite.sqlite3.open(malformedDatabase.path);
+      try {
+        rawDatabase.execute('ALTER TABLE recipes DROP COLUMN link');
+      } finally {
+        rawDatabase.dispose();
+      }
+      entries['meal_of_record.db'] = await malformedDatabase.readAsBytes();
+      final malformed = await _writeArchive(
+        File('${tempDirectory.path}/missing-column.zip'),
+        entries,
+      );
+
+      await _expectSafeFailure(databaseService, malformed, liveFile);
+    });
+
     test('rejects a backup with a missing referenced image', () async {
       final backup = await databaseService.exportBackupAsZip();
       addTearDown(() async {

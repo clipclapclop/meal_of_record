@@ -78,17 +78,69 @@ class DatabaseService {
     'has_seen_welcome',
     'share_include_images',
   };
-  static const Set<String> _requiredLiveTables = {
-    'foods',
-    'food_portions',
-    'recipes',
-    'recipe_items',
-    'categories',
-    'recipe_category_links',
-    'logged_portions',
-    'weights',
-    'containers',
-    'food_barcodes',
+  static const Map<String, Set<String>> _requiredLiveColumns = {
+    'foods': {
+      'id',
+      'name',
+      'source',
+      'emoji',
+      'thumbnail',
+      'caloriesPerGram',
+      'proteinPerGram',
+      'fatPerGram',
+      'carbsPerGram',
+      'fiberPerGram',
+      'sourceFdcId',
+      'sourceBarcode',
+      'usageNote',
+      'hidden',
+      'parentId',
+    },
+    'food_portions': {
+      'id',
+      'foodId',
+      'unitName',
+      'gramsPerPortion',
+      'quantityPerPortion',
+    },
+    'recipes': {
+      'id',
+      'name',
+      'emoji',
+      'thumbnail',
+      'servings_created',
+      'final_weight_grams',
+      'portion_name',
+      'notes',
+      'link',
+      'is_template',
+      'hidden',
+      'parent_id',
+      'created_timestamp',
+    },
+    'recipe_items': {
+      'id',
+      'recipe_id',
+      'ingredient_food_id',
+      'ingredient_recipe_id',
+      'grams',
+      'unit',
+      'position',
+    },
+    'categories': {'id', 'name'},
+    'recipe_category_links': {'recipe_id', 'category_id'},
+    'logged_portions': {
+      'id',
+      'loggedFoodId',
+      'recipeId',
+      'log_timestamp',
+      'grams',
+      'unit',
+      'quantity',
+    },
+    'weights': {'id', 'weight', 'date'},
+    'containers': {'id', 'name', 'weight', 'unit', 'thumbnail', 'hidden'},
+    'food_barcodes': {'id', 'food_id', 'barcode'},
   };
 
   late LiveDatabase _liveDb;
@@ -741,11 +793,26 @@ class DatabaseService {
           .customSelect("SELECT name FROM sqlite_master WHERE type = 'table'")
           .get();
       final tableNames = tables.map((row) => row.data['name']).toSet();
-      final missingTables = _requiredLiveTables.difference(tableNames);
+      final missingTables = _requiredLiveColumns.keys
+          .where((table) => !tableNames.contains(table))
+          .toList();
       if (missingTables.isNotEmpty) {
         throw BackupRestoreException(
           'the database is incomplete; missing ${missingTables.join(', ')}',
         );
+      }
+      for (final entry in _requiredLiveColumns.entries) {
+        final columns = await candidate
+            .customSelect('PRAGMA table_info(${entry.key})')
+            .get();
+        final columnNames = columns.map((row) => row.data['name']).toSet();
+        final missingColumns = entry.value.difference(columnNames);
+        if (missingColumns.isNotEmpty) {
+          throw BackupRestoreException(
+            'the database is incomplete; ${entry.key} is missing '
+            '${missingColumns.join(', ')}',
+          );
+        }
       }
       final quickCheck = await candidate
           .customSelect('PRAGMA quick_check')
@@ -770,7 +837,29 @@ class DatabaseService {
     } finally {
       await candidate.close();
     }
+    await _consolidateSqliteDatabase(databaseFile);
     return sourceSchemaVersion;
+  }
+
+  Future<void> _consolidateSqliteDatabase(File databaseFile) async {
+    final snapshot = File('${databaseFile.path}.consolidated');
+    sqlite.Database? rawDatabase;
+    try {
+      if (await snapshot.exists()) await snapshot.delete();
+      rawDatabase = sqlite.sqlite3.open(databaseFile.path);
+      rawDatabase.execute('VACUUM INTO ?', [snapshot.path]);
+    } catch (error) {
+      throw BackupRestoreException(
+        'the validated database could not be consolidated',
+        error,
+      );
+    } finally {
+      rawDatabase?.dispose();
+    }
+
+    await databaseFile.delete();
+    await _deleteSqliteSidecars(databaseFile);
+    await snapshot.rename(databaseFile.path);
   }
 
   Future<Map<String, Object?>> _capturePreferences() async {
