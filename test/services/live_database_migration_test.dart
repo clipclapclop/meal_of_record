@@ -25,6 +25,55 @@ void main() {
   });
 
   test(
+    'migrates v12 provenance fixups without corrupting parent links',
+    () async {
+      await _createDatabaseFromFixture(
+        databaseFile,
+        File('test/fixtures/live_schema_v13.sql'),
+      );
+      final fixture = sqlite.sqlite3.open(databaseFile.path);
+      try {
+        fixture.execute('PRAGMA foreign_keys = OFF');
+        fixture.execute('''
+        INSERT INTO foods (
+          id, name, source, caloriesPerGram, proteinPerGram, fatPerGram,
+          carbsPerGram, fiberPerGram, sourceFdcId, sourceBarcode, hidden,
+          parentId
+        ) VALUES
+          (100, 'Barcode food', 'live', 1, 0, 0, 0, 0, NULL, '12345', 0, NULL),
+          (101, 'USDA food', 'live', 1, 0, 0, 0, 0, 9001, NULL, 0, NULL),
+          (102, 'Custom food', 'live', 1, 0, 0, 0, 0, NULL, NULL, 0, NULL),
+          (103, 'Fasted', 'live', 0, 0, 0, 0, 0, NULL, NULL, 1, NULL),
+          (104, 'Valid child', 'live', 1, 0, 0, 0, 0, NULL, NULL, 0, 102),
+          (105, 'Orphan child', 'live', 1, 0, 0, 0, 0, NULL, NULL, 0, 999)
+      ''');
+        fixture.execute('PRAGMA user_version = 12');
+      } finally {
+        fixture.dispose();
+      }
+
+      final database = LiveDatabase(connection: NativeDatabase(databaseFile));
+      addTearDown(database.close);
+      await database.customSelect('SELECT 1').getSingle();
+
+      final rows = await database.customSelect('''
+      SELECT id, source, parentId FROM foods WHERE id >= 100 ORDER BY id
+    ''').get();
+      final byId = {for (final row in rows) row.data['id']: row.data};
+      expect(byId[100]!['source'], 'off');
+      expect(byId[101]!['source'], 'FOUNDATION');
+      expect(byId[102]!['source'], 'user');
+      expect(byId[103]!['source'], 'live');
+      expect(byId[104]!['parentId'], 102);
+      expect(byId[105]!['parentId'], isNull);
+      expect(
+        await database.customSelect('PRAGMA foreign_key_check').get(),
+        isEmpty,
+      );
+    },
+  );
+
+  test(
     'migrates the production v13 fixture to v14 without data loss',
     () async {
       await _createDatabaseFromFixture(
