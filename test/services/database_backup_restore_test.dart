@@ -21,8 +21,10 @@ void main() {
   late LiveDatabase liveDatabase;
   late ref.ReferenceDatabase referenceDatabase;
   late DatabaseService databaseService;
+  late bool failBeforeOpeningRestoredDatabase;
 
   setUp(() async {
+    failBeforeOpeningRestoredDatabase = false;
     SharedPreferences.setMockInitialValues({
       'goal_settings': jsonEncode(_goalSettings),
       'macro_targets': jsonEncode(_macroTargets),
@@ -57,6 +59,11 @@ void main() {
       referenceDatabase,
       liveDbFile: liveFile,
       imagesDirectory: imagesDirectory,
+      beforeOpenRestoredDatabase: () async {
+        if (failBeforeOpeningRestoredDatabase) {
+          throw StateError('simulated restore interruption');
+        }
+      },
     );
 
     for (final image in <String>[
@@ -239,6 +246,44 @@ void main() {
   );
 
   group('safe restore failure', () {
+    test(
+      'rollback preserves committed WAL data when installation fails',
+      () async {
+        final backup = await databaseService.exportBackupAsZip();
+        addTearDown(() async {
+          if (await backup.parent.exists()) {
+            await backup.parent.delete(recursive: true);
+          }
+        });
+        final journalMode = await liveDatabase
+            .customSelect('PRAGMA journal_mode = WAL')
+            .getSingle();
+        expect(journalMode.data.values.single, 'wal');
+        await liveDatabase.customStatement('PRAGMA wal_autocheckpoint = 0');
+        await liveDatabase.customStatement(
+          'INSERT INTO weights (id, weight, date) VALUES (99, 79.5, 1736035200000)',
+        );
+        expect(await File('${liveFile.path}-wal').length(), greaterThan(0));
+
+        failBeforeOpeningRestoredDatabase = true;
+        await expectLater(
+          databaseService.restoreDatabase(backup),
+          throwsA(isA<BackupRestoreException>()),
+        );
+
+        final restoredLiveData = sqlite.sqlite3.open(liveFile.path);
+        try {
+          final rows = restoredLiveData.select(
+            'SELECT weight, date FROM weights WHERE id = 99',
+          );
+          expect(rows.single['weight'], 79.5);
+          expect(rows.single['date'], 1736035200000);
+        } finally {
+          restoredLiveData.dispose();
+        }
+      },
+    );
+
     test('rejects an interrupted zip without changing current data', () async {
       final backup = await databaseService.exportBackupAsZip();
       addTearDown(() async {

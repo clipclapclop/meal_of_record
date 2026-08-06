@@ -95,6 +95,7 @@ class DatabaseService {
   late ReferenceDatabase _referenceDb;
   File? _liveDbFileOverride;
   Directory? _imagesDirectoryOverride;
+  Future<void> Function()? _beforeOpenRestoredDatabaseForTesting;
 
   static final DatabaseService instance = DatabaseService._internal();
 
@@ -105,12 +106,14 @@ class DatabaseService {
     ReferenceDatabase referenceDb, {
     File? liveDbFile,
     Directory? imagesDirectory,
+    Future<void> Function()? beforeOpenRestoredDatabase,
   }) {
     return DatabaseService._internal()
       .._liveDb = liveDb
       .._referenceDb = referenceDb
       .._liveDbFileOverride = liveDbFile
-      .._imagesDirectoryOverride = imagesDirectory;
+      .._imagesDirectoryOverride = imagesDirectory
+      .._beforeOpenRestoredDatabaseForTesting = beforeOpenRestoredDatabase;
   }
 
   static void initSingletonForTesting(
@@ -780,11 +783,12 @@ class DatabaseService {
     var preferencesChanged = false;
     var replacementOpened = false;
 
+    await _checkpointLiveDatabase();
     await _liveDb.close();
     try {
-      await _deleteSqliteSidecars(liveFile);
       await liveFile.rename(rollbackDatabase.path);
       databaseMoved = true;
+      await _moveSqliteSidecars(liveFile, rollbackDatabase);
 
       if (staged.replacesImages && hadImages) {
         await imagesDirectory.rename(rollbackImages.path);
@@ -804,6 +808,7 @@ class DatabaseService {
         await _replacePreferences(staged.preferences!);
       }
 
+      await _beforeOpenRestoredDatabaseForTesting?.call();
       _liveDb = LiveDatabase(connection: NativeDatabase(liveFile));
       replacementOpened = true;
       await _liveDb.customSelect('SELECT 1').getSingle();
@@ -812,12 +817,15 @@ class DatabaseService {
       if (replacementOpened) {
         await _liveDb.close();
       }
-      if (replacementDatabaseInstalled && await liveFile.exists()) {
-        await liveFile.delete();
+      if (replacementDatabaseInstalled) {
+        if (await liveFile.exists()) {
+          await liveFile.delete();
+        }
+        await _deleteSqliteSidecars(liveFile);
       }
-      await _deleteSqliteSidecars(liveFile);
       if (databaseMoved && await rollbackDatabase.exists()) {
         await rollbackDatabase.rename(liveFile.path);
+        await _moveSqliteSidecars(rollbackDatabase, liveFile);
       }
 
       if (replacementImagesInstalled && await imagesDirectory.exists()) {
@@ -836,6 +844,27 @@ class DatabaseService {
         'the restore could not be applied; the original data was put back',
         error,
       );
+    }
+  }
+
+  Future<void> _checkpointLiveDatabase() async {
+    final row = await _liveDb
+        .customSelect('PRAGMA wal_checkpoint(TRUNCATE)')
+        .getSingle();
+    final busy = row.data['busy'];
+    if (busy is! int || busy != 0) {
+      throw const BackupRestoreException(
+        'the live database is busy and could not be safely checkpointed',
+      );
+    }
+  }
+
+  Future<void> _moveSqliteSidecars(File from, File to) async {
+    for (final suffix in const ['-wal', '-shm', '-journal']) {
+      final source = File('${from.path}$suffix');
+      if (await source.exists()) {
+        await source.rename('${to.path}$suffix');
+      }
     }
   }
 
