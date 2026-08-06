@@ -354,9 +354,21 @@ class DatabaseService {
         'the archive is incomplete: meal_of_record.db is missing',
       );
     }
-    if (filesByName['settings.json'] == null) {
+    final settingsEntry = filesByName['settings.json'];
+    if (settingsEntry == null) {
       throw const BackupRestoreException(
         'the archive is incomplete: settings.json is missing',
+      );
+    }
+    final settingsVersion = _decodeBackupSettings(settingsEntry).version;
+    if (manifest == null && settingsVersion != 1) {
+      throw const BackupRestoreException(
+        'the archive is incomplete: manifest.json is missing',
+      );
+    }
+    if (manifest != null && settingsVersion != backupFormatVersion) {
+      throw const BackupRestoreException(
+        'the manifest and settings versions are incompatible',
       );
     }
 
@@ -403,10 +415,7 @@ class DatabaseService {
       await target.writeAsBytes(entry.value.content as List<int>, flush: true);
     }
 
-    final settingsEntry = filesByName['settings.json'];
-    final preferences = settingsEntry == null
-        ? null
-        : _decodeBackupPreferences(settingsEntry);
+    final preferences = _decodeBackupPreferences(settingsEntry);
 
     return _StagedBackup(
       directory: stageDirectory,
@@ -414,7 +423,7 @@ class DatabaseService {
       images: images,
       preferences: preferences,
       replacesImages: true,
-      replacesPreferences: settingsEntry != null,
+      replacesPreferences: true,
     );
   }
 
@@ -573,7 +582,9 @@ class DatabaseService {
     }
   }
 
-  Map<String, Object?> _decodeBackupPreferences(ArchiveFile settingsEntry) {
+  ({int version, Map<String, dynamic> data}) _decodeBackupSettings(
+    ArchiveFile settingsEntry,
+  ) {
     final settings = _decodeJsonObject(settingsEntry, 'settings.json');
     final version = settings['version'];
     if (version is! int || version < 1 || version > backupFormatVersion) {
@@ -581,7 +592,13 @@ class DatabaseService {
         'settings version $version is not supported',
       );
     }
+    return (version: version, data: settings);
+  }
 
+  Map<String, Object?> _decodeBackupPreferences(ArchiveFile settingsEntry) {
+    final decoded = _decodeBackupSettings(settingsEntry);
+    final settings = decoded.data;
+    final version = decoded.version;
     final preferences = <String, Object?>{};
     if (version == 1) {
       for (final key in const [

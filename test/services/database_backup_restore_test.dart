@@ -280,6 +280,23 @@ void main() {
       await _expectSafeFailure(databaseService, missingSettings, liveFile);
     });
 
+    test('rejects current-format settings without a manifest', () async {
+      final missingManifest = await _writeArchive(
+        File('${tempDirectory.path}/missing-manifest.zip'),
+        <String, List<int>>{
+          'meal_of_record.db': await liveFile.readAsBytes(),
+          'settings.json': utf8.encode(
+            jsonEncode({
+              'version': DatabaseService.backupFormatVersion,
+              'preferences': <String, Object?>{},
+            }),
+          ),
+        },
+      );
+
+      await _expectSafeFailure(databaseService, missingManifest, liveFile);
+    });
+
     test('rejects malformed settings before replacing data', () async {
       final malformedSettings = await _writeArchive(
         File('${tempDirectory.path}/malformed-settings.zip'),
