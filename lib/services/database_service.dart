@@ -812,6 +812,7 @@ class DatabaseService {
     }
 
     final rollbackDatabase = File('${staged.directory.path}/previous.db');
+    final originalDatabase = File('${staged.directory.path}/original.db');
     final rollbackImages = Directory(
       '${staged.directory.path}/previous_images',
     );
@@ -819,19 +820,22 @@ class DatabaseService {
         ? await _capturePreferences()
         : null;
     final hadImages = await imagesDirectory.exists();
-    var databaseMoved = false;
+    var originalDatabaseMoved = false;
     var imagesMoved = false;
     var replacementDatabaseInstalled = false;
     var replacementImagesInstalled = false;
     var preferencesChanged = false;
     var replacementOpened = false;
 
-    await _checkpointLiveDatabase();
+    // Create a self-contained rollback snapshot before touching the live file.
+    // VACUUM INTO includes committed WAL pages without requiring active readers
+    // to release their snapshots.
+    await _liveDb.customStatement('VACUUM INTO ?', [rollbackDatabase.path]);
     await _liveDb.close();
     try {
-      await liveFile.rename(rollbackDatabase.path);
-      databaseMoved = true;
-      await _moveSqliteSidecars(liveFile, rollbackDatabase);
+      await liveFile.rename(originalDatabase.path);
+      originalDatabaseMoved = true;
+      await _moveSqliteSidecars(liveFile, originalDatabase);
 
       if (staged.replacesImages && hadImages) {
         await imagesDirectory.rename(rollbackImages.path);
@@ -860,15 +864,17 @@ class DatabaseService {
       if (replacementOpened) {
         await _liveDb.close();
       }
-      if (replacementDatabaseInstalled) {
-        if (await liveFile.exists()) {
-          await liveFile.delete();
-        }
-        await _deleteSqliteSidecars(liveFile);
+      if (replacementDatabaseInstalled && await liveFile.exists()) {
+        await liveFile.delete();
       }
-      if (databaseMoved && await rollbackDatabase.exists()) {
-        await rollbackDatabase.rename(liveFile.path);
-        await _moveSqliteSidecars(rollbackDatabase, liveFile);
+      if (originalDatabaseMoved) {
+        // Any remaining sidecars belong to either the interrupted replacement
+        // or the old file. The rollback snapshot already contains every
+        // committed page, so applying either set to it would be unsafe.
+        await _deleteSqliteSidecars(liveFile);
+        if (await rollbackDatabase.exists()) {
+          await rollbackDatabase.rename(liveFile.path);
+        }
       }
 
       if (replacementImagesInstalled && await imagesDirectory.exists()) {
@@ -886,18 +892,6 @@ class DatabaseService {
       throw BackupRestoreException(
         'the restore could not be applied; the original data was put back',
         error,
-      );
-    }
-  }
-
-  Future<void> _checkpointLiveDatabase() async {
-    final row = await _liveDb
-        .customSelect('PRAGMA wal_checkpoint(TRUNCATE)')
-        .getSingle();
-    final busy = row.data['busy'];
-    if (busy is! int || busy != 0) {
-      throw const BackupRestoreException(
-        'the live database is busy and could not be safely checkpointed',
       );
     }
   }

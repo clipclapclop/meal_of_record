@@ -270,6 +270,13 @@ void main() {
           'INSERT INTO weights (id, weight, date) VALUES (99, 79.5, 1736035200000)',
         );
         expect(await File('${liveFile.path}-wal').length(), greaterThan(0));
+        final activeReader = sqlite.sqlite3.open(liveFile.path);
+        activeReader.execute('BEGIN');
+        activeReader.select('SELECT COUNT(*) FROM weights');
+        addTearDown(() {
+          activeReader.execute('ROLLBACK');
+          activeReader.dispose();
+        });
 
         failBeforeOpeningRestoredDatabase = true;
         await expectLater(
