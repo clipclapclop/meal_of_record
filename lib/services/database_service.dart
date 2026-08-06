@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:drift/drift.dart';
+import 'package:drift/native.dart';
 import 'package:archive/archive.dart';
+import 'package:sqlite3/sqlite3.dart' as sqlite;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path/path.dart' as p;
 
 import 'package:meal_of_record/models/food.dart' as model;
 import 'package:meal_of_record/models/food_serving.dart' as model_serving;
@@ -35,9 +38,62 @@ class LastLoggedInfo {
   });
 }
 
+class BackupRestoreException implements Exception {
+  final String message;
+  final Object? cause;
+
+  const BackupRestoreException(this.message, [this.cause]);
+
+  @override
+  String toString() => 'Backup restore failed: $message';
+}
+
+class _StagedBackup {
+  final Directory directory;
+  final File database;
+  final Directory? images;
+  final Map<String, Object?>? preferences;
+  final bool replacesImages;
+  final bool replacesPreferences;
+
+  const _StagedBackup({
+    required this.directory,
+    required this.database,
+    required this.images,
+    required this.preferences,
+    required this.replacesImages,
+    required this.replacesPreferences,
+  });
+}
+
 class DatabaseService {
+  static const int backupFormatVersion = 2;
+  static const int _maxBackupFiles = 10000;
+  static const int _maxExpandedBackupBytes = 512 * 1024 * 1024;
+  static const Set<String> _backupPreferenceKeys = {
+    'goal_settings',
+    'macro_targets',
+    'target_snapshots',
+    'has_seen_welcome',
+    'share_include_images',
+  };
+  static const Set<String> _requiredLiveTables = {
+    'foods',
+    'food_portions',
+    'recipes',
+    'recipe_items',
+    'categories',
+    'recipe_category_links',
+    'logged_portions',
+    'weights',
+    'containers',
+    'food_barcodes',
+  };
+
   late LiveDatabase _liveDb;
   late ReferenceDatabase _referenceDb;
+  File? _liveDbFileOverride;
+  Directory? _imagesDirectoryOverride;
 
   static final DatabaseService instance = DatabaseService._internal();
 
@@ -45,11 +101,15 @@ class DatabaseService {
 
   factory DatabaseService.forTesting(
     LiveDatabase liveDb,
-    ReferenceDatabase referenceDb,
-  ) {
+    ReferenceDatabase referenceDb, {
+    File? liveDbFile,
+    Directory? imagesDirectory,
+  }) {
     return DatabaseService._internal()
       .._liveDb = liveDb
-      .._referenceDb = referenceDb;
+      .._referenceDb = referenceDb
+      .._liveDbFileOverride = liveDbFile
+      .._imagesDirectoryOverride = imagesDirectory;
   }
 
   static void initSingletonForTesting(
@@ -66,122 +126,576 @@ class DatabaseService {
     await _ensureSystemQuickAddFood();
   }
 
-  Future<void> restoreDatabase(File backupFile) async {
-    final liveFile = await getLiveDbFile();
-    final imgService = ImageStorageService.instance;
-    final imagesDir = await imgService.getImagesDirectory();
-
-    // 1. Close current connections
+  Future<void> close() async {
     await _liveDb.close();
     await _referenceDb.close();
+  }
 
+  Future<File> _liveDbFile() async {
+    return _liveDbFileOverride ?? await getLiveDbFile();
+  }
+
+  Future<Directory> _imagesDirectory() async {
+    return _imagesDirectoryOverride ??
+        await ImageStorageService.instance.getImagesDirectory();
+  }
+
+  Future<void> restoreDatabase(File backupFile) async {
+    final liveFile = await _liveDbFile();
+    final imagesDirectory = await _imagesDirectory();
+    await liveFile.parent.create(recursive: true);
+
+    final staged = await _stageBackup(backupFile, liveFile.parent);
     try {
-      if (backupFile.path.toLowerCase().endsWith('.zip')) {
-        // Zip restore
-        final bytes = await backupFile.readAsBytes();
-        final archive = ZipDecoder().decodeBytes(bytes);
-
-        for (final file in archive) {
-          if (file.isFile) {
-            if (file.name == 'meal_of_record.db') {
-              final dbFile = File(liveFile.path);
-              await dbFile.writeAsBytes(file.content as List<int>);
-            } else if (file.name.startsWith('app_images/')) {
-              // Extract image
-              final relativePath = file.name.substring('app_images/'.length);
-              final targetFile = File('${imagesDir.path}/$relativePath');
-              await targetFile.parent.create(recursive: true);
-              await targetFile.writeAsBytes(file.content as List<int>);
-            } else if (file.name == 'settings.json') {
-              // Restore goal settings and macro targets
-              final settingsJson = utf8.decode(file.content as List<int>);
-              final settingsData =
-                  jsonDecode(settingsJson) as Map<String, dynamic>;
-
-              final prefs = await SharedPreferences.getInstance();
-
-              if (settingsData.containsKey('goal_settings')) {
-                await prefs.setString(
-                  'goal_settings',
-                  jsonEncode(settingsData['goal_settings']),
-                );
-              }
-              if (settingsData.containsKey('macro_targets')) {
-                await prefs.setString(
-                  'macro_targets',
-                  jsonEncode(settingsData['macro_targets']),
-                );
-              }
-            }
-          }
-        }
-      } else {
-        // Legacy .db restore
-        await backupFile.copy(liveFile.path);
-      }
+      await _installStagedBackup(staged, liveFile, imagesDirectory);
+      await BackupConfigService.instance.markDirty();
     } finally {
-      // 3. Re-initialize
-      await init();
-      BackupConfigService.instance.markDirty();
+      if (await staged.directory.exists()) {
+        await staged.directory.delete(recursive: true);
+      }
     }
   }
 
-  /// Exports the live database, images, and settings as a zip archive
+  /// Exports a point-in-time SQLite snapshot, app-owned images, and important
+  /// preferences as a versioned zip archive.
   Future<File> exportBackupAsZip() async {
-    final liveFile = await getLiveDbFile();
-    final imgService = ImageStorageService.instance;
-    final imagesDir = await imgService.getImagesDirectory();
+    final imagesDirectory = await _imagesDirectory();
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'meal_of_record_backup_',
+    );
+    final snapshotFile = File('${tempDirectory.path}/meal_of_record.db');
 
-    final archive = Archive();
+    try {
+      // VACUUM INTO uses SQLite's snapshot semantics and includes committed WAL
+      // data without requiring the live connection to be closed.
+      await _liveDb.customStatement('VACUUM INTO ?', [snapshotFile.path]);
+      final databaseBytes = await snapshotFile.readAsBytes();
+      final archive = Archive()
+        ..addFile(
+          ArchiveFile('meal_of_record.db', databaseBytes.length, databaseBytes),
+        );
 
-    // Add database
-    final dbBytes = await liveFile.readAsBytes();
-    archive.addFile(ArchiveFile('meal_of_record.db', dbBytes.length, dbBytes));
-
-    // Add images
-    if (await imagesDir.exists()) {
-      await for (final entity in imagesDir.list(recursive: true)) {
-        if (entity is File) {
-          final relativePath = entity.path.substring(
-            imagesDir.parent.path.length + 1,
+      if (await imagesDirectory.exists()) {
+        await for (final entity in imagesDirectory.list(recursive: true)) {
+          if (entity is! File) continue;
+          final relativePath = p.relative(
+            entity.path,
+            from: imagesDirectory.path,
+          );
+          final archivePath = p.posix.join(
+            'app_images',
+            p.posix.joinAll(p.split(relativePath)),
           );
           final bytes = await entity.readAsBytes();
-          archive.addFile(ArchiveFile(relativePath, bytes.length, bytes));
+          archive.addFile(ArchiveFile(archivePath, bytes.length, bytes));
+        }
+      }
+
+      final preferences = await _capturePreferences();
+      final settingsBytes = utf8.encode(
+        jsonEncode({
+          'version': backupFormatVersion,
+          'preferences': preferences,
+        }),
+      );
+      archive.addFile(
+        ArchiveFile('settings.json', settingsBytes.length, settingsBytes),
+      );
+
+      final manifestBytes = utf8.encode(
+        jsonEncode({
+          'formatVersion': backupFormatVersion,
+          'databaseSchemaVersion': LiveDatabase.currentSchemaVersion,
+          'createdAtUtc': DateTime.now().toUtc().toIso8601String(),
+        }),
+      );
+      archive.addFile(
+        ArchiveFile('manifest.json', manifestBytes.length, manifestBytes),
+      );
+
+      final zipBytes = ZipEncoder().encode(archive);
+      if (zipBytes == null) {
+        throw const BackupRestoreException('the archive could not be encoded');
+      }
+
+      final now = DateTime.now();
+      final timestamp =
+          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}-${now.minute.toString().padLeft(2, '0')}-${now.second.toString().padLeft(2, '0')}';
+      final zipFile = File(
+        '${tempDirectory.path}/meal_of_record_$timestamp.zip',
+      );
+      await zipFile.writeAsBytes(zipBytes, flush: true);
+      await snapshotFile.delete();
+      return zipFile;
+    } catch (error) {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+      if (error is BackupRestoreException) rethrow;
+      throw BackupRestoreException('the backup could not be created', error);
+    }
+  }
+
+  Future<_StagedBackup> _stageBackup(
+    File backupFile,
+    Directory applicationDirectory,
+  ) async {
+    final stageDirectory = await applicationDirectory.createTemp(
+      '.meal_of_record_restore_',
+    );
+    try {
+      final staged = backupFile.path.toLowerCase().endsWith('.zip')
+          ? await _stageZipBackup(backupFile, stageDirectory)
+          : await _stageLegacyDatabase(backupFile, stageDirectory);
+      return staged;
+    } catch (error) {
+      if (await stageDirectory.exists()) {
+        await stageDirectory.delete(recursive: true);
+      }
+      if (error is BackupRestoreException) rethrow;
+      throw BackupRestoreException(
+        'the selected file is not a valid backup',
+        error,
+      );
+    }
+  }
+
+  Future<_StagedBackup> _stageLegacyDatabase(
+    File backupFile,
+    Directory stageDirectory,
+  ) async {
+    final database = await backupFile.copy(
+      '${stageDirectory.path}/meal_of_record.db',
+    );
+    await _validateDatabase(database);
+    return _StagedBackup(
+      directory: stageDirectory,
+      database: database,
+      images: null,
+      preferences: null,
+      replacesImages: false,
+      replacesPreferences: false,
+    );
+  }
+
+  Future<_StagedBackup> _stageZipBackup(
+    File backupFile,
+    Directory stageDirectory,
+  ) async {
+    final List<int> bytes;
+    final Archive archive;
+    try {
+      if (await backupFile.length() > _maxExpandedBackupBytes) {
+        throw const BackupRestoreException('the archive is too large');
+      }
+      bytes = await backupFile.readAsBytes();
+      // Entry data stays compressed until after the declared expanded sizes
+      // have passed the bounds below.
+      archive = ZipDecoder().decodeBytes(bytes);
+    } catch (error) {
+      if (error is BackupRestoreException) rethrow;
+      throw BackupRestoreException(
+        'the zip archive is malformed or interrupted',
+        error,
+      );
+    }
+
+    if (archive.files.length > _maxBackupFiles) {
+      throw const BackupRestoreException('the archive contains too many files');
+    }
+
+    final filesByName = <String, ArchiveFile>{};
+    var expandedBytes = 0;
+    for (final entry in archive.files) {
+      _validateArchivePath(entry.name);
+      if (entry.isSymbolicLink) {
+        throw const BackupRestoreException(
+          'the archive contains a symbolic link',
+        );
+      }
+      if (!entry.isFile) continue;
+      if (filesByName.containsKey(entry.name)) {
+        throw BackupRestoreException(
+          'the archive contains duplicate ${entry.name} entries',
+        );
+      }
+      filesByName[entry.name] = entry;
+      expandedBytes += entry.size;
+      if (expandedBytes > _maxExpandedBackupBytes) {
+        throw const BackupRestoreException('the expanded archive is too large');
+      }
+    }
+
+    for (final entry in filesByName.values) {
+      final content = entry.content as List<int>;
+      if (content.length != entry.size ||
+          (entry.crc32 != null && getCrc32(content) != entry.crc32)) {
+        throw BackupRestoreException(
+          'the archive entry ${entry.name} is corrupt',
+        );
+      }
+    }
+
+    final manifestEntry = filesByName['manifest.json'];
+    Map<String, dynamic>? manifest;
+    if (manifestEntry != null) {
+      manifest = _decodeJsonObject(manifestEntry, 'manifest.json');
+      final formatVersion = manifest['formatVersion'];
+      if (formatVersion is! int || formatVersion != backupFormatVersion) {
+        throw BackupRestoreException(
+          'backup format $formatVersion is not supported by this app version',
+        );
+      }
+    }
+
+    final databaseEntry = filesByName['meal_of_record.db'];
+    if (databaseEntry == null || databaseEntry.size == 0) {
+      throw const BackupRestoreException(
+        'the archive is incomplete: meal_of_record.db is missing',
+      );
+    }
+    if (manifest != null && filesByName['settings.json'] == null) {
+      throw const BackupRestoreException(
+        'the archive is incomplete: settings.json is missing',
+      );
+    }
+
+    if (manifest != null) {
+      for (final name in filesByName.keys) {
+        if (name != 'manifest.json' &&
+            name != 'settings.json' &&
+            name != 'meal_of_record.db' &&
+            !name.startsWith('app_images/')) {
+          throw BackupRestoreException(
+            'the archive contains unknown file $name',
+          );
         }
       }
     }
 
-    // Add settings.json with goal settings and macro targets
-    final prefs = await SharedPreferences.getInstance();
-    final goalSettingsJson = prefs.getString('goal_settings');
-    final macroTargetsJson = prefs.getString('macro_targets');
-
-    final settingsData = <String, dynamic>{
-      'version': 1,
-      if (goalSettingsJson != null)
-        'goal_settings': jsonDecode(goalSettingsJson),
-      if (macroTargetsJson != null)
-        'macro_targets': jsonDecode(macroTargetsJson),
-    };
-
-    final settingsBytes = utf8.encode(jsonEncode(settingsData));
-    archive.addFile(
-      ArchiveFile('settings.json', settingsBytes.length, settingsBytes),
+    final database = File('${stageDirectory.path}/meal_of_record.db');
+    await database.writeAsBytes(
+      databaseEntry.content as List<int>,
+      flush: true,
     );
 
-    final zipBytes = ZipEncoder().encode(archive);
-    if (zipBytes == null) throw Exception('Failed to encode zip');
+    final sourceSchemaVersion = await _validateDatabase(database);
+    if (manifest != null) {
+      final declaredSchemaVersion = manifest['databaseSchemaVersion'];
+      if (declaredSchemaVersion is! int ||
+          declaredSchemaVersion != sourceSchemaVersion) {
+        throw const BackupRestoreException(
+          'the manifest does not match the database schema',
+        );
+      }
+    }
 
-    // Generate timestamped filename: meal_of_record_backup_YYYY-MM-DD_HH-mm-ss.zip
-    final now = DateTime.now();
-    final timestamp =
-        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}-${now.minute.toString().padLeft(2, '0')}-${now.second.toString().padLeft(2, '0')}';
+    final images = Directory('${stageDirectory.path}/app_images');
+    await images.create();
+    for (final entry in filesByName.entries) {
+      if (!entry.key.startsWith('app_images/')) continue;
+      final relativePath = entry.key.substring('app_images/'.length);
+      if (relativePath.isEmpty) continue;
+      final target = File(
+        p.joinAll([images.path, ...p.posix.split(relativePath)]),
+      );
+      await target.parent.create(recursive: true);
+      await target.writeAsBytes(entry.value.content as List<int>, flush: true);
+    }
 
-    final tempDir = await Directory.systemTemp.createTemp();
-    final zipFile = File('${tempDir.path}/meal_of_record_$timestamp.zip');
-    await zipFile.writeAsBytes(zipBytes);
+    final settingsEntry = filesByName['settings.json'];
+    final preferences = settingsEntry == null
+        ? null
+        : _decodeBackupPreferences(settingsEntry);
 
-    return zipFile;
+    return _StagedBackup(
+      directory: stageDirectory,
+      database: database,
+      images: images,
+      preferences: preferences,
+      replacesImages: true,
+      replacesPreferences: settingsEntry != null,
+    );
+  }
+
+  void _validateArchivePath(String name) {
+    final segments = p.posix.split(name);
+    if (name.isEmpty ||
+        name.contains('\\') ||
+        p.posix.isAbsolute(name) ||
+        segments.contains('..') ||
+        segments.contains('.') ||
+        name.startsWith('/')) {
+      throw BackupRestoreException('the archive contains unsafe path $name');
+    }
+  }
+
+  Map<String, dynamic> _decodeJsonObject(ArchiveFile entry, String name) {
+    try {
+      final decoded = jsonDecode(utf8.decode(entry.content as List<int>));
+      if (decoded is! Map) {
+        throw const FormatException('expected a JSON object');
+      }
+      return Map<String, dynamic>.from(decoded);
+    } catch (error) {
+      throw BackupRestoreException('$name is malformed', error);
+    }
+  }
+
+  Map<String, Object?> _decodeBackupPreferences(ArchiveFile settingsEntry) {
+    final settings = _decodeJsonObject(settingsEntry, 'settings.json');
+    final version = settings['version'];
+    if (version is! int || version < 1 || version > backupFormatVersion) {
+      throw BackupRestoreException(
+        'settings version $version is not supported',
+      );
+    }
+
+    final preferences = <String, Object?>{};
+    if (version == 1) {
+      for (final key in const [
+        'goal_settings',
+        'macro_targets',
+        'target_snapshots',
+      ]) {
+        if (settings.containsKey(key)) {
+          final value = settings[key];
+          if (value is! Map && value is! List) {
+            throw BackupRestoreException('settings value $key is malformed');
+          }
+          preferences[key] = jsonEncode(value);
+        }
+      }
+      for (final key in const ['has_seen_welcome', 'share_include_images']) {
+        if (settings.containsKey(key)) preferences[key] = settings[key];
+      }
+    } else {
+      final rawPreferences = settings['preferences'];
+      if (rawPreferences is! Map) {
+        throw const BackupRestoreException(
+          'settings.json does not contain preferences',
+        );
+      }
+      for (final entry in rawPreferences.entries) {
+        final key = entry.key;
+        if (key is String && _backupPreferenceKeys.contains(key)) {
+          preferences[key] = entry.value;
+        }
+      }
+    }
+
+    for (final entry in preferences.entries) {
+      final expectsString =
+          entry.key == 'goal_settings' ||
+          entry.key == 'macro_targets' ||
+          entry.key == 'target_snapshots';
+      if ((expectsString && entry.value is! String) ||
+          (!expectsString && entry.value is! bool)) {
+        throw BackupRestoreException(
+          'settings value ${entry.key} has the wrong type',
+        );
+      }
+      if (expectsString) {
+        try {
+          jsonDecode(entry.value! as String);
+        } catch (error) {
+          throw BackupRestoreException(
+            'settings value ${entry.key} is malformed',
+            error,
+          );
+        }
+      }
+    }
+    return preferences;
+  }
+
+  Future<int> _validateDatabase(File databaseFile) async {
+    sqlite.Database? rawDatabase;
+    late int sourceSchemaVersion;
+    try {
+      rawDatabase = sqlite.sqlite3.open(databaseFile.path);
+      final versionRows = rawDatabase.select('PRAGMA user_version');
+      sourceSchemaVersion = versionRows.single['user_version']! as int;
+      if (sourceSchemaVersion < LiveDatabase.minimumSupportedSchemaVersion) {
+        throw BackupRestoreException(
+          'database schema $sourceSchemaVersion is older than the oldest supported schema '
+          '${LiveDatabase.minimumSupportedSchemaVersion}',
+        );
+      }
+      if (sourceSchemaVersion > LiveDatabase.currentSchemaVersion) {
+        throw BackupRestoreException(
+          'database schema $sourceSchemaVersion is newer than this app supports',
+        );
+      }
+      final quickCheck = rawDatabase.select('PRAGMA quick_check');
+      if (quickCheck.length != 1 || quickCheck.single.values.single != 'ok') {
+        throw const BackupRestoreException(
+          'the database failed its integrity check',
+        );
+      }
+    } catch (error) {
+      if (error is BackupRestoreException) rethrow;
+      throw BackupRestoreException('meal_of_record.db is malformed', error);
+    } finally {
+      rawDatabase?.dispose();
+    }
+
+    final candidate = LiveDatabase(connection: NativeDatabase(databaseFile));
+    try {
+      await candidate.customSelect('SELECT 1').getSingle();
+      final tables = await candidate
+          .customSelect("SELECT name FROM sqlite_master WHERE type = 'table'")
+          .get();
+      final tableNames = tables.map((row) => row.data['name']).toSet();
+      final missingTables = _requiredLiveTables.difference(tableNames);
+      if (missingTables.isNotEmpty) {
+        throw BackupRestoreException(
+          'the database is incomplete; missing ${missingTables.join(', ')}',
+        );
+      }
+      final quickCheck = await candidate
+          .customSelect('PRAGMA quick_check')
+          .get();
+      if (quickCheck.length != 1 ||
+          quickCheck.single.data.values.single != 'ok') {
+        throw const BackupRestoreException(
+          'the database failed its integrity check',
+        );
+      }
+      final foreignKeyErrors = await candidate
+          .customSelect('PRAGMA foreign_key_check')
+          .get();
+      if (foreignKeyErrors.isNotEmpty) {
+        throw const BackupRestoreException(
+          'the database contains broken relationships',
+        );
+      }
+    } catch (error) {
+      if (error is BackupRestoreException) rethrow;
+      throw BackupRestoreException('the database could not be migrated', error);
+    } finally {
+      await candidate.close();
+    }
+    return sourceSchemaVersion;
+  }
+
+  Future<Map<String, Object?>> _capturePreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    return <String, Object?>{
+      for (final key in _backupPreferenceKeys)
+        if (prefs.containsKey(key)) key: prefs.get(key),
+    };
+  }
+
+  Future<void> _replacePreferences(Map<String, Object?> values) async {
+    final prefs = await SharedPreferences.getInstance();
+    for (final key in _backupPreferenceKeys) {
+      await prefs.remove(key);
+    }
+    for (final entry in values.entries) {
+      final value = entry.value;
+      if (value is String) {
+        await prefs.setString(entry.key, value);
+      } else if (value is bool) {
+        await prefs.setBool(entry.key, value);
+      } else {
+        throw BackupRestoreException(
+          'preference ${entry.key} has an unsupported type',
+        );
+      }
+    }
+  }
+
+  Future<void> _installStagedBackup(
+    _StagedBackup staged,
+    File liveFile,
+    Directory imagesDirectory,
+  ) async {
+    if (!await liveFile.exists()) {
+      throw const BackupRestoreException(
+        'the current live database is missing',
+      );
+    }
+
+    final rollbackDatabase = File('${staged.directory.path}/previous.db');
+    final rollbackImages = Directory(
+      '${staged.directory.path}/previous_images',
+    );
+    final oldPreferences = staged.replacesPreferences
+        ? await _capturePreferences()
+        : null;
+    final hadImages = await imagesDirectory.exists();
+    var databaseMoved = false;
+    var imagesMoved = false;
+    var replacementDatabaseInstalled = false;
+    var replacementImagesInstalled = false;
+    var preferencesChanged = false;
+    var replacementOpened = false;
+
+    await _liveDb.close();
+    try {
+      await _deleteSqliteSidecars(liveFile);
+      await liveFile.rename(rollbackDatabase.path);
+      databaseMoved = true;
+
+      if (staged.replacesImages && hadImages) {
+        await imagesDirectory.rename(rollbackImages.path);
+        imagesMoved = true;
+      }
+
+      await staged.database.rename(liveFile.path);
+      replacementDatabaseInstalled = true;
+
+      if (staged.replacesImages) {
+        await staged.images!.rename(imagesDirectory.path);
+        replacementImagesInstalled = true;
+      }
+
+      if (staged.replacesPreferences) {
+        preferencesChanged = true;
+        await _replacePreferences(staged.preferences!);
+      }
+
+      _liveDb = LiveDatabase(connection: NativeDatabase(liveFile));
+      replacementOpened = true;
+      await _liveDb.customSelect('SELECT 1').getSingle();
+      await _ensureSystemQuickAddFood();
+    } catch (error) {
+      if (replacementOpened) {
+        await _liveDb.close();
+      }
+      if (replacementDatabaseInstalled && await liveFile.exists()) {
+        await liveFile.delete();
+      }
+      await _deleteSqliteSidecars(liveFile);
+      if (databaseMoved && await rollbackDatabase.exists()) {
+        await rollbackDatabase.rename(liveFile.path);
+      }
+
+      if (replacementImagesInstalled && await imagesDirectory.exists()) {
+        await imagesDirectory.delete(recursive: true);
+      }
+      if (imagesMoved && await rollbackImages.exists()) {
+        await rollbackImages.rename(imagesDirectory.path);
+      }
+      if (preferencesChanged && oldPreferences != null) {
+        await _replacePreferences(oldPreferences);
+      }
+
+      _liveDb = LiveDatabase(connection: NativeDatabase(liveFile));
+      await _liveDb.customSelect('SELECT 1').getSingle();
+      throw BackupRestoreException(
+        'the restore could not be applied; the original data was put back',
+        error,
+      );
+    }
+  }
+
+  Future<void> _deleteSqliteSidecars(File database) async {
+    for (final suffix in const ['-wal', '-shm', '-journal']) {
+      final sidecar = File('${database.path}$suffix');
+      if (await sidecar.exists()) await sidecar.delete();
+    }
   }
 
   model.Weight _mapWeightData(dynamic weightData) {

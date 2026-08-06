@@ -51,6 +51,7 @@ nav:
   - Concepts:
     - Core Concepts: concepts.md
   - Maintainer:
+    - Data Integrity and Release Smoke Test: data-integrity.md
     - Android Release Signing: android-release-signing.md
     - Forgejo Android Releases: forgejo-android-release.md
   - About: about.md

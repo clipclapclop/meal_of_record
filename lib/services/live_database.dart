@@ -23,10 +23,17 @@ part 'live_database.g.dart';
   ],
 )
 class LiveDatabase extends _$LiveDatabase {
+  static const int currentSchemaVersion = 14;
+
+  // v13 is the oldest schema shipped in a tagged production release. Earlier
+  // development schemas were never released and don't have a safe, complete
+  // migration path.
+  static const int minimumSupportedSchemaVersion = 13;
+
   LiveDatabase({required QueryExecutor connection}) : super(connection);
 
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => currentSchemaVersion;
 
   @override
   MigrationStrategy get migration {
@@ -128,7 +135,6 @@ class LiveDatabase extends _$LiveDatabase {
         if (from < 14) {
           await m.addColumn(recipes, recipes.link);
         }
-
       },
       beforeOpen: (details) async {
         if (details.wasCreated) {

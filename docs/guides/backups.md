@@ -37,14 +37,16 @@ Go to **Settings → Data Management → Export**. This generates a backup file 
 
 Go to **Settings → Data Management → Import** and select a previously exported backup file.
 
-!!! warning "Import replaces everything"
-    Importing a backup is a destructive action — it completely replaces your current data with the contents of the backup file. Always make a fresh export before importing, just in case.
+Before replacing anything, Meal of Record stages the backup, checks its format and database integrity, verifies that its schema is supported, and checks its relationships. Interrupted, malformed, incomplete, or incompatible backups are rejected without changing your current data.
+
+!!! warning "Import replaces portable app data"
+    A successful import replaces the live database, app-owned images, goals, target history, and other portable preferences with the backup contents. Device-specific backup destinations, schedules, and NAS credentials stay on the device. Keeping a fresh export before importing is still recommended.
 
 ---
 
 ## Images
 
-The app automatically manages food and recipe images for you. Images are resized to keep things fast, and orphaned images (no longer linked to any food or recipe) are cleaned up automatically. You don't need to think about this — it just works.
+The app automatically manages food, recipe, and container images for you. Images are resized to keep things fast and are included in zip backups with their database references. You don't need to manage these files separately.
 
 ---
 
