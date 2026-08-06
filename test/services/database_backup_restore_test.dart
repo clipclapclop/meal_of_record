@@ -271,6 +271,15 @@ void main() {
       await _expectSafeFailure(databaseService, incomplete, liveFile);
     });
 
+    test('rejects a zip backup without portable settings', () async {
+      final missingSettings = await _writeArchive(
+        File('${tempDirectory.path}/missing-settings.zip'),
+        <String, List<int>>{'meal_of_record.db': await liveFile.readAsBytes()},
+      );
+
+      await _expectSafeFailure(databaseService, missingSettings, liveFile);
+    });
+
     test('rejects malformed settings before replacing data', () async {
       final malformedSettings = await _writeArchive(
         File('${tempDirectory.path}/malformed-settings.zip'),

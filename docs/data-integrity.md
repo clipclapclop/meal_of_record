@@ -36,7 +36,7 @@ Coverage is maintained as follows:
 
 Schemas v1–v12 were development-only snapshots, were not present in a tagged production release, and do not have a complete non-destructive migration chain. Restore rejects them before replacing live data. A future schema is also rejected by an older app.
 
-Backup zip format v2 is current. Zips created by the prior unversioned/v1 exporter remain accepted when they contain a supported database. New-format backups require `manifest.json`, `meal_of_record.db`, and `settings.json`.
+Backup zip format v2 is current. Zips created by the prior unversioned/v1 exporter remain accepted when they contain a supported database and `settings.json`. New-format backups additionally require `manifest.json`; a zip missing any portable settings is rejected instead of mixing data from two devices.
 
 ## Required regression updates
 

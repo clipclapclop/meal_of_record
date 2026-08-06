@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:archive/archive.dart';
@@ -282,15 +283,14 @@ class DatabaseService {
     File backupFile,
     Directory stageDirectory,
   ) async {
-    final List<int> bytes;
+    final Uint8List bytes;
     final Archive archive;
     try {
       if (await backupFile.length() > _maxExpandedBackupBytes) {
         throw const BackupRestoreException('the archive is too large');
       }
       bytes = await backupFile.readAsBytes();
-      // Entry data stays compressed until after the declared expanded sizes
-      // have passed the bounds below.
+      _preflightZipArchive(bytes);
       archive = ZipDecoder().decodeBytes(bytes);
     } catch (error) {
       if (error is BackupRestoreException) rethrow;
@@ -354,7 +354,7 @@ class DatabaseService {
         'the archive is incomplete: meal_of_record.db is missing',
       );
     }
-    if (manifest != null && filesByName['settings.json'] == null) {
+    if (filesByName['settings.json'] == null) {
       throw const BackupRestoreException(
         'the archive is incomplete: settings.json is missing',
       );
@@ -416,6 +416,137 @@ class DatabaseService {
       replacesImages: true,
       replacesPreferences: settingsEntry != null,
     );
+  }
+
+  void _preflightZipArchive(Uint8List bytes) {
+    const endOfCentralDirectorySignature = 0x06054b50;
+    const centralDirectoryEntrySignature = 0x02014b50;
+    const minimumEndRecordLength = 22;
+    const maximumCommentLength = 0xffff;
+
+    if (bytes.length < minimumEndRecordLength) {
+      throw const BackupRestoreException('the zip archive is incomplete');
+    }
+
+    final data = ByteData.sublistView(bytes);
+    final earliestEndOffset =
+        bytes.length - minimumEndRecordLength - maximumCommentLength;
+    final minimumOffset = earliestEndOffset < 0 ? 0 : earliestEndOffset;
+    int? endOffset;
+    for (
+      var offset = bytes.length - minimumEndRecordLength;
+      offset >= minimumOffset;
+      offset--
+    ) {
+      if (data.getUint32(offset, Endian.little) !=
+          endOfCentralDirectorySignature) {
+        continue;
+      }
+      final commentLength = data.getUint16(offset + 20, Endian.little);
+      if (offset + minimumEndRecordLength + commentLength == bytes.length) {
+        endOffset = offset;
+        break;
+      }
+    }
+    if (endOffset == null) {
+      throw const BackupRestoreException(
+        'the zip archive is malformed or interrupted',
+      );
+    }
+
+    final diskNumber = data.getUint16(endOffset + 4, Endian.little);
+    final directoryDisk = data.getUint16(endOffset + 6, Endian.little);
+    final entriesOnDisk = data.getUint16(endOffset + 8, Endian.little);
+    final entryCount = data.getUint16(endOffset + 10, Endian.little);
+    final directorySize = data.getUint32(endOffset + 12, Endian.little);
+    final directoryOffset = data.getUint32(endOffset + 16, Endian.little);
+    if (diskNumber != 0 ||
+        directoryDisk != 0 ||
+        entriesOnDisk != entryCount ||
+        entryCount == 0xffff ||
+        directorySize == 0xffffffff ||
+        directoryOffset == 0xffffffff) {
+      throw const BackupRestoreException(
+        'multi-disk and ZIP64 backups are not supported',
+      );
+    }
+    if (entryCount > _maxBackupFiles) {
+      throw const BackupRestoreException('the archive contains too many files');
+    }
+
+    final directoryEnd = directoryOffset + directorySize;
+    if (directoryOffset > endOffset || directoryEnd != endOffset) {
+      throw const BackupRestoreException('the zip directory is malformed');
+    }
+
+    final names = <String>{};
+    var expandedBytes = 0;
+    var cursor = directoryOffset;
+    for (var index = 0; index < entryCount; index++) {
+      if (cursor + 46 > directoryEnd ||
+          data.getUint32(cursor, Endian.little) !=
+              centralDirectoryEntrySignature) {
+        throw const BackupRestoreException('the zip directory is malformed');
+      }
+
+      final versionMadeBy = data.getUint16(cursor + 4, Endian.little);
+      final flags = data.getUint16(cursor + 8, Endian.little);
+      final uncompressedSize = data.getUint32(cursor + 24, Endian.little);
+      final nameLength = data.getUint16(cursor + 28, Endian.little);
+      final extraLength = data.getUint16(cursor + 30, Endian.little);
+      final commentLength = data.getUint16(cursor + 32, Endian.little);
+      final entryDisk = data.getUint16(cursor + 34, Endian.little);
+      final externalAttributes = data.getUint32(cursor + 38, Endian.little);
+      final localHeaderOffset = data.getUint32(cursor + 42, Endian.little);
+      final nextCursor = cursor + 46 + nameLength + extraLength + commentLength;
+      if (nextCursor > directoryEnd ||
+          entryDisk != 0 ||
+          localHeaderOffset >= directoryOffset ||
+          uncompressedSize == 0xffffffff) {
+        throw const BackupRestoreException('the zip directory is malformed');
+      }
+      if ((flags & 0x1) != 0) {
+        throw const BackupRestoreException(
+          'encrypted backups are not supported',
+        );
+      }
+
+      final nameBytes = bytes.sublist(cursor + 46, cursor + 46 + nameLength);
+      final String name;
+      try {
+        name = (flags & 0x800) != 0
+            ? utf8.decode(nameBytes)
+            : latin1.decode(nameBytes);
+      } catch (error) {
+        throw BackupRestoreException(
+          'the zip contains an invalid file name',
+          error,
+        );
+      }
+      _validateArchivePath(name);
+      if (!names.add(name)) {
+        throw BackupRestoreException(
+          'the archive contains duplicate $name entries',
+        );
+      }
+
+      final creatorSystem = versionMadeBy >> 8;
+      final unixFileType = (externalAttributes >> 16) & 0xf000;
+      if (creatorSystem == 3 && unixFileType == 0xa000) {
+        throw const BackupRestoreException(
+          'the archive contains a symbolic link',
+        );
+      }
+
+      expandedBytes += uncompressedSize;
+      if (expandedBytes > _maxExpandedBackupBytes) {
+        throw const BackupRestoreException('the expanded archive is too large');
+      }
+      cursor = nextCursor;
+    }
+    if (cursor != directoryEnd) {
+      throw const BackupRestoreException('the zip directory is malformed');
+    }
   }
 
   void _validateArchivePath(String name) {
