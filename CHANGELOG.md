@@ -4,9 +4,15 @@ Release notes for Meal of Record are maintained in this file. A release pull req
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-08-07
+
 ### Added
 
 - A manually authorized local Forgejo release process for signed arm64 Android APKs.
+
+### Changed
+
+- Strengthened database migration and backup/restore validation to preserve historical logs, relationships, goals, preferences, and app-owned images, with safe rejection of invalid backups.
 
 ## [1.0.0] - 2026-02-22
 
