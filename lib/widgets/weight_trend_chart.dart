@@ -402,7 +402,7 @@ class _WeightLinePainter extends CustomPainter {
     );
 
     final gridPaint = Paint()
-      ..color = Colors.white.withOpacity(0.05)
+      ..color = Colors.white.withValues(alpha: 0.05)
       ..strokeWidth = 1.0;
 
     void drawYLabelRight(double weight) {
@@ -450,7 +450,7 @@ class _WeightLinePainter extends CustomPainter {
 
     // 2. Paint trend line (EMA)
     final trendPaint = Paint()
-      ..color = Colors.blue.withOpacity(0.3)
+      ..color = Colors.blue.withValues(alpha: 0.3)
       ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke;
 
@@ -465,7 +465,7 @@ class _WeightLinePainter extends CustomPainter {
     // 2.5 Paint Maintenance Calories (Kalman)
     if (maintenanceHistory.isNotEmpty) {
       final mainPaint = Paint()
-        ..color = Colors.orangeAccent.withOpacity(0.6)
+        ..color = Colors.orangeAccent.withValues(alpha: 0.6)
         ..strokeWidth = 1.5
         ..style = PaintingStyle.stroke;
 
@@ -520,8 +520,8 @@ class _WeightLinePainter extends CustomPainter {
       if (point.isPlaceholder) {
         // Muted color for old placeholders, red for today
         dotPaint.color = point.isToday
-            ? Colors.red.withOpacity(0.8)
-            : Colors.white.withOpacity(0.2);
+            ? Colors.red.withValues(alpha: 0.8)
+            : Colors.white.withValues(alpha: 0.2);
         canvas.drawCircle(
           Offset(getX(point.date), getYWeight(point.weight)),
           point.isToday ? 4 : 2,

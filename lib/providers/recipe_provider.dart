@@ -117,10 +117,8 @@ class RecipeProvider extends ChangeNotifier {
     }
   }
 
+  /// Reorders an ingredient using post-removal indices from `onReorderItem`.
   void reorderItem(int oldIndex, int newIndex) {
-    if (oldIndex < newIndex) {
-      newIndex -= 1;
-    }
     final item = _items.removeAt(oldIndex);
     _items.insert(newIndex, item);
     _ingredientsChanged = true;

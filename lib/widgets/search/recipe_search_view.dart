@@ -74,7 +74,7 @@ class _RecipeSearchViewState extends State<RecipeSearchView> {
               Expanded(
                 flex: 3,
                 child: DropdownButtonFormField<int?>(
-                  value: searchProvider.selectedCategoryId,
+                  initialValue: searchProvider.selectedCategoryId,
                   decoration: const InputDecoration(
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 12,

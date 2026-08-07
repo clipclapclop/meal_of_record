@@ -125,7 +125,7 @@ class _ContainerSettingsScreenState extends State<ContainerSettingsScreen> {
                 itemBuilder: (context, index) {
                   final container = _containers[index];
                   return Card(
-                    color: Colors.white.withOpacity(0.05),
+                    color: Colors.white.withValues(alpha: 0.05),
                     margin: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 4,

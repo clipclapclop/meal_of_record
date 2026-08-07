@@ -50,6 +50,18 @@ void main() {
       expect(find.text('Configure NAS'), findsOneWidget);
     });
 
+    testWidgets('uses the configured active switch thumb colors', (
+      tester,
+    ) async {
+      await tester.pumpWidget(createSubject());
+      await tester.pumpAndSettle();
+
+      final activeThumbColors = tester
+          .widgetList<Switch>(find.byType(Switch))
+          .map((widget) => widget.activeThumbColor);
+      expect(activeThumbColors, containsAll([Colors.teal, Colors.orange]));
+    });
+
     testWidgets('shows NAS address when configured', (tester) async {
       when(mockConfigService.isNasConfigured()).thenAnswer((_) async => true);
       when(mockConfigService.getNasHost())

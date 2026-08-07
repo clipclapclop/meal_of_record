@@ -137,6 +137,35 @@ void main() {
       expect(provider.ingredientsChanged, isTrue);
     });
 
+    test('reorderItem uses onReorderItem post-removal indices', () async {
+      final first = await createTestFood(name: 'First');
+      final second = await createTestFood(name: 'Second');
+      final third = await createTestFood(name: 'Third');
+      final recipe = await createTestRecipe(
+        items: [
+          model.RecipeItem(id: 1, food: first, grams: 10, unit: 'g'),
+          model.RecipeItem(id: 2, food: second, grams: 20, unit: 'g'),
+          model.RecipeItem(id: 3, food: third, grams: 30, unit: 'g'),
+        ],
+      );
+      provider.loadFromRecipe(recipe);
+
+      provider.reorderItem(0, 2);
+      expect(provider.items.map((item) => item.food!.name), [
+        'Second',
+        'Third',
+        'First',
+      ]);
+
+      provider.reorderItem(2, 0);
+      expect(provider.items.map((item) => item.food!.name), [
+        'First',
+        'Second',
+        'Third',
+      ]);
+      expect(provider.ingredientsChanged, isTrue);
+    });
+
     test('metadata changes should not set ingredientsChanged', () async {
       final recipe = await createTestRecipe();
       provider.loadFromRecipe(recipe);

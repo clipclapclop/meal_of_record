@@ -819,7 +819,7 @@ class _DataManagementScreenState extends State<DataManagementScreen> {
                 Switch(
                   value: _isLocalBackupEnabled,
                   onChanged: _toggleLocalBackup,
-                  activeColor: Colors.teal,
+                  activeThumbColor: Colors.teal,
                 ),
               ],
             ),
@@ -951,7 +951,7 @@ class _DataManagementScreenState extends State<DataManagementScreen> {
                 Switch(
                   value: _isAutoBackupEnabled,
                   onChanged: _toggleAutoBackup,
-                  activeColor: Colors.orange,
+                  activeThumbColor: Colors.orange,
                 ),
               ],
             ),

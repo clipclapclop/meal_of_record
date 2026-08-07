@@ -945,7 +945,8 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
       physics: const NeverScrollableScrollPhysics(),
       buildDefaultDragHandles: false,
       itemCount: provider.items.length,
-      onReorder: (oldIndex, newIndex) => provider.reorderItem(oldIndex, newIndex),
+      onReorderItem: (oldIndex, newIndex) =>
+          provider.reorderItem(oldIndex, newIndex),
       itemBuilder: (context, index) {
         final item = provider.items[index];
         return SlidableRecipeItemWidget(
