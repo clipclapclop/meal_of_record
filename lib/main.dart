@@ -128,7 +128,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       await Future.delayed(const Duration(seconds: 2));
 
       final ctx = navigatorKey.currentContext;
-      if (ctx == null) return;
+      if (ctx == null || !ctx.mounted) return;
 
       showDialog(
         context: ctx,

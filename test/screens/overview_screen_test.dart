@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:meal_of_record/providers/log_provider.dart';
@@ -154,6 +156,25 @@ void main() {
         ),
         findsNothing,
       );
+    });
+
+    testWidgets('does not reload after disposal during data loading', (
+      tester,
+    ) async {
+      final statsCompleter = Completer<List<DailyMacroStats>>();
+      when(
+        mockLogProvider.getDailyMacroStats(any, any),
+      ).thenAnswer((_) => statsCompleter.future);
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pump();
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      statsCompleter.complete([]);
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+      verify(mockLogProvider.getDailyMacroStats(any, any)).called(1);
     });
   });
 }

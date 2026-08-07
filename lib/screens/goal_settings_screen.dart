@@ -142,10 +142,8 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
       return;
     }
 
-    // For maintain mode, validate target weight
-    // For maintain mode, validate target weight
-    double? targetWeight;
-    targetWeight = double.tryParse(_anchorWeightController.text);
+    // Validate target weight
+    final targetWeight = double.tryParse(_anchorWeightController.text);
     if (targetWeight == null || targetWeight <= 0) {
       UiUtils.showAutoDismissDialog(
         context,
@@ -170,8 +168,7 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
     final isInitialSetup = !goalsProvider.isGoalsSet;
 
     final newSettings = GoalSettings(
-      anchorWeight:
-          targetWeight ?? double.tryParse(_anchorWeightController.text) ?? 0.0,
+      anchorWeight: targetWeight,
       maintenanceCaloriesStart: maintenanceCal,
       proteinTarget: protein ?? 0.0, // May be recalculated if multiplier
       fatTarget: fat ?? 0.0,
@@ -194,6 +191,8 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
       newSettings,
       isInitialSetup: isInitialSetup,
     );
+
+    if (!mounted) return;
 
     // Switch to Overview tab
     final navProvider = Provider.of<NavigationProvider>(context, listen: false);

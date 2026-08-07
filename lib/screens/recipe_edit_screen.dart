@@ -244,9 +244,10 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
                   // Check if this edit would trigger versioning
                   final wouldVersion =
                       await provider.wouldTriggerVersioning();
+                  if (!context.mounted) return;
 
                   bool forceUpdateInPlace = false;
-                  if (wouldVersion && mounted) {
+                  if (wouldVersion) {
                     final choice = await showDialog<String>(
                       context: context,
                       builder: (ctx) => AlertDialog(
@@ -288,7 +289,7 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
                       ),
                     );
 
-                    if (choice == null) return; // dismissed
+                    if (!context.mounted || choice == null) return;
                     forceUpdateInPlace = choice == 'fix';
                   }
 
@@ -296,7 +297,7 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
                     forceUpdateInPlace: forceUpdateInPlace,
                   );
 
-                  if (!mounted) return;
+                  if (!context.mounted) return;
 
                   if (success) {
                     navigator.pop(true);
@@ -975,7 +976,7 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
               return;
             }
 
-            if (!mounted) return;
+            if (!context.mounted) return;
 
             // Navigate to QuantityEditScreen
             final updatedPortion = await Navigator.push<FoodPortion>(

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
@@ -127,13 +129,87 @@ void main() {
     await tester.tap(saveButton);
     await tester.pumpAndSettle();
 
+    final savedSettings = verify(
+      mockGoalsProvider.saveSettings(
+        captureAny,
+        isInitialSetup: anyNamed('isInitialSetup'),
+      ),
+    ).captured.single as GoalSettings;
+    expect(savedSettings.anchorWeight, 155.5);
+    verify(mockNavigationProvider.changeTab(0)).called(1);
+  });
+
+  testWidgets('Saving does not navigate after the screen is disposed', (
+    tester,
+  ) async {
+    final saveCompleter = Completer<void>();
+    when(
+      mockGoalsProvider.saveSettings(
+        any,
+        isInitialSetup: anyNamed('isInitialSetup'),
+      ),
+    ).thenAnswer((_) => saveCompleter.future);
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<GoalsProvider>.value(value: mockGoalsProvider),
+          ChangeNotifierProvider<NavigationProvider>.value(
+            value: mockNavigationProvider,
+          ),
+          ChangeNotifierProvider<WeightProvider>.value(
+            value: mockWeightProvider,
+          ),
+        ],
+        child: const MaterialApp(home: GoalSettingsScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    Future<void> fillField(String label, String value) async {
+      final finder = find.widgetWithText(TextField, label);
+      await tester.scrollUntilVisible(
+        finder,
+        500.0,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.enterText(finder, value);
+      await tester.pump();
+    }
+
+    await fillField('Target Weight (lb)', '155.5');
+    await fillField('Initial TDEE', '2340');
+    await fillField('Protein Target (g)', '150');
+    await fillField('Carbs (g)', '200');
+    await fillField('Fiber (g)', '38');
+
+    final saveButton = find.text('Save Settings');
+    await tester.scrollUntilVisible(
+      saveButton,
+      500.0,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.drag(
+      find.byType(Scrollable).first,
+      const Offset(0, -100),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(saveButton);
+    await tester.pump();
+
     verify(
       mockGoalsProvider.saveSettings(
         any,
         isInitialSetup: anyNamed('isInitialSetup'),
       ),
     ).called(1);
-    verify(mockNavigationProvider.changeTab(0)).called(1);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    saveCompleter.complete();
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    verifyNever(mockNavigationProvider.changeTab(any));
   });
 
   testWidgets(

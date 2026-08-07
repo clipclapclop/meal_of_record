@@ -92,6 +92,8 @@ class FoodSearchView extends StatelessWidget {
               result.foodId,
               'live',
             );
+            if (!context.mounted) return;
+
             if (food != null) {
               // Open quantity edit screen
               final result = await Navigator.push<model_portion.FoodPortion>(

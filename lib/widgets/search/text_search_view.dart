@@ -219,6 +219,7 @@ class _TextSearchViewState extends State<TextSearchView> {
                     await searchProvider.textSearch(
                       searchProvider.currentQuery,
                     );
+                    if (!context.mounted) return;
 
                     if (result.useImmediately) {
                       final newFood = await DatabaseService.instance
@@ -264,6 +265,7 @@ class _TextSearchViewState extends State<TextSearchView> {
                     await searchProvider.textSearch(
                       searchProvider.currentQuery,
                     );
+                    if (!context.mounted) return;
 
                     if (result.useImmediately) {
                       final newFood = await DatabaseService.instance
@@ -299,11 +301,14 @@ class _TextSearchViewState extends State<TextSearchView> {
 
                   // Refresh search results
                   await searchProvider.textSearch(searchProvider.currentQuery);
+                  if (!context.mounted) return;
 
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Food deleted successfully')),
                   );
                 } catch (e) {
+                  if (!context.mounted) return;
+
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Failed to delete food: $e')),
                   );
@@ -457,7 +462,7 @@ class _TextSearchViewState extends State<TextSearchView> {
       ),
     );
 
-    if (!mounted) return;
+    if (!mounted || !context.mounted) return;
 
     // Clear barcode search state first to avoid re-triggering the dialog
     searchProvider.clearBarcodeSearchState();
@@ -465,7 +470,7 @@ class _TextSearchViewState extends State<TextSearchView> {
     switch (result) {
       case 'scan_again':
         // Re-launch scanner
-        if (!mounted) return;
+        if (!context.mounted) return;
         await SearchModeTabs.handleScanTap(context);
         break;
       case 'off_search':
@@ -474,7 +479,7 @@ class _TextSearchViewState extends State<TextSearchView> {
         break;
       case 'create':
         // Navigate to food edit screen with barcode pre-populated
-        if (!mounted) return;
+        if (!context.mounted) return;
         final editResult = await Navigator.push<FoodEditResult>(
           context,
           MaterialPageRoute(
@@ -487,14 +492,14 @@ class _TextSearchViewState extends State<TextSearchView> {
           ),
         );
 
-        if (editResult != null && mounted) {
+        if (editResult != null && context.mounted) {
           // If food was created and user wants to use it immediately
           if (editResult.useImmediately) {
             final newFood = await DatabaseService.instance.getFoodById(
               editResult.foodId,
               'live',
             );
-            if (mounted && newFood != null) {
+            if (context.mounted && newFood != null) {
               _openQuantityEdit(context, newFood, config);
             }
           }

@@ -71,8 +71,9 @@ class _OverviewScreenState extends State<OverviewScreen> {
       );
 
       final stats = await logProvider.getDailyMacroStats(start, today);
-      final goals = goalsProvider.currentGoals;
+      if (!mounted) return;
 
+      final goals = goalsProvider.currentGoals;
       final navProvider = Provider.of<NavigationProvider>(
         context,
         listen: false,
@@ -135,7 +136,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
       debugPrint('Error loading overview data: $e');
     } finally {
       _isDataLoading = false;
-      if (_needsReload) {
+      if (_needsReload && mounted) {
         _loadData();
       }
     }

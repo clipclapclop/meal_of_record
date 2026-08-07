@@ -527,6 +527,8 @@ class _DataManagementScreenState extends State<DataManagementScreen> {
   Future<void> _importBackup() async {
     final result = await FilePicker.platform.pickFiles(type: FileType.any);
 
+    if (!mounted) return;
+
     if (result != null && result.files.single.path != null) {
       final confirmed = await showDialog<bool>(
         context: context,
@@ -548,9 +550,10 @@ class _DataManagementScreenState extends State<DataManagementScreen> {
         ),
       );
 
+      if (!mounted) return;
+
       if (confirmed == true) {
         setState(() => _isRestoring = true);
-        // Capture provider before async gap
         final goalsProvider = context.read<GoalsProvider>();
         try {
           final backupFile = File(result.files.single.path!);
@@ -627,6 +630,8 @@ class _DataManagementScreenState extends State<DataManagementScreen> {
         ),
       );
 
+      if (!mounted) return;
+
       if (selectedBackup != null) {
         final confirmed = await showDialog<bool>(
           context: context,
@@ -651,8 +656,9 @@ class _DataManagementScreenState extends State<DataManagementScreen> {
           ),
         );
 
+        if (!mounted) return;
+
         if (confirmed == true) {
-          // Capture provider before async gap
           final goalsProvider = context.read<GoalsProvider>();
           final tempFile = await _nasService.downloadBackup(
             selectedBackup.href,
