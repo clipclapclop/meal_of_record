@@ -197,7 +197,11 @@ class _WeightTrendChartState extends State<WeightTrendChart> {
       // kalmanWeightHistory maps 1:1 to daily points between startDate and endDate.
       // Build a date->weight map, then look up each real data point's date.
       final kalmanByDate = <DateTime, double>{};
-      var kDate = DateTime(widget.startDate.year, widget.startDate.month, widget.startDate.day);
+      var kDate = DateTime(
+        widget.startDate.year,
+        widget.startDate.month,
+        widget.startDate.day,
+      );
       for (var i = 0; i < widget.kalmanWeightHistory.length; i++) {
         if (widget.kalmanWeightHistory[i] != 0.0) {
           kalmanByDate[kDate] = widget.kalmanWeightHistory[i];
@@ -249,7 +253,8 @@ class _WeightTrendChartState extends State<WeightTrendChart> {
                   behavior: HitTestBehavior.opaque,
                   onTapUp: (details) {
                     // Check if tap is on today's placeholder red dot
-                    if (todayPlaceholder != null && widget.onTodayPlaceholderTapped != null) {
+                    if (todayPlaceholder != null &&
+                        widget.onTodayPlaceholderTapped != null) {
                       final tapPos = details.localPosition;
                       final placeholderPos = _getPointPosition(
                         date: todayPlaceholder.date,
@@ -277,8 +282,9 @@ class _WeightTrendChartState extends State<WeightTrendChart> {
                       endDate: widget.endDate,
                     );
                     setState(() {
-                      _selectedRealIndex =
-                          (tapped == _selectedRealIndex) ? null : tapped;
+                      _selectedRealIndex = (tapped == _selectedRealIndex)
+                          ? null
+                          : tapped;
                     });
                   },
                   child: CustomPaint(

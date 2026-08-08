@@ -72,23 +72,21 @@ class ServingInfoSheet extends StatelessWidget {
                   padding: const EdgeInsets.all(12),
                   children: [
                     // Always show per 100g first
-                    _buildServingCard(
-                      context,
-                      label: '100g',
-                      grams: 100,
-                    ),
+                    _buildServingCard(context, label: '100g', grams: 100),
                     const SizedBox(height: 8),
                     // Then show all other servings
                     ...food.servings
                         .where((s) => s.unit != 'g')
-                        .map((serving) => Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: _buildServingCard(
-                                context,
-                                label: _formatServingLabel(serving),
-                                grams: serving.grams,
-                              ),
-                            )),
+                        .map(
+                          (serving) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: _buildServingCard(
+                              context,
+                              label: _formatServingLabel(serving),
+                              grams: serving.grams,
+                            ),
+                          ),
+                        ),
                   ],
                 ),
               ),
@@ -113,7 +111,10 @@ class ServingInfoSheet extends StatelessWidget {
     required double grams,
   }) {
     // Calculate macros for this serving size
-    final useNetCarbs = Provider.of<GoalsProvider>(context, listen: false).useNetCarbs;
+    final useNetCarbs = Provider.of<GoalsProvider>(
+      context,
+      listen: false,
+    ).useNetCarbs;
     final calories = food.calories * grams;
     final protein = food.protein * grams;
     final fat = food.fat * grams;
@@ -132,15 +133,19 @@ class ServingInfoSheet extends StatelessWidget {
         children: [
           Text(
             label,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           _buildMacroRow('Calories', _formatMacro(calories), 'cal'),
           _buildMacroRow('Protein', _formatMacro(protein), 'g'),
           _buildMacroRow('Fat', _formatMacro(fat), 'g'),
-          _buildMacroRow(useNetCarbs ? 'Net Carbs' : 'Carbs', _formatMacro(carbs), 'g'),
+          _buildMacroRow(
+            useNetCarbs ? 'Net Carbs' : 'Carbs',
+            _formatMacro(carbs),
+            'g',
+          ),
           _buildMacroRow('Fiber', _formatMacro(fiber), 'g'),
         ],
       ),

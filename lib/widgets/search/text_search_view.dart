@@ -80,7 +80,9 @@ class _TextSearchViewState extends State<TextSearchView> {
 
             return SlidableSearchResult(
               // OFF results all share id 0/source 'off'; barcode keeps keys unique
-              key: ValueKey('${food.id}_${food.source}_${food.sourceBarcode ?? ''}'),
+              key: ValueKey(
+                '${food.id}_${food.source}_${food.sourceBarcode ?? ''}',
+              ),
               food: food,
               isUpdate: isUpdate,
               note: searchProvider.displayNotes[food.id],
@@ -103,23 +105,24 @@ class _TextSearchViewState extends State<TextSearchView> {
                     (s) => s.unit == existingPortion.unit,
                     orElse: () => reloadedFood.servings.first,
                   );
-                  final result = await Navigator.push<model_portion.FoodPortion>(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => QuantityEditScreen(
-                        config: QuantityEditConfig(
-                          context: config.context,
-                          food: reloadedFood,
-                          isUpdate: true,
-                          initialUnit: existingPortion.unit,
-                          initialQuantity: unitServing.quantityFromGrams(
-                            existingPortion.grams,
+                  final result =
+                      await Navigator.push<model_portion.FoodPortion>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => QuantityEditScreen(
+                            config: QuantityEditConfig(
+                              context: config.context,
+                              food: reloadedFood,
+                              isUpdate: true,
+                              initialUnit: existingPortion.unit,
+                              initialQuantity: unitServing.quantityFromGrams(
+                                existingPortion.grams,
+                              ),
+                              originalGrams: existingPortion.grams,
+                            ),
                           ),
-                          originalGrams: existingPortion.grams,
                         ),
-                      ),
-                    ),
-                  );
+                      );
                   if (result != null && context.mounted) {
                     Provider.of<LogProvider>(
                       context,
@@ -225,11 +228,7 @@ class _TextSearchViewState extends State<TextSearchView> {
                       final newFood = await DatabaseService.instance
                           .getFoodById(result.foodId, 'live');
                       if (context.mounted && newFood != null) {
-                        _openQuantityEdit(
-                          context,
-                          newFood,
-                          config,
-                        );
+                        _openQuantityEdit(context, newFood, config);
                       }
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -271,11 +270,7 @@ class _TextSearchViewState extends State<TextSearchView> {
                       final newFood = await DatabaseService.instance
                           .getFoodById(result.foodId, 'live');
                       if (context.mounted && newFood != null) {
-                        _openQuantityEdit(
-                          context,
-                          newFood,
-                          config,
-                        );
+                        _openQuantityEdit(context, newFood, config);
                       }
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -295,9 +290,7 @@ class _TextSearchViewState extends State<TextSearchView> {
               },
               onDelete: () async {
                 try {
-                  await DatabaseService.instance.deleteFood(
-                    food.id,
-                  );
+                  await DatabaseService.instance.deleteFood(food.id);
 
                   // Refresh search results
                   await searchProvider.textSearch(searchProvider.currentQuery);
@@ -330,9 +323,13 @@ class _TextSearchViewState extends State<TextSearchView> {
     var initialQuantity = food.servings.first.quantity;
 
     if (food.id != 0) {
-      final lastInfo = await DatabaseService.instance.getLastLoggedInfo(food.id);
+      final lastInfo = await DatabaseService.instance.getLastLoggedInfo(
+        food.id,
+      );
       if (lastInfo != null) {
-        final serving = food.servings.where((s) => s.unit == lastInfo.unit).firstOrNull;
+        final serving = food.servings
+            .where((s) => s.unit == lastInfo.unit)
+            .firstOrNull;
         if (serving != null) {
           initialUnit = serving.unit;
           initialQuantity = lastInfo.quantity;
@@ -359,14 +356,8 @@ class _TextSearchViewState extends State<TextSearchView> {
       if (config.onSaveOverride != null) {
         config.onSaveOverride!(result);
       } else {
-        Provider.of<LogProvider>(
-          context,
-          listen: false,
-        ).addFoodToQueue(result);
-        Provider.of<SearchProvider>(
-          context,
-          listen: false,
-        ).clearSearch();
+        Provider.of<LogProvider>(context, listen: false).addFoodToQueue(result);
+        Provider.of<SearchProvider>(context, listen: false).clearSearch();
       }
     }
   }
@@ -434,24 +425,24 @@ class _TextSearchViewState extends State<TextSearchView> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context, 'cancel'),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context, 'scan_again'),
-                  child: const Text('Scan Again'),
-                ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, 'cancel'),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, 'scan_again'),
+                child: const Text('Scan Again'),
+              ),
             ],
           ),
           const Divider(),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context, 'off_search'),
-                  child: const Text('Search Open Food Facts'),
-                ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, 'off_search'),
+                child: const Text('Search Open Food Facts'),
+              ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, 'create'),
                 child: const Text('Create Food'),

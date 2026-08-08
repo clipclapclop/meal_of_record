@@ -59,8 +59,9 @@ class _NutritionTargetsOverviewChartState
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Column(
-                    children:
-                        List.generate(widget.nutritionData.length, (index) {
+                    children: List.generate(widget.nutritionData.length, (
+                      index,
+                    ) {
                       return const Padding(
                         padding: EdgeInsets.symmetric(vertical: 4.0),
                         child: SizedBox(height: 48),
@@ -81,7 +82,9 @@ class _NutritionTargetsOverviewChartState
                               child: Container(
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? const Color(0xFF5C1A1A) // Maroon highlight
+                                      ? const Color(
+                                          0xFF5C1A1A,
+                                        ) // Maroon highlight
                                       : Colors.transparent,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -91,22 +94,23 @@ class _NutritionTargetsOverviewChartState
                                 ),
                                 child: Column(
                                   children: List.generate(
-                                      widget.nutritionData.length,
-                                      (nutrientIndex) {
-                                    final NutritionTarget data =
-                                        widget.nutritionData[nutrientIndex];
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 4.0,
-                                      ),
-                                      child: VerticalMiniBarChart(
-                                        consumed: data.dailyAmounts[dayIndex],
-                                        target: data.dailyTargets[dayIndex],
-                                        color: data.color,
-                                        showConsumed: showConsumed,
-                                      ),
-                                    );
-                                  }),
+                                    widget.nutritionData.length,
+                                    (nutrientIndex) {
+                                      final NutritionTarget data =
+                                          widget.nutritionData[nutrientIndex];
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 4.0,
+                                        ),
+                                        child: VerticalMiniBarChart(
+                                          consumed: data.dailyAmounts[dayIndex],
+                                          target: data.dailyTargets[dayIndex],
+                                          color: data.color,
+                                          showConsumed: showConsumed,
+                                        ),
+                                      );
+                                    },
+                                  ),
                                 ),
                               ),
                             );
@@ -140,7 +144,8 @@ class _NutritionTargetsOverviewChartState
                     children: widget.nutritionData.map((data) {
                       final selectedAmount =
                           data.dailyAmounts[_selectedDayIndex];
-                      final selectedTarget = data.dailyTargets[_selectedDayIndex];
+                      final selectedTarget =
+                          data.dailyTargets[_selectedDayIndex];
                       final displayAmount = showConsumed
                           ? selectedAmount
                           : (selectedTarget - selectedAmount);

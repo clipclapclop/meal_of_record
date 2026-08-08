@@ -57,15 +57,18 @@ class Recipe {
   double get fatPerGram => totalFat / totalGrams;
   double get carbsPerGram => totalCarbs / totalGrams;
   double get fiberPerGram => totalFiber / totalGrams;
-  double get netCarbsPerGram => (carbsPerGram - fiberPerGram).clamp(0.0, double.infinity);
+  double get netCarbsPerGram =>
+      (carbsPerGram - fiberPerGram).clamp(0.0, double.infinity);
 
   double get caloriesPerPortion => totalCalories / servingsCreated;
   double get proteinPerPortion => totalProtein / servingsCreated;
   double get fatPerPortion => totalFat / servingsCreated;
   double get carbsPerPortion => totalCarbs / servingsCreated;
   double get fiberPerPortion => totalFiber / servingsCreated;
-  double get totalNetCarbs => (totalCarbs - totalFiber).clamp(0.0, double.infinity);
-  double get netCarbsPerPortion => (carbsPerPortion - fiberPerPortion).clamp(0.0, double.infinity);
+  double get totalNetCarbs =>
+      (totalCarbs - totalFiber).clamp(0.0, double.infinity);
+  double get netCarbsPerPortion =>
+      (carbsPerPortion - fiberPerPortion).clamp(0.0, double.infinity);
 
   double get gramsPerPortion => totalGrams / servingsCreated;
 

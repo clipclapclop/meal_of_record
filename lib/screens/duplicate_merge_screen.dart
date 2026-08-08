@@ -38,8 +38,7 @@ class _DuplicateMergeScreenState extends State<DuplicateMergeScreen> {
         if (!await sessionsDir.exists()) {
           await sessionsDir.create(recursive: true);
         }
-        final stamp =
-            DateFormat('yyyy-MM-dd_HH-mm-ss').format(DateTime.now());
+        final stamp = DateFormat('yyyy-MM-dd_HH-mm-ss').format(DateTime.now());
         final dest = File('${sessionsDir.path}/merge_session_$stamp.zip');
         await zip.copy(dest.path);
         if (!mounted) return;

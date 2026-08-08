@@ -49,11 +49,7 @@ class DailyMacroStats {
     final endUtc = DateTime.utc(end.year, end.month, end.day);
     final dayCount = endUtc.difference(startUtc).inDays;
     for (int i = 0; i <= dayCount; i++) {
-      final date = DateTime(
-        start.year,
-        start.month,
-        start.day + i,
-      );
+      final date = DateTime(start.year, start.month, start.day + i);
       // Key by start of day milliseconds for easy lookup
       final dateKey = DateTime(
         date.year,

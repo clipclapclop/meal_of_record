@@ -38,15 +38,19 @@ class _DuplicateMergePreviewScreenState
   Future<List<_LoserPreview>> _loadPreviews() async {
     final List<_LoserPreview> out = [];
     for (final loser in widget.losers) {
-      final predicted =
-          await DatabaseService.instance.getMergePredictedCounts(loserId: loser.id);
-      final barcodes =
-          await DatabaseService.instance.getBarcodesByFoodId(loser.id);
-      out.add(_LoserPreview(
-        loser: loser,
-        predicted: predicted,
-        droppedBarcodes: barcodes,
-      ));
+      final predicted = await DatabaseService.instance.getMergePredictedCounts(
+        loserId: loser.id,
+      );
+      final barcodes = await DatabaseService.instance.getBarcodesByFoodId(
+        loser.id,
+      );
+      out.add(
+        _LoserPreview(
+          loser: loser,
+          predicted: predicted,
+          droppedBarcodes: barcodes,
+        ),
+      );
     }
     return out;
   }
@@ -189,12 +193,13 @@ class _DuplicateMergePreviewScreenState
                   Text(
                     widget.keeper.name,
                     style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w600),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   Text(
                     'id ${widget.keeper.id}',
-                    style:
-                        const TextStyle(color: Colors.black54, fontSize: 12),
+                    style: const TextStyle(color: Colors.black54, fontSize: 12),
                   ),
                 ],
               ),
@@ -239,12 +244,16 @@ class _DuplicateMergePreviewScreenState
                       Text(
                         p.loser.name,
                         style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       Text(
                         'id ${p.loser.id}',
                         style: const TextStyle(
-                            color: Colors.black54, fontSize: 12),
+                          color: Colors.black54,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -275,11 +284,15 @@ class _DuplicateMergePreviewScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: p.loser.servings
-                      .map((s) => Text(
-                            '• ${s.unit}: ${s.grams.toStringAsFixed(1)} g',
-                            style: const TextStyle(
-                                fontSize: 12, color: Colors.black54),
-                          ))
+                      .map(
+                        (s) => Text(
+                          '• ${s.unit}: ${s.grams.toStringAsFixed(1)} g',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      )
                       .toList(),
                 ),
               ),
@@ -290,11 +303,15 @@ class _DuplicateMergePreviewScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: p.droppedBarcodes
-                      .map((b) => Text(
-                            '• $b',
-                            style: const TextStyle(
-                                fontSize: 12, color: Colors.black54),
-                          ))
+                      .map(
+                        (b) => Text(
+                          '• $b',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      )
                       .toList(),
                 ),
               ),
@@ -338,14 +355,20 @@ class _DuplicateMergePreviewScreenState
           children: const [
             SizedBox(width: 80),
             Expanded(
-                child: Text('keeper /100g',
-                    textAlign: TextAlign.right,
-                    style: TextStyle(fontSize: 11, color: Colors.black54))),
+              child: Text(
+                'keeper /100g',
+                textAlign: TextAlign.right,
+                style: TextStyle(fontSize: 11, color: Colors.black54),
+              ),
+            ),
             SizedBox(width: 32),
             Expanded(
-                child: Text('loser /100g',
-                    textAlign: TextAlign.right,
-                    style: TextStyle(fontSize: 11, color: Colors.black54))),
+              child: Text(
+                'loser /100g',
+                textAlign: TextAlign.right,
+                style: TextStyle(fontSize: 11, color: Colors.black54),
+              ),
+            ),
           ],
         ),
         row('kcal', keeper.calories, loser.calories),
@@ -363,10 +386,7 @@ class _DuplicateMergePreviewScreenState
       child: Row(
         children: [
           Expanded(child: Text(label)),
-          Text(
-            '$n',
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
+          Text('$n', style: const TextStyle(fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -412,7 +432,9 @@ class _DuplicateMergePreviewScreenState
                         Text(
                           'FAILED: ${o.preview.loser.name} (id ${o.preview.loser.id})',
                           style: const TextStyle(
-                              fontWeight: FontWeight.w600, color: Colors.red),
+                            fontWeight: FontWeight.w600,
+                            color: Colors.red,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text('${o.error}'),
@@ -436,15 +458,30 @@ class _DuplicateMergePreviewScreenState
                       ),
                       const SizedBox(height: 8),
                       _resultRow(
-                          'Logs repointed', p.loggedToRepoint, r.loggedRepointed),
-                      _resultRow('Recipe items repointed', p.recipeToRepoint,
-                          r.recipeRepointed),
-                      _resultRow('Parent chains repointed',
-                          p.parentChainsToRepoint, r.parentChainsRepointed),
+                        'Logs repointed',
+                        p.loggedToRepoint,
+                        r.loggedRepointed,
+                      ),
                       _resultRow(
-                          'Portions dropped', p.portionsToDrop, r.portionsDropped),
+                        'Recipe items repointed',
+                        p.recipeToRepoint,
+                        r.recipeRepointed,
+                      ),
                       _resultRow(
-                          'Barcodes dropped', p.barcodesToDrop, r.barcodesDropped),
+                        'Parent chains repointed',
+                        p.parentChainsToRepoint,
+                        r.parentChainsRepointed,
+                      ),
+                      _resultRow(
+                        'Portions dropped',
+                        p.portionsToDrop,
+                        r.portionsDropped,
+                      ),
+                      _resultRow(
+                        'Barcodes dropped',
+                        p.barcodesToDrop,
+                        r.barcodesDropped,
+                      ),
                       if (r.sampleLoggedTimestamps.isNotEmpty) ...[
                         const Divider(height: 24),
                         const Text(
@@ -456,7 +493,9 @@ class _DuplicateMergePreviewScreenState
                           (ts) => Text(
                             '• ${fmt.format(DateTime.fromMillisecondsSinceEpoch(ts))}',
                             style: const TextStyle(
-                                fontSize: 12, color: Colors.black54),
+                              fontSize: 12,
+                              color: Colors.black54,
+                            ),
                           ),
                         ),
                       ],

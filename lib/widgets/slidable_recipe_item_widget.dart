@@ -58,7 +58,9 @@ class SlidableRecipeItemWidget extends StatelessWidget {
                 child: Icon(Icons.drag_handle, color: Colors.grey),
               ),
             ),
-            Expanded(child: RecipeItemWidget(item: item, onEdit: onEdit)),
+            Expanded(
+              child: RecipeItemWidget(item: item, onEdit: onEdit),
+            ),
           ],
         ),
       ),

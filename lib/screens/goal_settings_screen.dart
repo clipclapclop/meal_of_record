@@ -145,13 +145,9 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
     // Validate target weight
     final targetWeight = double.tryParse(_anchorWeightController.text);
     if (targetWeight == null || targetWeight <= 0) {
-      UiUtils.showAutoDismissDialog(
-        context,
-        'Please enter a valid weight',
-      );
+      UiUtils.showAutoDismissDialog(context, 'Please enter a valid weight');
       return;
     }
-
 
     // For lose/gain modes, validate delta
     double? delta;
@@ -182,7 +178,8 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
       lastTargetUpdate: goalsProvider.settings.lastTargetUpdate,
       isSet: true,
       enableSmartTargets: _enableSmartTargets,
-      correctionWindowDays: int.tryParse(_correctionWindowController.text) ?? 30,
+      correctionWindowDays:
+          int.tryParse(_correctionWindowController.text) ?? 30,
       tdeeWindowDays: _tdeeWindowDays,
       useNetCarbs: _useNetCarbs,
     );
@@ -233,27 +230,26 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
   Future<void> _showDiscardChangesDialog() async {
     final result = await showDialog<String>(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Unsaved Changes'),
-            content: const Text(
-              'You have unsaved changes. Do you want to save them before leaving?',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, 'cancel'),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, 'discard'),
-                child: const Text('Discard'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, 'save'),
-                child: const Text('Save'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: const Text('Unsaved Changes'),
+        content: const Text(
+          'You have unsaved changes. Do you want to save them before leaving?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, 'cancel'),
+            child: const Text('Cancel'),
           ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, 'discard'),
+            child: const Text('Discard'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, 'save'),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
     );
 
     if (result == 'discard') {
@@ -276,113 +272,113 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
         await _showDiscardChangesDialog();
       },
       child: ScreenBackground(
-      appBar: AppBar(
-        title: const Text('Goals & Targets'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        appBar: AppBar(
+          title: const Text('Goals & Targets'),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        ),
+        child: ListView(
+          padding: const EdgeInsets.all(12.0),
+          children: [
+            const Text(
+              'Goal Mode',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            _buildModeSelector(),
+            //const Divider(height: 40),
+            const Divider(height: 20),
+            SwitchListTile(
+              title: const Text('Smart Target Calculations'),
+              subtitle: const Text(
+                'Targets are auto-adjusted based on weight/food trends after the first week.',
+              ),
+              value: _enableSmartTargets,
+              onChanged: (val) => setState(() => _enableSmartTargets = val),
+            ),
+            SwitchListTile(
+              title: const Text('Use Net Carbs'),
+              subtitle: const Text('Display and track carbs minus fiber.'),
+              value: _useNetCarbs,
+              onChanged: (val) => setState(() => _useNetCarbs = val),
+            ),
+            if (_enableSmartTargets) _buildTdeeWindowSelector(),
+            const Divider(height: 20),
+            _buildTextField(
+              controller: _anchorWeightController,
+              label: _mode == GoalMode.maintain
+                  ? 'Target Weight (lb)'
+                  : 'Starting Weight (lb)',
+              hint: 'Your weight',
+            ),
+            _buildTextField(
+              controller: _maintenanceCalController,
+              label: 'Initial TDEE',
+              hint: 'Your estimated TDEE',
+              keyboardType: TextInputType.number,
+            ),
+            if (_mode != GoalMode.maintain)
+              _buildTextField(
+                controller: _fixedDeltaController,
+                label: _mode == GoalMode.gain ? 'Serplus' : 'Deficit',
+                hint: 'e.g. 500',
+                keyboardType: TextInputType.number,
+              ),
+            if (_mode == GoalMode.maintain)
+              _buildTextField(
+                controller: _correctionWindowController,
+                label: 'Correct Weight Drift Back to the Target (days)',
+                hint: 'e.g. 30',
+                keyboardType: TextInputType.number,
+              ),
+            const Divider(height: 24),
+            const Text(
+              'Macro Split Strategy',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            _buildCalcModeSelector(),
+            const SizedBox(height: 10),
+            _buildProteinSection(),
+            const SizedBox(height: 10),
+            if (_calcMode == MacroCalculationMode.proteinFat)
+              _buildTextField(
+                controller: _fatController,
+                label: 'Fat (g)',
+                keyboardType: TextInputType.number,
+              ),
+            if (_calcMode == MacroCalculationMode.proteinCarbs)
+              _buildTextField(
+                controller: _carbController,
+                label: _useNetCarbs ? 'Net Carbs (g)' : 'Carbs (g)',
+                keyboardType: TextInputType.number,
+              ),
+            _buildTextField(
+              controller: _fiberController,
+              label: 'Fiber (g)',
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _save,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.all(12),
+              ),
+              child: const Text('Save Settings'),
+            ),
+          ],
+        ),
       ),
-      child: ListView(
-        padding: const EdgeInsets.all(12.0),
-        children: [
-          const Text(
-            'Goal Mode',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          _buildModeSelector(),
-          //const Divider(height: 40),
-          const Divider(height: 20),
-          SwitchListTile(
-            title: const Text('Smart Target Calculations'),
-            subtitle: const Text(
-              'Targets are auto-adjusted based on weight/food trends after the first week.',
-            ),
-            value: _enableSmartTargets,
-            onChanged: (val) => setState(() => _enableSmartTargets = val),
-          ),
-          SwitchListTile(
-            title: const Text('Use Net Carbs'),
-            subtitle: const Text(
-              'Display and track carbs minus fiber.',
-            ),
-            value: _useNetCarbs,
-            onChanged: (val) => setState(() => _useNetCarbs = val),
-          ),
-          if (_enableSmartTargets) _buildTdeeWindowSelector(),
-          const Divider(height: 20),
-          _buildTextField(
-            controller: _anchorWeightController,
-            label:
-                _mode == GoalMode.maintain
-                    ? 'Target Weight (lb)'
-                    : 'Starting Weight (lb)',
-            hint: 'Your weight',
-          ),
-          _buildTextField(
-            controller: _maintenanceCalController,
-            label: 'Initial TDEE',
-            hint: 'Your estimated TDEE',
-            keyboardType: TextInputType.number,
-          ),
-          if (_mode != GoalMode.maintain)
-            _buildTextField(
-              controller: _fixedDeltaController,
-              label: _mode == GoalMode.gain ? 'Serplus' : 'Deficit',
-              hint: 'e.g. 500',
-              keyboardType: TextInputType.number,
-            ),
-          if (_mode == GoalMode.maintain)
-            _buildTextField(
-              controller: _correctionWindowController,
-              label: 'Correct Weight Drift Back to the Target (days)',
-              hint: 'e.g. 30',
-              keyboardType: TextInputType.number,
-            ),
-          const Divider(height: 24),
-          const Text(
-            'Macro Split Strategy',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          _buildCalcModeSelector(),
-          const SizedBox(height: 10),
-          _buildProteinSection(),
-          const SizedBox(height: 10),
-          if (_calcMode == MacroCalculationMode.proteinFat)
-            _buildTextField(
-              controller: _fatController,
-              label: 'Fat (g)',
-              keyboardType: TextInputType.number,
-            ),
-          if (_calcMode == MacroCalculationMode.proteinCarbs)
-            _buildTextField(
-              controller: _carbController,
-              label: _useNetCarbs ? 'Net Carbs (g)' : 'Carbs (g)',
-              keyboardType: TextInputType.number,
-            ),
-          _buildTextField(
-            controller: _fiberController,
-            label: 'Fiber (g)',
-            keyboardType: TextInputType.number,
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _save,
-            style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(12)),
-            child: const Text('Save Settings'),
-          ),
-        ],
-      ),
-    ),
-  );
-}
+    );
+  }
 
   Future<void> _runPreview() async {
     final goalsProvider = Provider.of<GoalsProvider>(context, listen: false);
 
     final previewSettings = GoalSettings(
       anchorWeight: double.tryParse(_anchorWeightController.text) ?? 0.0,
-      maintenanceCaloriesStart: double.tryParse(_maintenanceCalController.text) ?? 2000.0,
+      maintenanceCaloriesStart:
+          double.tryParse(_maintenanceCalController.text) ?? 2000.0,
       proteinTarget: double.tryParse(_proteinController.text) ?? 0.0,
       fatTarget: double.tryParse(_fatController.text) ?? 0.0,
       carbTarget: double.tryParse(_carbController.text) ?? 0.0,
@@ -390,12 +386,14 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
       mode: _mode,
       calculationMode: _calcMode,
       proteinTargetMode: _proteinTargetMode,
-      proteinMultiplier: double.tryParse(_proteinMultiplierController.text) ?? 1.0,
+      proteinMultiplier:
+          double.tryParse(_proteinMultiplierController.text) ?? 1.0,
       fixedDelta: double.tryParse(_fixedDeltaController.text) ?? 0.0,
       lastTargetUpdate: goalsProvider.settings.lastTargetUpdate,
       isSet: goalsProvider.isGoalsSet,
       enableSmartTargets: _enableSmartTargets,
-      correctionWindowDays: int.tryParse(_correctionWindowController.text) ?? 30,
+      correctionWindowDays:
+          int.tryParse(_correctionWindowController.text) ?? 30,
       tdeeWindowDays: _tdeeWindowDays,
     );
 
@@ -403,11 +401,13 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
 
     if (!mounted) return;
     setState(() {
-      _maintenanceCalController.text =
-          result.settings.maintenanceCaloriesStart.roundToDouble().toString();
+      _maintenanceCalController.text = result.settings.maintenanceCaloriesStart
+          .roundToDouble()
+          .toString();
       if (_proteinTargetMode == ProteinTargetMode.percentageOfWeight) {
-        _proteinController.text =
-            result.settings.proteinTarget.roundToDouble().toString();
+        _proteinController.text = result.settings.proteinTarget
+            .roundToDouble()
+            .toString();
       }
     });
   }
@@ -425,18 +425,9 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
           const SizedBox(height: 8),
           SegmentedButton<int>(
             segments: const [
-              ButtonSegment(
-                value: 14,
-                label: Text('Responsive (14d)'),
-              ),
-              ButtonSegment(
-                value: 28,
-                label: Text('Balanced (28d)'),
-              ),
-              ButtonSegment(
-                value: 60,
-                label: Text('Smooth (60d)'),
-              ),
+              ButtonSegment(value: 14, label: Text('Responsive (14d)')),
+              ButtonSegment(value: 28, label: Text('Balanced (28d)')),
+              ButtonSegment(value: 60, label: Text('Smooth (60d)')),
             ],
             selected: {_tdeeWindowDays},
             onSelectionChanged: (newSelection) {
@@ -527,7 +518,6 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
     );
   }
 
-
   Widget _buildModeSelector() {
     return SegmentedButton<GoalMode>(
       segments: const [
@@ -548,8 +538,9 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
           if (weights.isNotEmpty) {
             final sorted = List<Weight>.from(weights)
               ..sort((a, b) => a.date.compareTo(b.date));
-            _anchorWeightController.text =
-                sorted.last.weight.toStringAsFixed(1);
+            _anchorWeightController.text = sorted.last.weight.toStringAsFixed(
+              1,
+            );
           }
         }
         setState(() {

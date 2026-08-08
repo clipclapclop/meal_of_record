@@ -182,10 +182,7 @@ class SearchResultTileState extends State<SearchResultTile> {
   }
 
   Widget _buildPopupImage() {
-    return FoodImageWidget(
-      food: widget.food,
-      size: 300,
-    );
+    return FoodImageWidget(food: widget.food, size: 300);
   }
 
   /// Creates a FoodServing with the current display quantity
@@ -202,11 +199,15 @@ class SearchResultTileState extends State<SearchResultTile> {
   @override
   Widget build(BuildContext context) {
     final displayGrams = _selectedUnit.gramsPerUnit * _displayQuantity;
-    final useNetCarbs = Provider.of<GoalsProvider>(context, listen: false).useNetCarbs;
+    final useNetCarbs = Provider.of<GoalsProvider>(
+      context,
+      listen: false,
+    ).useNetCarbs;
     final calories = widget.food.calories * displayGrams;
     final protein = widget.food.protein * displayGrams;
     final fat = widget.food.fat * displayGrams;
-    final carbs = (useNetCarbs ? widget.food.netCarbs : widget.food.carbs) * displayGrams;
+    final carbs =
+        (useNetCarbs ? widget.food.netCarbs : widget.food.carbs) * displayGrams;
     final fiber = widget.food.fiber * displayGrams;
 
     return ListTile(
@@ -243,22 +244,22 @@ class SearchResultTileState extends State<SearchResultTile> {
             value: _selectedUnit,
             items: _availableServings.map((unit) {
               // Show _displayQuantity for selected unit, serving definition for others
-              final qty = (unit == _selectedUnit) ? _displayQuantity : unit.quantity;
+              final qty = (unit == _selectedUnit)
+                  ? _displayQuantity
+                  : unit.quantity;
               // For 'g' unit, just show "1 g" (no redundant grams display)
               // For other units, show "1 serving (27g)"
               final label = unit.unit == 'g'
                   ? '$qty ${unit.unit}'
                   : '$qty ${unit.unit} (${(unit.gramsPerUnit * qty).toStringAsFixed(0)}g)';
-              return DropdownMenuItem(
-                value: unit,
-                child: Text(label),
-              );
+              return DropdownMenuItem(value: unit, child: Text(label));
             }).toList(),
             onChanged: (unit) {
               if (unit != null) {
                 setState(() {
                   _selectedUnit = unit;
-                  _displayQuantity = unit.quantity; // Reset to serving definition
+                  _displayQuantity =
+                      unit.quantity; // Reset to serving definition
                 });
               }
             },

@@ -145,8 +145,9 @@ class GoalLogicService {
       final double observedWeight = weights[i];
 
       // Use current TDEE estimate as intake when data is missing (neutral)
-      final double effectiveIntake =
-          (intakeIsValid == null || intakeIsValid[i]) ? intakes[i] : xTdee;
+      final double effectiveIntake = (intakeIsValid == null || intakeIsValid[i])
+          ? intakes[i]
+          : xTdee;
 
       // 1. Predict
       // x = Fx + Bu
@@ -201,7 +202,11 @@ class GoalLogicService {
     final threshold = minDays ?? (windowDays * 0.7).ceil();
     final today = now ?? DateTime.now();
     final todayDate = DateTime(today.year, today.month, today.day);
-    final cutoff = DateTime(todayDate.year, todayDate.month, todayDate.day - windowDays);
+    final cutoff = DateTime(
+      todayDate.year,
+      todayDate.month,
+      todayDate.day - windowDays,
+    );
     final recentCount = weights.where((w) {
       final d = DateTime(w.date.year, w.date.month, w.date.day);
       return !d.isBefore(cutoff);
@@ -236,15 +241,29 @@ class GoalLogicService {
   }) {
     // Find earliest weight in weightMap to compute daysOfData
     if (weightMap.isEmpty) return null;
-    final earliestWeight = weightMap.keys.reduce((a, b) => a.isBefore(b) ? a : b);
-    final tdeeDateUtc = DateTime.utc(tdeeDate.year, tdeeDate.month, tdeeDate.day);
-    final earliestUtc = DateTime.utc(earliestWeight.year, earliestWeight.month, earliestWeight.day);
+    final earliestWeight = weightMap.keys.reduce(
+      (a, b) => a.isBefore(b) ? a : b,
+    );
+    final tdeeDateUtc = DateTime.utc(
+      tdeeDate.year,
+      tdeeDate.month,
+      tdeeDate.day,
+    );
+    final earliestUtc = DateTime.utc(
+      earliestWeight.year,
+      earliestWeight.month,
+      earliestWeight.day,
+    );
     final daysOfData = tdeeDateUtc.difference(earliestUtc).inDays;
 
     final effectiveWin = effectiveWindow(tdeeWindow, daysOfData);
     if (effectiveWin == 0) return null;
 
-    final windowStart = DateTime(tdeeDate.year, tdeeDate.month, tdeeDate.day - effectiveWin);
+    final windowStart = DateTime(
+      tdeeDate.year,
+      tdeeDate.month,
+      tdeeDate.day - effectiveWin,
+    );
 
     // Build parallel arrays from windowStart to dt-1
     final List<double> dailyWeights = [];
@@ -270,7 +289,11 @@ class GoalLogicService {
     }
 
     // Check we have enough weight data in this window
-    if (!hasEnoughWeightData(weightsInWindow, windowDays: effectiveWin, now: tdeeDate)) {
+    if (!hasEnoughWeightData(
+      weightsInWindow,
+      windowDays: effectiveWin,
+      now: tdeeDate,
+    )) {
       return null;
     }
 

@@ -53,7 +53,13 @@ class ImageStorageService {
     final cropSize = image.width < image.height ? image.width : image.height;
     final x = (image.width - cropSize) ~/ 2;
     final y = (image.height - cropSize) ~/ 2;
-    final cropped = copyCrop(image, x: x, y: y, width: cropSize, height: cropSize);
+    final cropped = copyCrop(
+      image,
+      x: x,
+      y: y,
+      width: cropSize,
+      height: cropSize,
+    );
 
     // Resize (input is already square, so only width needed)
     final resized = copyResize(cropped, width: _maxImageSize);

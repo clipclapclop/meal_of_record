@@ -43,8 +43,10 @@ class _SearchScreenState extends State<SearchScreen> {
       }
 
       // Ensure logged portions are fresh so bar charts show correct values
-      Provider.of<LogProvider>(context, listen: false)
-          .loadLoggedPortionsForDate(DateTime.now());
+      Provider.of<LogProvider>(
+        context,
+        listen: false,
+      ).loadLoggedPortionsForDate(DateTime.now());
 
       // Load solo food suggestions for empty-query state
       Provider.of<SearchProvider>(context, listen: false).loadSuggestions();

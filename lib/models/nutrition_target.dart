@@ -7,7 +7,8 @@ class NutritionTarget {
   final String macroLabel; // The abrev. name/label of the macro
   final String unitLabel; // The unit of measure (grams or nothing)
   final List<double> dailyAmounts; // The amounts of macro per day
-  final List<double> dailyTargets; // The target amounts per day (from snapshots)
+  final List<double>
+  dailyTargets; // The target amounts per day (from snapshots)
 
   NutritionTarget({
     required this.color,

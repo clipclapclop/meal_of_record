@@ -47,10 +47,10 @@ class _DuplicateMergeSuggestedTabState
   }
 
   Future<_SuggestedData> _load() async {
-    final macroGroups = await DatabaseService.instance
-        .findDuplicateFoodGroups(thresholdPct: _threshold);
-    final chainGroups =
-        await DatabaseService.instance.findVersionChainGroups();
+    final macroGroups = await DatabaseService.instance.findDuplicateFoodGroups(
+      thresholdPct: _threshold,
+    );
+    final chainGroups = await DatabaseService.instance.findVersionChainGroups();
 
     final allIds = {
       for (final g in macroGroups) ...g.map((f) => f.id),
@@ -60,10 +60,12 @@ class _DuplicateMergeSuggestedTabState
     if (allIds.isNotEmpty) {
       final usage = await DatabaseService.instance.getFoodUsageStats(allIds);
       _logCounts = {for (final e in usage.entries) e.key: e.value.logCount};
-      _recipeCounts =
-          await DatabaseService.instance.getRecipeUsageCounts(allIds);
-      _withBarcodes =
-          await DatabaseService.instance.getFoodIdsWithBarcodes(allIds);
+      _recipeCounts = await DatabaseService.instance.getRecipeUsageCounts(
+        allIds,
+      );
+      _withBarcodes = await DatabaseService.instance.getFoodIdsWithBarcodes(
+        allIds,
+      );
     } else {
       _logCounts = {};
       _recipeCounts = {};
@@ -79,10 +81,7 @@ class _DuplicateMergeSuggestedTabState
     macroGroups.sort(byNameThenSize);
     chainGroups.sort(byNameThenSize);
 
-    return _SuggestedData(
-      macroGroups: macroGroups,
-      chainGroups: chainGroups,
-    );
+    return _SuggestedData(macroGroups: macroGroups, chainGroups: chainGroups);
   }
 
   @override
@@ -102,8 +101,14 @@ class _DuplicateMergeSuggestedTabState
                     .map(
                       (v) => DropdownMenuItem(
                         value: v,
-                        child: Text('${v.toStringAsFixed(0)}%'
-                            '${v == 1 ? ' (strict)' : v == 10 ? ' (loose)' : ''}'),
+                        child: Text(
+                          '${v.toStringAsFixed(0)}%'
+                          '${v == 1
+                              ? ' (strict)'
+                              : v == 10
+                              ? ' (loose)'
+                              : ''}',
+                        ),
                       ),
                     )
                     .toList(),
@@ -155,8 +160,11 @@ class _DuplicateMergeSuggestedTabState
                       '${chainGroups.length} chain${chainGroups.length == 1 ? '' : 's'}',
                     ),
                     for (int i = 0; i < chainGroups.length; i++)
-                      _buildGroupCard('v$i', chainGroups[i],
-                          isVersionChain: true),
+                      _buildGroupCard(
+                        'v$i',
+                        chainGroups[i],
+                        isVersionChain: true,
+                      ),
                     const SizedBox(height: 12),
                   ],
                   if (macroGroups.isNotEmpty) ...[
@@ -165,8 +173,11 @@ class _DuplicateMergeSuggestedTabState
                       '${macroGroups.length} group${macroGroups.length == 1 ? '' : 's'}',
                     ),
                     for (int i = 0; i < macroGroups.length; i++)
-                      _buildGroupCard('m$i', macroGroups[i],
-                          isVersionChain: false),
+                      _buildGroupCard(
+                        'm$i',
+                        macroGroups[i],
+                        isVersionChain: false,
+                      ),
                   ],
                 ],
               );
@@ -201,8 +212,11 @@ class _DuplicateMergeSuggestedTabState
     );
   }
 
-  Widget _buildGroupCard(String groupKey, List<Food> group,
-      {required bool isVersionChain}) {
+  Widget _buildGroupCard(
+    String groupKey,
+    List<Food> group, {
+    required bool isVersionChain,
+  }) {
     final keeperId = _keeperByGroup[groupKey];
     final skipped = _skippedByGroup[groupKey] ?? const <int>{};
     final groupHash = group.map((f) => f.id).fold<int>(0, (a, b) => a ^ b);
@@ -215,8 +229,7 @@ class _DuplicateMergeSuggestedTabState
     final loserCount = group
         .where((f) => f.id != keeperId && !skipped.contains(f.id))
         .length;
-    final canPreview =
-        widget.canMerge && keeperId != null && loserCount >= 1;
+    final canPreview = widget.canMerge && keeperId != null && loserCount >= 1;
 
     return Card(
       key: stableKey,
@@ -247,12 +260,14 @@ class _DuplicateMergeSuggestedTabState
             },
             child: Column(
               children: group
-                  .map((food) => _buildFoodRow(
-                        food,
-                        groupKey: groupKey,
-                        isSkipped: skipped.contains(food.id),
-                        isKeeper: food.id == keeperId,
-                      ))
+                  .map(
+                    (food) => _buildFoodRow(
+                      food,
+                      groupKey: groupKey,
+                      isSkipped: skipped.contains(food.id),
+                      isKeeper: food.id == keeperId,
+                    ),
+                  )
                   .toList(),
             ),
           ),
@@ -264,10 +279,9 @@ class _DuplicateMergeSuggestedTabState
                   keeperId == null
                       ? 'Pick a keeper to enable merge'
                       : loserCount == 0
-                          ? 'Nothing to merge (all others skipped)'
-                          : '$loserCount to merge in',
-                  style: const TextStyle(
-                      fontSize: 12, color: Colors.black54),
+                      ? 'Nothing to merge (all others skipped)'
+                      : '$loserCount to merge in',
+                  style: const TextStyle(fontSize: 12, color: Colors.black54),
                 ),
                 const Spacer(),
                 FilledButton.icon(
@@ -366,7 +380,11 @@ class _DuplicateMergeSuggestedTabState
         'F ${(food.fat * 100).toStringAsFixed(1)}  '
         'C ${(food.carbs * 100).toStringAsFixed(1)}\n'
         '$logs logs  •  $recipes recipes'
-        '${isSkipped ? '  •  skipped' : isKeeper ? '  •  KEEPER' : ''}',
+        '${isSkipped
+            ? '  •  skipped'
+            : isKeeper
+            ? '  •  KEEPER'
+            : ''}',
       ),
       isThreeLine: true,
       enabled: !isSkipped,
@@ -377,7 +395,10 @@ class _DuplicateMergeSuggestedTabState
   }
 
   Future<void> _openPreview(
-      String groupKey, List<Food> group, int keeperId) async {
+    String groupKey,
+    List<Food> group,
+    int keeperId,
+  ) async {
     final skipped = _skippedByGroup[groupKey] ?? const <int>{};
     final keeper = group.firstWhere((f) => f.id == keeperId);
     final losers = group
@@ -386,10 +407,8 @@ class _DuplicateMergeSuggestedTabState
     if (losers.isEmpty) return;
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => DuplicateMergePreviewScreen(
-          keeper: keeper,
-          losers: losers,
-        ),
+        builder: (_) =>
+            DuplicateMergePreviewScreen(keeper: keeper, losers: losers),
       ),
     );
     if (result == true) {
@@ -401,8 +420,5 @@ class _DuplicateMergeSuggestedTabState
 class _SuggestedData {
   final List<List<Food>> macroGroups;
   final List<List<Food>> chainGroups;
-  const _SuggestedData({
-    required this.macroGroups,
-    required this.chainGroups,
-  });
+  const _SuggestedData({required this.macroGroups, required this.chainGroups});
 }

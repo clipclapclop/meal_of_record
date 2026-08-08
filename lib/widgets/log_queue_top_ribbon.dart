@@ -47,7 +47,9 @@ class LogQueueTopRibbon extends StatelessWidget {
     final double targetCal = goals.calories - logProvider.loggedCalories;
     final double targetProt = goals.protein - logProvider.loggedProtein;
     final double targetFat = goals.fat - logProvider.loggedFat;
-    final double targetCarb = goals.carbs - (useNetCarbs ? logProvider.loggedNetCarbs : logProvider.loggedCarbs);
+    final double targetCarb =
+        goals.carbs -
+        (useNetCarbs ? logProvider.loggedNetCarbs : logProvider.loggedCarbs);
     final double targetFib = goals.fiber - logProvider.loggedFiber;
 
     final projectedTargets = [
@@ -59,7 +61,12 @@ class LogQueueTopRibbon extends StatelessWidget {
       ),
       createTarget('P', logProvider.totalProtein, goals.protein, Colors.red),
       createTarget('F', logProvider.totalFat, goals.fat, Colors.orange),
-      createTarget('C', useNetCarbs ? logProvider.totalNetCarbs : logProvider.totalCarbs, goals.carbs, Colors.green),
+      createTarget(
+        'C',
+        useNetCarbs ? logProvider.totalNetCarbs : logProvider.totalCarbs,
+        goals.carbs,
+        Colors.green,
+      ),
       createTarget('Fb', logProvider.totalFiber, goals.fiber, Colors.brown),
     ];
 

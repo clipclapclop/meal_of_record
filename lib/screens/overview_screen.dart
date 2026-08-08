@@ -60,7 +60,11 @@ class _OverviewScreenState extends State<OverviewScreen> {
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final start = DateTime(today.year, today.month, today.day - 6); // Last 7 days
+    final start = DateTime(
+      today.year,
+      today.month,
+      today.day - 6,
+    ); // Last 7 days
 
     try {
       final logProvider = Provider.of<LogProvider>(context, listen: false);
@@ -78,9 +82,17 @@ class _OverviewScreenState extends State<OverviewScreen> {
         context,
         listen: false,
       );
-      final rangeStart = DateTime(today.year, today.month, today.day - navProvider.weightRangeDays);
+      final rangeStart = DateTime(
+        today.year,
+        today.month,
+        today.day - navProvider.weightRangeDays,
+      );
       final userWindow = goalsProvider.settings.tdeeWindowDays;
-      final analysisStart = DateTime(rangeStart.year, rangeStart.month, rangeStart.day - userWindow);
+      final analysisStart = DateTime(
+        rangeStart.year,
+        rangeStart.month,
+        rangeStart.day - userWindow,
+      );
 
       final analysisStats = await logProvider.getDailyMacroStats(
         analysisStart,
@@ -198,11 +210,21 @@ class _OverviewScreenState extends State<OverviewScreen> {
     final fiber = mapField((s) => s.fiber);
 
     // Build per-day target lists from snapshots
-    final dailyCalorieTargets = stats.map((s) => goalsProvider.targetFor(s.date).calories).toList();
-    final dailyProteinTargets = stats.map((s) => goalsProvider.targetFor(s.date).protein).toList();
-    final dailyFatTargets = stats.map((s) => goalsProvider.targetFor(s.date).fat).toList();
-    final dailyCarbTargets = stats.map((s) => goalsProvider.targetFor(s.date).carbs).toList();
-    final dailyFiberTargets = stats.map((s) => goalsProvider.targetFor(s.date).fiber).toList();
+    final dailyCalorieTargets = stats
+        .map((s) => goalsProvider.targetFor(s.date).calories)
+        .toList();
+    final dailyProteinTargets = stats
+        .map((s) => goalsProvider.targetFor(s.date).protein)
+        .toList();
+    final dailyFatTargets = stats
+        .map((s) => goalsProvider.targetFor(s.date).fat)
+        .toList();
+    final dailyCarbTargets = stats
+        .map((s) => goalsProvider.targetFor(s.date).carbs)
+        .toList();
+    final dailyFiberTargets = stats
+        .map((s) => goalsProvider.targetFor(s.date).fiber)
+        .toList();
 
     // Get Today's values (last in the list)
     final todayStats = stats.last;
@@ -257,10 +279,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
   }
 
   Widget _buildRangeSelector() {
-    final navProvider = Provider.of<NavigationProvider>(
-      context,
-      listen: false,
-    );
+    final navProvider = Provider.of<NavigationProvider>(context, listen: false);
     final ranges = {
       '1 wk': 7,
       '1 mo': 30,
@@ -311,27 +330,53 @@ class _OverviewScreenState extends State<OverviewScreen> {
     if (!lpIsToday) return _nutritionData;
     final src = _nutritionData;
     return [
-      NutritionTarget(color: src[0].color, thisAmount: logProvider.loggedCalories,
-          targetAmount: src[0].targetAmount, macroLabel: src[0].macroLabel,
-          unitLabel: src[0].unitLabel, dailyAmounts: src[0].dailyAmounts,
-          dailyTargets: src[0].dailyTargets),
-      NutritionTarget(color: src[1].color, thisAmount: logProvider.loggedProtein,
-          targetAmount: src[1].targetAmount, macroLabel: src[1].macroLabel,
-          unitLabel: src[1].unitLabel, dailyAmounts: src[1].dailyAmounts,
-          dailyTargets: src[1].dailyTargets),
-      NutritionTarget(color: src[2].color, thisAmount: logProvider.loggedFat,
-          targetAmount: src[2].targetAmount, macroLabel: src[2].macroLabel,
-          unitLabel: src[2].unitLabel, dailyAmounts: src[2].dailyAmounts,
-          dailyTargets: src[2].dailyTargets),
-      NutritionTarget(color: src[3].color,
-          thisAmount: useNetCarbs ? logProvider.loggedNetCarbs : logProvider.loggedCarbs,
-          targetAmount: src[3].targetAmount, macroLabel: src[3].macroLabel,
-          unitLabel: src[3].unitLabel, dailyAmounts: src[3].dailyAmounts,
-          dailyTargets: src[3].dailyTargets),
-      NutritionTarget(color: src[4].color, thisAmount: logProvider.loggedFiber,
-          targetAmount: src[4].targetAmount, macroLabel: src[4].macroLabel,
-          unitLabel: src[4].unitLabel, dailyAmounts: src[4].dailyAmounts,
-          dailyTargets: src[4].dailyTargets),
+      NutritionTarget(
+        color: src[0].color,
+        thisAmount: logProvider.loggedCalories,
+        targetAmount: src[0].targetAmount,
+        macroLabel: src[0].macroLabel,
+        unitLabel: src[0].unitLabel,
+        dailyAmounts: src[0].dailyAmounts,
+        dailyTargets: src[0].dailyTargets,
+      ),
+      NutritionTarget(
+        color: src[1].color,
+        thisAmount: logProvider.loggedProtein,
+        targetAmount: src[1].targetAmount,
+        macroLabel: src[1].macroLabel,
+        unitLabel: src[1].unitLabel,
+        dailyAmounts: src[1].dailyAmounts,
+        dailyTargets: src[1].dailyTargets,
+      ),
+      NutritionTarget(
+        color: src[2].color,
+        thisAmount: logProvider.loggedFat,
+        targetAmount: src[2].targetAmount,
+        macroLabel: src[2].macroLabel,
+        unitLabel: src[2].unitLabel,
+        dailyAmounts: src[2].dailyAmounts,
+        dailyTargets: src[2].dailyTargets,
+      ),
+      NutritionTarget(
+        color: src[3].color,
+        thisAmount: useNetCarbs
+            ? logProvider.loggedNetCarbs
+            : logProvider.loggedCarbs,
+        targetAmount: src[3].targetAmount,
+        macroLabel: src[3].macroLabel,
+        unitLabel: src[3].unitLabel,
+        dailyAmounts: src[3].dailyAmounts,
+        dailyTargets: src[3].dailyTargets,
+      ),
+      NutritionTarget(
+        color: src[4].color,
+        thisAmount: logProvider.loggedFiber,
+        targetAmount: src[4].targetAmount,
+        macroLabel: src[4].macroLabel,
+        unitLabel: src[4].unitLabel,
+        dailyAmounts: src[4].dailyAmounts,
+        dailyTargets: src[4].dailyTargets,
+      ),
     ];
   }
 
@@ -339,57 +384,75 @@ class _OverviewScreenState extends State<OverviewScreen> {
   Widget build(BuildContext context) {
     return Consumer<LogProvider>(
       builder: (context, logProvider, _) {
-      final useNetCarbs =
-          Provider.of<GoalsProvider>(context, listen: false).useNetCarbs;
-      final liveNutritionData = _buildLiveTodayTargets(logProvider, useNetCarbs);
-      return ScreenBackground(
-      appBar: AppBar(
-        title: const Text('Overview'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      child: Column(
-        children: [
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : ListView(
-                    children: [
-                      _buildGoalsWarning(),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 4.0),
-                        child: NutritionTargetsOverviewChart(
-                          nutritionData: liveNutritionData,
-                          dates: _nutritionDates,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 4.0),
-                        child: Column(
-                          children: [
-                            WeightTrendChart(
-                              weightHistory: _weightHistory,
-                              maintenanceHistory: _maintenanceHistory,
-                              kalmanWeightHistory: _kalmanWeightHistory,
-                              timeframeLabel: Provider.of<NavigationProvider>(context, listen: false).weightRangeLabel,
-                              startDate: _weightRangeStart,
-                              endDate: _weightRangeEnd,
-                              onTodayPlaceholderTapped: () {
-                                Provider.of<NavigationProvider>(context, listen: false).changeTab(2);
-                              },
-                            ),
-                            const SizedBox(height: 8),
-                            _buildRangeSelector(),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+        final useNetCarbs = Provider.of<GoalsProvider>(
+          context,
+          listen: false,
+        ).useNetCarbs;
+        final liveNutritionData = _buildLiveTodayTargets(
+          logProvider,
+          useNetCarbs,
+        );
+        return ScreenBackground(
+          appBar: AppBar(
+            title: const Text('Overview'),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
           ),
-          const SearchRibbon(),
-        ],
-      ),
-    );
+          child: Column(
+            children: [
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : ListView(
+                        children: [
+                          _buildGoalsWarning(),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6.0,
+                              vertical: 4.0,
+                            ),
+                            child: NutritionTargetsOverviewChart(
+                              nutritionData: liveNutritionData,
+                              dates: _nutritionDates,
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6.0,
+                              vertical: 4.0,
+                            ),
+                            child: Column(
+                              children: [
+                                WeightTrendChart(
+                                  weightHistory: _weightHistory,
+                                  maintenanceHistory: _maintenanceHistory,
+                                  kalmanWeightHistory: _kalmanWeightHistory,
+                                  timeframeLabel:
+                                      Provider.of<NavigationProvider>(
+                                        context,
+                                        listen: false,
+                                      ).weightRangeLabel,
+                                  startDate: _weightRangeStart,
+                                  endDate: _weightRangeEnd,
+                                  onTodayPlaceholderTapped: () {
+                                    Provider.of<NavigationProvider>(
+                                      context,
+                                      listen: false,
+                                    ).changeTab(2);
+                                  },
+                                ),
+                                const SizedBox(height: 8),
+                                _buildRangeSelector(),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+              const SearchRibbon(),
+            ],
+          ),
+        );
       },
     );
   }

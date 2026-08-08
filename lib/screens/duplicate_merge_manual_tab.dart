@@ -51,7 +51,8 @@ class _DuplicateMergeManualTabState extends State<DuplicateMergeManualTab> {
           child: FilledButton.icon(
             icon: const Icon(Icons.merge_type),
             label: const Text('Preview merge'),
-            onPressed: widget.canMerge &&
+            onPressed:
+                widget.canMerge &&
                     _keeper != null &&
                     _loser != null &&
                     _keeper!.id != _loser!.id
@@ -66,10 +67,8 @@ class _DuplicateMergeManualTabState extends State<DuplicateMergeManualTab> {
   Future<void> _openPreview() async {
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => DuplicateMergePreviewScreen(
-          keeper: _keeper!,
-          losers: [_loser!],
-        ),
+        builder: (_) =>
+            DuplicateMergePreviewScreen(keeper: _keeper!, losers: [_loser!]),
       ),
     );
     if (result == true && mounted) {
@@ -118,8 +117,9 @@ class _FoodPickerState extends State<_FoodPicker> {
       return;
     }
     setState(() => _searching = true);
-    final results =
-        await DatabaseService.instance.searchLiveFoodsByName(q.trim());
+    final results = await DatabaseService.instance.searchLiveFoodsByName(
+      q.trim(),
+    );
     if (!mounted) return;
     setState(() {
       _results = results.where((f) => f.id != widget.exclude).toList();

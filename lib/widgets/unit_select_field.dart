@@ -35,9 +35,14 @@ class _UnitSelectFieldState extends State<UnitSelectField> {
   void _checkInitialValue() {
     // If value is not 'serving' and not in available units, it's custom
     // OR if the value matches what would serve as custom text input
-    final isKnown = ['serving', ...widget.availableUnits].contains(widget.value);
+    final isKnown = [
+      'serving',
+      ...widget.availableUnits,
+    ].contains(widget.value);
     _isCustom = !isKnown && widget.value.isNotEmpty;
-    _customController = TextEditingController(text: _isCustom ? widget.value : '');
+    _customController = TextEditingController(
+      text: _isCustom ? widget.value : '',
+    );
   }
 
   @override
@@ -50,7 +55,10 @@ class _UnitSelectFieldState extends State<UnitSelectField> {
   }
 
   void _checkValueUpdate() {
-    final isKnown = ['serving', ...widget.availableUnits].contains(widget.value);
+    final isKnown = [
+      'serving',
+      ...widget.availableUnits,
+    ].contains(widget.value);
     bool shouldBeCustom = !isKnown && widget.value.isNotEmpty;
 
     // If we are already in custom mode, and the new value matches what's in the text field,
@@ -122,10 +130,7 @@ class _UnitSelectFieldState extends State<UnitSelectField> {
       decoration: InputDecoration(
         labelText: widget.label,
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(
-          vertical: 8,
-          horizontal: 8,
-        ),
+        contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -135,10 +140,7 @@ class _UnitSelectFieldState extends State<UnitSelectField> {
           isDense: true,
           items: [
             ...units.map(
-              (unit) => DropdownMenuItem(
-                value: unit,
-                child: Text(unit),
-              ),
+              (unit) => DropdownMenuItem(value: unit, child: Text(unit)),
             ),
             if (widget.allowCustom)
               const DropdownMenuItem(

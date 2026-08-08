@@ -182,9 +182,7 @@ class _QrSharingScreenState extends State<QrSharingScreen>
         // Navigate to the portions import screen
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (_) => const QrPortionSharingScreen(),
-          ),
+          MaterialPageRoute(builder: (_) => const QrPortionSharingScreen()),
         );
         return;
       }

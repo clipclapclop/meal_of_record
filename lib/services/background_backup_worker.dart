@@ -49,10 +49,7 @@ Future<bool> tryAutoBackup({
     final zipFile = await DatabaseService.instance.exportBackupAsZip();
 
     final retention = await config.getRetentionCount();
-    final success = await nas.uploadBackup(
-      zipFile,
-      retentionCount: retention,
-    );
+    final success = await nas.uploadBackup(zipFile, retentionCount: retention);
 
     // Clean up temp zip and its temp directory
     try {
@@ -87,9 +84,7 @@ Future<bool> tryAutoBackup({
 /// debounce trigger produces a fresh backup.
 ///
 /// Runs silently — logs via debugPrint but never throws.
-Future<bool> tryAutoLocalBackup({
-  BackupConfigService? configService,
-}) async {
+Future<bool> tryAutoLocalBackup({BackupConfigService? configService}) async {
   final config = configService ?? BackupConfigService.instance;
 
   try {

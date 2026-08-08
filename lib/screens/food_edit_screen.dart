@@ -60,8 +60,7 @@ class _FoodEditScreenState extends State<FoodEditScreen> {
   final _fiberController = TextEditingController();
 
   // Primary serving controllers (for new foods / per-serving mode)
-  final _primaryServingQuantityController =
-      TextEditingController(text: '1');
+  final _primaryServingQuantityController = TextEditingController(text: '1');
   final _primaryServingGramsController = TextEditingController();
   String _primaryServingUnit = 'serving';
 
@@ -170,8 +169,9 @@ class _FoodEditScreenState extends State<FoodEditScreen> {
   Future<void> _loadBarcodes() async {
     // Load barcodes for existing food
     if (widget.originalFood != null && !widget.isCopy) {
-      final barcodes = await DatabaseService.instance
-          .getBarcodesByFoodId(widget.originalFood!.id);
+      final barcodes = await DatabaseService.instance.getBarcodesByFoodId(
+        widget.originalFood!.id,
+      );
       if (mounted) {
         setState(() {
           _barcodes = barcodes;
@@ -223,10 +223,12 @@ class _FoodEditScreenState extends State<FoodEditScreen> {
         _isPerServingMode = true;
         _selectedServingForMacroInput = primaryServing;
         _primaryServingUnit = primaryServing.unit;
-        _primaryServingQuantityController.text =
-            _formatQuantity(primaryServing.quantity);
-        _primaryServingGramsController.text =
-            _formatServingGrams(primaryServing.grams);
+        _primaryServingQuantityController.text = _formatQuantity(
+          primaryServing.quantity,
+        );
+        _primaryServingGramsController.text = _formatServingGrams(
+          primaryServing.grams,
+        );
         // Set macros for this serving
         _updateMacroFieldsForServing(food, primaryServing);
       } else {
@@ -284,9 +286,7 @@ class _FoodEditScreenState extends State<FoodEditScreen> {
     if (val == val.roundToDouble()) return val.round().toString();
     final s = val.toStringAsFixed(2);
     // Strip trailing zeros: "28.50" → "28.5", "28.00" → "28"
-    return s
-        .replaceAll(RegExp(r'0+$'), '')
-        .replaceAll(RegExp(r'\.$'), '');
+    return s.replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '');
   }
 
   @override
@@ -307,7 +307,8 @@ class _FoodEditScreenState extends State<FoodEditScreen> {
     super.dispose();
   }
 
-  double _parse(String text) => double.tryParse(text) ?? MathEvaluator.evaluate(text) ?? 0.0;
+  double _parse(String text) =>
+      double.tryParse(text) ?? MathEvaluator.evaluate(text) ?? 0.0;
 
   Future<void> _save(bool useImmediately) async {
     if (!_formKey.currentState!.validate()) return;
@@ -362,7 +363,8 @@ class _FoodEditScreenState extends State<FoodEditScreen> {
 
     // Calculate per-gram values
     double factor = 1.0;
-    final displayGrams = _isPerServingMode && _selectedServingForMacroInput != null
+    final displayGrams =
+        _isPerServingMode && _selectedServingForMacroInput != null
         ? _selectedServingForMacroInput!.grams
         : 100.0;
     if (_isPerServingMode && _selectedServingForMacroInput != null) {
@@ -386,7 +388,8 @@ class _FoodEditScreenState extends State<FoodEditScreen> {
     // minimum intentional change (0.1 / grams), so real edits are preserved.
     if (widget.originalFood != null && !widget.isCopy && displayGrams > 0) {
       final orig = widget.originalFood!;
-      final tolerance = 0.06 / displayGrams; // slightly above 0.05 for float safety
+      final tolerance =
+          0.06 / displayGrams; // slightly above 0.05 for float safety
       if ((cal - orig.calories).abs() < tolerance) cal = orig.calories;
       if ((prot - orig.protein).abs() < tolerance) prot = orig.protein;
       if ((fat - orig.fat).abs() < tolerance) fat = orig.fat;
@@ -502,7 +505,9 @@ class _FoodEditScreenState extends State<FoodEditScreen> {
                   left: 12.0,
                   right: 12.0,
                   top: 8.0,
-                  bottom: 8.0 + (showOperatorBar ? 48 + keyboardHeight : keyboardHeight),
+                  bottom:
+                      8.0 +
+                      (showOperatorBar ? 48 + keyboardHeight : keyboardHeight),
                 ),
                 children: [
                   _buildMetadataSection(),
@@ -680,7 +685,9 @@ class _FoodEditScreenState extends State<FoodEditScreen> {
     if (_barcodes.contains(barcode)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Barcode already assigned to this food')),
+          const SnackBar(
+            content: Text('Barcode already assigned to this food'),
+          ),
         );
       }
       return;
@@ -688,8 +695,10 @@ class _FoodEditScreenState extends State<FoodEditScreen> {
 
     // Check if on another food (only for existing foods)
     if (widget.originalFood != null && !widget.isCopy) {
-      final otherFood = await DatabaseService.instance
-          .isBarcodeOnOtherFood(barcode, widget.originalFood!.id);
+      final otherFood = await DatabaseService.instance.isBarcodeOnOtherFood(
+        barcode,
+        widget.originalFood!.id,
+      );
       if (otherFood != null && mounted) {
         final useAnyway = await showDialog<bool>(
           context: context,
@@ -841,12 +850,18 @@ class _FoodEditScreenState extends State<FoodEditScreen> {
                 SizedBox(
                   width: 60,
                   child: Focus(
-                    onFocusChange: (hasFocus) => _onNumericFocusChange(_primaryServingQuantityController, hasFocus),
+                    onFocusChange: (hasFocus) => _onNumericFocusChange(
+                      _primaryServingQuantityController,
+                      hasFocus,
+                    ),
                     child: TextFormField(
                       controller: _primaryServingQuantityController,
-                      focusNode: _focusNodeFor(_primaryServingQuantityController),
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      focusNode: _focusNodeFor(
+                        _primaryServingQuantityController,
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       textAlign: TextAlign.center,
                       decoration: const InputDecoration(
                         labelText: 'Qty',
@@ -868,10 +883,12 @@ class _FoodEditScreenState extends State<FoodEditScreen> {
                     availableUnits: widget.originalFood == null
                         ? _availableUnits // New food: show all database units
                         : _servings
-                            //.where((s) => s.unit != 'g')
-                            .map((s) => s.unit)
-                            .toList(), // Existing food: only this food's serving units
-                    allowCustom: widget.originalFood == null, // Only allow custom for new foods
+                              //.where((s) => s.unit != 'g')
+                              .map((s) => s.unit)
+                              .toList(), // Existing food: only this food's serving units
+                    allowCustom:
+                        widget.originalFood ==
+                        null, // Only allow custom for new foods
                     onChanged: (val) {
                       setState(() {
                         _primaryServingUnit = val;
@@ -910,12 +927,16 @@ class _FoodEditScreenState extends State<FoodEditScreen> {
                 SizedBox(
                   width: 80,
                   child: Focus(
-                    onFocusChange: (hasFocus) => _onNumericFocusChange(_primaryServingGramsController, hasFocus),
+                    onFocusChange: (hasFocus) => _onNumericFocusChange(
+                      _primaryServingGramsController,
+                      hasFocus,
+                    ),
                     child: TextFormField(
                       controller: _primaryServingGramsController,
                       focusNode: _focusNodeFor(_primaryServingGramsController),
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       textAlign: TextAlign.end,
                       decoration: const InputDecoration(
                         labelText: 'Grams',
@@ -932,8 +953,12 @@ class _FoodEditScreenState extends State<FoodEditScreen> {
                           final grams = _parse(val);
                           if (grams > 0) {
                             final food = widget.originalFood!;
-                            _caloriesController.text = _format(food.calories * grams);
-                            _proteinController.text = _format(food.protein * grams);
+                            _caloriesController.text = _format(
+                              food.calories * grams,
+                            );
+                            _proteinController.text = _format(
+                              food.protein * grams,
+                            );
                             _fatController.text = _format(food.fat * grams);
                             _carbsController.text = _format(food.carbs * grams);
                             _fiberController.text = _format(food.fiber * grams);
@@ -951,7 +976,6 @@ class _FoodEditScreenState extends State<FoodEditScreen> {
     );
   }
 
-
   Widget _buildMacroSection() {
     return Container(
       padding: const EdgeInsets.all(10),
@@ -964,7 +988,8 @@ class _FoodEditScreenState extends State<FoodEditScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Nutrition', style: Theme.of(context).textTheme.titleMedium),
-          if (_isPerServingMode && _primaryServingGramsController.text.isNotEmpty)
+          if (_isPerServingMode &&
+              _primaryServingGramsController.text.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
@@ -1004,7 +1029,8 @@ class _FoodEditScreenState extends State<FoodEditScreen> {
           SizedBox(width: 80, child: Text(label)),
           Expanded(
             child: Focus(
-              onFocusChange: (hasFocus) => _onNumericFocusChange(controller, hasFocus),
+              onFocusChange: (hasFocus) =>
+                  _onNumericFocusChange(controller, hasFocus),
               child: TextFormField(
                 controller: controller,
                 focusNode: focusNode,
@@ -1051,8 +1077,7 @@ class _FoodEditScreenState extends State<FoodEditScreen> {
           final serving = entry.value;
           // Don't show 'g' unit or the primary serving being edited
           if (serving.unit == 'g') return const SizedBox.shrink();
-          if (_isPerServingMode &&
-              serving.unit == _primaryServingUnit) {
+          if (_isPerServingMode && serving.unit == _primaryServingUnit) {
             return const SizedBox.shrink();
           }
 
@@ -1116,9 +1141,7 @@ class _FoodEditScreenState extends State<FoodEditScreen> {
 
     final tempFood = Food(
       id: widget.originalFood?.id ?? 0,
-      name: _nameController.text.isNotEmpty
-          ? _nameController.text
-          : 'New Food',
+      name: _nameController.text.isNotEmpty ? _nameController.text : 'New Food',
       source: widget.originalFood?.source ?? 'user',
       calories: _parse(_caloriesController.text) * factor,
       protein: _parse(_proteinController.text) * factor,

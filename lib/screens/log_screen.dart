@@ -98,7 +98,9 @@ class _LogScreenState extends State<LogScreen> with RouteAware {
       ),
       NutritionTarget(
         color: Colors.green,
-        thisAmount: useNetCarbs ? logProvider.loggedNetCarbs : logProvider.loggedCarbs,
+        thisAmount: useNetCarbs
+            ? logProvider.loggedNetCarbs
+            : logProvider.loggedCarbs,
         targetAmount: goals.carbs,
         macroLabel: 'C',
         unitLabel: 'g',

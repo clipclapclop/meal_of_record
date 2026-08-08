@@ -125,15 +125,15 @@ class _DataManagementScreenState extends State<DataManagementScreen> {
         // Perform first backup immediately
         tryAutoBackup(force: true);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('NAS backup enabled!')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('NAS backup enabled!')));
         }
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('NAS backup disabled.')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('NAS backup disabled.')));
         }
       }
 
@@ -160,13 +160,13 @@ class _DataManagementScreenState extends State<DataManagementScreen> {
       final error = await _nasService.testConnection();
       if (!mounted) return;
       if (error == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Connection successful!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Connection successful!')));
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error)));
       }
     } finally {
       if (mounted) setState(() => _isRestoring = false);
@@ -186,12 +186,8 @@ class _DataManagementScreenState extends State<DataManagementScreen> {
       text: await config.getNasPath() ?? '/backups/meal_of_record',
     );
     final (existingUser, existingPass) = await config.getNasCredentials();
-    final usernameController = TextEditingController(
-      text: existingUser ?? '',
-    );
-    final passwordController = TextEditingController(
-      text: existingPass ?? '',
-    );
+    final usernameController = TextEditingController(text: existingUser ?? '');
+    final passwordController = TextEditingController(text: existingPass ?? '');
     var useHttps = await config.getNasUseHttps();
     var allowSelfSigned = await config.getNasAllowSelfSigned();
 
@@ -233,16 +229,12 @@ class _DataManagementScreenState extends State<DataManagementScreen> {
                 const SizedBox(height: 8),
                 TextField(
                   controller: usernameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Username',
-                  ),
+                  decoration: const InputDecoration(labelText: 'Username'),
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: passwordController,
-                  decoration: const InputDecoration(
-                    labelText: 'Password',
-                  ),
+                  decoration: const InputDecoration(labelText: 'Password'),
                   obscureText: true,
                 ),
                 const SizedBox(height: 12),
@@ -256,8 +248,7 @@ class _DataManagementScreenState extends State<DataManagementScreen> {
                   SwitchListTile(
                     title: const Text('Allow self-signed certificate'),
                     value: allowSelfSigned,
-                    onChanged: (v) =>
-                        setDialogState(() => allowSelfSigned = v),
+                    onChanged: (v) => setDialogState(() => allowSelfSigned = v),
                     contentPadding: EdgeInsets.zero,
                   ),
                 const SizedBox(height: 8),
@@ -351,9 +342,9 @@ class _DataManagementScreenState extends State<DataManagementScreen> {
     if (value) {
       tryAutoLocalBackup();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Local backup enabled!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Local backup enabled!')));
       }
     }
     await _loadSettings();
@@ -430,20 +421,22 @@ class _DataManagementScreenState extends State<DataManagementScreen> {
         final destFile = File('$_localBackupPath/meal_of_record.zip');
         await zipFile.copy(destFile.path);
       } finally {
-        try { await zipFile.parent.delete(recursive: true); } catch (_) {}
+        try {
+          await zipFile.parent.delete(recursive: true);
+        } catch (_) {}
       }
       await _backupConfigService.clearDirty();
       await _backupConfigService.updateLocalBackupLastTime();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Local backup successful!')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Local backup successful!')));
       await _loadSettings();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Local backup failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Local backup failed: $e')));
     } finally {
       if (mounted) setState(() => _isRestoring = false);
     }
@@ -456,22 +449,26 @@ class _DataManagementScreenState extends State<DataManagementScreen> {
       setState(() => _isRestoring = true);
       final zipFile = await DatabaseService.instance.exportBackupAsZip();
       try {
-        final dateStr = DateFormat('yyyy-MM-dd_HH-mm-ss').format(DateTime.now());
+        final dateStr = DateFormat(
+          'yyyy-MM-dd_HH-mm-ss',
+        ).format(DateTime.now());
         final destFile = File('$_localBackupPath/meal_of_record_$dateStr.zip');
         await zipFile.copy(destFile.path);
       } finally {
-        try { await zipFile.parent.delete(recursive: true); } catch (_) {}
+        try {
+          await zipFile.parent.delete(recursive: true);
+        } catch (_) {}
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Export successful!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Export successful!')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Export failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Export failed: $e')));
       }
     } finally {
       if (mounted) setState(() => _isRestoring = false);
@@ -515,9 +512,9 @@ class _DataManagementScreenState extends State<DataManagementScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('NAS backup failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('NAS backup failed: $e')));
       }
     } finally {
       if (mounted) setState(() => _isRestoring = false);
@@ -722,8 +719,12 @@ class _DataManagementScreenState extends State<DataManagementScreen> {
                 Card(
                   color: Colors.grey[900],
                   child: ListTile(
-                    leading: Icon(Icons.file_upload,
-                        color: _localBackupPath != null ? Colors.blue : Colors.grey),
+                    leading: Icon(
+                      Icons.file_upload,
+                      color: _localBackupPath != null
+                          ? Colors.blue
+                          : Colors.grey,
+                    ),
                     title: const Text('Export Now'),
                     subtitle: Text(
                       _localBackupPath != null
@@ -761,9 +762,7 @@ class _DataManagementScreenState extends State<DataManagementScreen> {
                         color: Colors.orange,
                       ),
                       title: const Text('Backup to NAS'),
-                      subtitle: const Text(
-                        'Upload a backup to your NAS now.',
-                      ),
+                      subtitle: const Text('Upload a backup to your NAS now.'),
                       onTap: _backupToNas,
                     ),
                   ),
@@ -846,7 +845,9 @@ class _DataManagementScreenState extends State<DataManagementScreen> {
                   OutlinedButton.icon(
                     icon: const Icon(Icons.folder_open, size: 16),
                     label: Text(
-                      _localBackupPath != null ? 'Change Folder' : 'Select Folder',
+                      _localBackupPath != null
+                          ? 'Change Folder'
+                          : 'Select Folder',
                     ),
                     onPressed: _pickLocalFolder,
                   ),
@@ -910,7 +911,11 @@ class _DataManagementScreenState extends State<DataManagementScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.check_circle, size: 16, color: Colors.green),
+                    const Icon(
+                      Icons.check_circle,
+                      size: 16,
+                      color: Colors.green,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'Last backup: ${DateFormat('MM/dd HH:mm').format(_localBackupLastTime!)}',

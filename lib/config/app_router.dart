@@ -91,13 +91,9 @@ class AppRouter {
         );
       case mealPortionRoute:
         final meal = settings.arguments as Meal;
-        return MaterialPageRoute(
-          builder: (_) => MealPortionScreen(meal: meal),
-        );
+        return MaterialPageRoute(builder: (_) => MealPortionScreen(meal: meal));
       case duplicateMergeRoute:
-        return MaterialPageRoute(
-          builder: (_) => const DuplicateMergeScreen(),
-        );
+        return MaterialPageRoute(builder: (_) => const DuplicateMergeScreen());
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(

@@ -118,6 +118,6 @@ class FoodBarcodes extends Table {
 
   @override
   List<Set<Column>> get uniqueKeys => [
-        {foodId, barcode},
-      ];
+    {foodId, barcode},
+  ];
 }

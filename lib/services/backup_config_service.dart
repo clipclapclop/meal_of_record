@@ -41,8 +41,7 @@ class BackupConfigService {
 
   // Allow injecting a custom FlutterSecureStorage for testing
   FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
-  set secureStorage(FlutterSecureStorage storage) =>
-      _secureStorage = storage;
+  set secureStorage(FlutterSecureStorage storage) => _secureStorage = storage;
 
   /// Called when the debounce timer fires after data changes settle.
   /// Wired in main.dart to trigger backup attempts.

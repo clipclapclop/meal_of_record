@@ -19,8 +19,7 @@ class QrPortionSharingScreen extends StatefulWidget {
   const QrPortionSharingScreen({super.key, this.portions});
 
   @override
-  State<QrPortionSharingScreen> createState() =>
-      _QrPortionSharingScreenState();
+  State<QrPortionSharingScreen> createState() => _QrPortionSharingScreenState();
 }
 
 class _QrPortionSharingScreenState extends State<QrPortionSharingScreen> {
@@ -339,9 +338,9 @@ class _QrPortionSharingScreenState extends State<QrPortionSharingScreen> {
     }
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Added $count items to queue')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Added $count items to queue')));
       Navigator.pop(context);
     }
   }
@@ -459,8 +458,7 @@ class _QrPortionSharingScreenState extends State<QrPortionSharingScreen> {
                 LinearProgressIndicator(
                   value: _receivedChunks.length / _totalChunks!,
                   backgroundColor: Colors.grey[800],
-                  valueColor:
-                      const AlwaysStoppedAnimation<Color>(Colors.green),
+                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
                 ),
               ],
             ],

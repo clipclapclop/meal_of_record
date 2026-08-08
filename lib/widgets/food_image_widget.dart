@@ -63,7 +63,11 @@ class FoodImageWidget extends StatelessWidget {
     }
   }
 
-  Widget _buildLocalImage(BuildContext context, String thumbnail, String? displayName) {
+  Widget _buildLocalImage(
+    BuildContext context,
+    String thumbnail,
+    String? displayName,
+  ) {
     final guid = thumbnail.replaceFirst(ImageStorageService.localPrefix, '');
     if (guid.isEmpty) {
       return _buildFallbackEmoji(context, displayName);
@@ -104,7 +108,11 @@ class FoodImageWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildNetworkImage(BuildContext context, String thumbnail, String? displayName) {
+  Widget _buildNetworkImage(
+    BuildContext context,
+    String thumbnail,
+    String? displayName,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -119,8 +127,10 @@ class FoodImageWidget extends StatelessWidget {
           child: CachedNetworkImage(
             imageUrl: thumbnail,
             fit: BoxFit.cover,
-            placeholder: (context, url) => _buildFallbackEmoji(context, displayName),
-            errorWidget: (context, url, error) => _buildFallbackEmoji(context, displayName),
+            placeholder: (context, url) =>
+                _buildFallbackEmoji(context, displayName),
+            errorWidget: (context, url, error) =>
+                _buildFallbackEmoji(context, displayName),
           ),
         ),
       ),

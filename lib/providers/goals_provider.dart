@@ -74,7 +74,11 @@ class GoalsProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   DateTime _dateFromString(String s) {
     final parts = s.split('-');
-    return DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+    return DateTime(
+      int.parse(parts[0]),
+      int.parse(parts[1]),
+      int.parse(parts[2]),
+    );
   }
 
   Future<void> _saveTargetSnapshot() async {
@@ -89,19 +93,20 @@ class GoalsProvider extends ChangeNotifier with WidgetsBindingObserver {
       final today = DateTime(now.year, now.month, now.day);
       for (int i = 6; i >= 0; i--) {
         final d = DateTime(today.year, today.month, today.day - i);
-        _targetSnapshots.add({
-          'date': _dateToString(d),
-          ...goals.toJson(),
-        });
+        _targetSnapshots.add({'date': _dateToString(d), ...goals.toJson()});
       }
     } else {
-      final existingIdx = _targetSnapshots.indexWhere((s) => s['date'] == todayStr);
+      final existingIdx = _targetSnapshots.indexWhere(
+        (s) => s['date'] == todayStr,
+      );
       if (existingIdx >= 0) {
         _targetSnapshots[existingIdx] = {'date': todayStr, ...goals.toJson()};
       } else {
         _targetSnapshots.add({'date': todayStr, ...goals.toJson()});
         if (_targetSnapshots.length > 7) {
-          _targetSnapshots = _targetSnapshots.sublist(_targetSnapshots.length - 7);
+          _targetSnapshots = _targetSnapshots.sublist(
+            _targetSnapshots.length - 7,
+          );
         }
       }
     }
@@ -180,7 +185,9 @@ class GoalsProvider extends ChangeNotifier with WidgetsBindingObserver {
       final snapshotsJson = prefs.getString(_snapshotsKey);
       if (snapshotsJson != null) {
         _targetSnapshots = List<Map<String, dynamic>>.from(
-          (jsonDecode(snapshotsJson) as List).map((e) => Map<String, dynamic>.from(e)),
+          (jsonDecode(snapshotsJson) as List).map(
+            (e) => Map<String, dynamic>.from(e),
+          ),
         );
       }
 
@@ -215,7 +222,11 @@ class GoalsProvider extends ChangeNotifier with WidgetsBindingObserver {
     // drift correction) are handled consistently in one place.
     // updateTdeeEstimate: false — respect whatever maintenance calorie value
     // the user typed; Kalman weight is still used for drift correction.
-    final result = await recalculateTargets(_settings, isInitialSetup: isInitialSetup, updateTdeeEstimate: false);
+    final result = await recalculateTargets(
+      _settings,
+      isInitialSetup: isInitialSetup,
+      updateTdeeEstimate: false,
+    );
     _settings = result.settings;
     _currentGoals = result.goals;
 
@@ -246,7 +257,11 @@ class GoalsProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     // Find the most recent Monday (today if Monday, else look back)
     final daysSinceMonday = (today.weekday - DateTime.monday) % 7;
-    final lastMonday = DateTime(today.year, today.month, today.day - daysSinceMonday);
+    final lastMonday = DateTime(
+      today.year,
+      today.month,
+      today.day - daysSinceMonday,
+    );
 
     final lastUpdate = DateTime(
       _settings.lastTargetUpdate.year,
@@ -273,12 +288,20 @@ class GoalsProvider extends ChangeNotifier with WidgetsBindingObserver {
   /// [GoalSettings.maintenanceCaloriesStart]. Pass `false` when saving from the
   /// settings screen so the user's typed value is preserved; the Kalman weight
   /// estimate is still used for drift correction and dynamic protein.
-  Future<TargetRecalcResult> recalculateTargets(GoalSettings settings, {bool isInitialSetup = false, bool updateTdeeEstimate = true}) async {
+  Future<TargetRecalcResult> recalculateTargets(
+    GoalSettings settings, {
+    bool isInitialSetup = false,
+    bool updateTdeeEstimate = true,
+  }) async {
     final now = _clock();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = DateTime(today.year, today.month, today.day - 1);
     final userWindow = settings.tdeeWindowDays;
-    final analysisStart = DateTime(today.year, today.month, today.day - userWindow);
+    final analysisStart = DateTime(
+      today.year,
+      today.month,
+      today.day - userWindow,
+    );
 
     // Fetch weights if needed for Smart TDEE OR Dynamic Protein
     // We fetch a broad range to support both inputs
@@ -313,9 +336,7 @@ class GoalsProvider extends ChangeNotifier with WidgetsBindingObserver {
         targetCalories = settings.maintenanceCaloriesStart + delta;
       }
 
-      settings = settings.copyWith(
-        lastTargetUpdate: _clock(),
-      );
+      settings = settings.copyWith(lastTargetUpdate: _clock());
     } else {
       // Smart mode: use Kalman TDEE via shared function
       // Fetch intake data for the full window
@@ -323,7 +344,11 @@ class GoalsProvider extends ChangeNotifier with WidgetsBindingObserver {
         analysisStart,
         now,
       );
-      final dailyStats = DailyMacroStats.fromDTOS(dtos, analysisStart, yesterday);
+      final dailyStats = DailyMacroStats.fromDTOS(
+        dtos,
+        analysisStart,
+        yesterday,
+      );
 
       // Build maps for computeTdeeAtDate
       final Map<DateTime, double> weightMap = {
@@ -365,9 +390,7 @@ class GoalsProvider extends ChangeNotifier with WidgetsBindingObserver {
         // Only overwrite the stored baseline when the caller wants a TDEE update
         // (Monday recalc, preview). On a settings save we keep the user's typed value.
         if (updateTdeeEstimate) {
-          settings = settings.copyWith(
-            maintenanceCaloriesStart: kalmanTDEE,
-          );
+          settings = settings.copyWith(maintenanceCaloriesStart: kalmanTDEE);
         }
 
         // Base calories: the Kalman TDEE when updating, otherwise the user's value.
@@ -380,8 +403,7 @@ class GoalsProvider extends ChangeNotifier with WidgetsBindingObserver {
           // a deficit; if under, drift < 0, so we add calories to create a surplus.
           final double C = GoalLogicService.kCalPerLb;
           final drift = kalmanWeight - settings.anchorWeight;
-          final correctionCals = drift * C /
-              settings.correctionWindowDays;
+          final correctionCals = drift * C / settings.correctionWindowDays;
           targetCalories = baseCalories - correctionCals;
         } else {
           double delta = settings.fixedDelta;
@@ -441,8 +463,11 @@ class GoalsProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     final displayCarbs = settings.useNetCarbs
         ? (settings.calculationMode == MacroCalculationMode.proteinFat
-            ? (macros['carbs']! - settings.fiberTarget).clamp(0.0, double.infinity)
-            : settings.carbTarget)
+              ? (macros['carbs']! - settings.fiberTarget).clamp(
+                  0.0,
+                  double.infinity,
+                )
+              : settings.carbTarget)
         : macros['carbs']!;
 
     final computedGoals = MacroGoals(

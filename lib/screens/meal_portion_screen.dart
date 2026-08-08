@@ -17,10 +17,8 @@ class MealPortionScreen extends StatefulWidget {
 class _MealPortionScreenState extends State<MealPortionScreen> {
   final TextEditingController _gramsController = TextEditingController();
 
-  double get _mealTotalGrams => widget.meal.loggedPortion.fold(
-        0.0,
-        (sum, lp) => sum + lp.portion.grams,
-      );
+  double get _mealTotalGrams =>
+      widget.meal.loggedPortion.fold(0.0, (sum, lp) => sum + lp.portion.grams);
 
   double get _desiredGrams {
     final text = _gramsController.text.trim();
@@ -90,8 +88,9 @@ class _MealPortionScreenState extends State<MealPortionScreen> {
             const SizedBox(height: 12),
             TextField(
               controller: _gramsController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               decoration: const InputDecoration(
                 labelText: 'Desired total grams',
                 border: OutlineInputBorder(),

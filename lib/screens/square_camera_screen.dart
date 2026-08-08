@@ -104,7 +104,9 @@ class _SquareCameraScreenState extends State<SquareCameraScreen> {
   }
 
   Future<void> _takePicture() async {
-    if (_isTakingPhoto || _controller == null || !_controller!.value.isInitialized) {
+    if (_isTakingPhoto ||
+        _controller == null ||
+        !_controller!.value.isInitialized) {
       return;
     }
 
@@ -122,9 +124,9 @@ class _SquareCameraScreenState extends State<SquareCameraScreen> {
         setState(() {
           _isTakingPhoto = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to take photo: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to take photo: $e')));
       }
     }
   }
@@ -155,7 +157,9 @@ class _SquareCameraScreenState extends State<SquareCameraScreen> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          if (_hasPermission && _controller != null && _controller!.value.isInitialized)
+          if (_hasPermission &&
+              _controller != null &&
+              _controller!.value.isInitialized)
             _buildCameraView()
           else if (_permissionDenied)
             _buildPermissionDeniedView()
@@ -169,7 +173,11 @@ class _SquareCameraScreenState extends State<SquareCameraScreen> {
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.white,
+                  size: 28,
+                ),
                 onPressed: () => Navigator.pop(context),
               ),
             ),
@@ -270,7 +278,10 @@ class _SquareCameraScreenState extends State<SquareCameraScreen> {
               icon: const Icon(Icons.settings),
               label: const Text('Open Settings'),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
               ),
             ),
             const SizedBox(height: 12),

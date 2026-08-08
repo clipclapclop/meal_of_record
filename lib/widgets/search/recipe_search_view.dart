@@ -236,27 +236,31 @@ class _RecipeSearchViewState extends State<RecipeSearchView> {
                                     orElse: () => reloadedFood.servings.first,
                                   );
 
-                              final result = await Navigator.push<model_portion.FoodPortion>(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => QuantityEditScreen(
-                                    config: QuantityEditConfig(
-                                      context: widget.config.context,
-                                      food: reloadedFood,
-                                      isUpdate: true,
-                                      initialUnit: existingPortion.unit,
-                                      initialQuantity: unitServing
-                                          .quantityFromGrams(
-                                            existingPortion.grams,
-                                          ),
-                                      originalGrams: existingPortion.grams,
+                              final result =
+                                  await Navigator.push<
+                                    model_portion.FoodPortion
+                                  >(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => QuantityEditScreen(
+                                        config: QuantityEditConfig(
+                                          context: widget.config.context,
+                                          food: reloadedFood,
+                                          isUpdate: true,
+                                          initialUnit: existingPortion.unit,
+                                          initialQuantity: unitServing
+                                              .quantityFromGrams(
+                                                existingPortion.grams,
+                                              ),
+                                          originalGrams: existingPortion.grams,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ),
-                              );
+                                  );
                               if (result != null && context.mounted) {
                                 logProvider.updateFoodInQueue(
-                                  existingIndex, result,
+                                  existingIndex,
+                                  result,
                                 );
                               }
                             }
@@ -284,28 +288,32 @@ class _RecipeSearchViewState extends State<RecipeSearchView> {
                           // Dump-only recipes: open QuantityEditScreen with the recipe's food
                           if (recipe.isTemplate && context.mounted) {
                             final recipeFood = recipe.toFood();
-                            final result = await Navigator.push<model_portion.FoodPortion>(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => QuantityEditScreen(
-                                  config: QuantityEditConfig(
-                                    context: widget.config.context,
-                                    food: recipeFood,
-                                    initialUnit: 'g',
-                                    initialQuantity: recipe.totalGrams,
-                                    canShare: true,
-                                    sourceRecipe: recipe,
+                            final result =
+                                await Navigator.push<model_portion.FoodPortion>(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => QuantityEditScreen(
+                                      config: QuantityEditConfig(
+                                        context: widget.config.context,
+                                        food: recipeFood,
+                                        initialUnit: 'g',
+                                        initialQuantity: recipe.totalGrams,
+                                        canShare: true,
+                                        sourceRecipe: recipe,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ),
-                            );
+                                );
                             if (result != null && context.mounted) {
                               final logProvider = Provider.of<LogProvider>(
                                 context,
                                 listen: false,
                               );
                               final quantity = result.grams / recipe.totalGrams;
-                              logProvider.dumpRecipeToQueue(recipe, quantity: quantity);
+                              logProvider.dumpRecipeToQueue(
+                                recipe,
+                                quantity: quantity,
+                              );
                               searchProvider.clearSearch();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
@@ -350,25 +358,27 @@ class _RecipeSearchViewState extends State<RecipeSearchView> {
                                 ? existingPortion.grams
                                 : 0.0;
 
-                            final result = await Navigator.push<model_portion.FoodPortion>(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => QuantityEditScreen(
-                                  config: QuantityEditConfig(
-                                    context: widget.config.context,
-                                    food: food,
-                                    isUpdate:
-                                        isUpdate &&
-                                        widget.config.onSaveOverride == null,
-                                    initialUnit: initialUnit,
-                                    initialQuantity: initialQuantity,
-                                    originalGrams: originalGrams,
-                                    canShare: true,
-                                    sourceRecipe: recipe,
+                            final result =
+                                await Navigator.push<model_portion.FoodPortion>(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => QuantityEditScreen(
+                                      config: QuantityEditConfig(
+                                        context: widget.config.context,
+                                        food: food,
+                                        isUpdate:
+                                            isUpdate &&
+                                            widget.config.onSaveOverride ==
+                                                null,
+                                        initialUnit: initialUnit,
+                                        initialQuantity: initialQuantity,
+                                        originalGrams: originalGrams,
+                                        canShare: true,
+                                        sourceRecipe: recipe,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ),
-                            );
+                                );
                             if (result != null && context.mounted) {
                               if (widget.config.onSaveOverride != null) {
                                 widget.config.onSaveOverride!(result);

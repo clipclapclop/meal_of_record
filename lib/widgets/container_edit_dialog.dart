@@ -88,7 +88,9 @@ class _ContainerEditDialogState extends State<ContainerEditDialog> {
         MaterialPageRoute(builder: (_) => const SquareCameraScreen()),
       );
     } else {
-      final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+      final pickedFile = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+      );
       pickedPath = pickedFile?.path;
     }
 

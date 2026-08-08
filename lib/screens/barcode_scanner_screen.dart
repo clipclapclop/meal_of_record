@@ -141,9 +141,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
             AnimatedOpacity(
               opacity: _showFlash ? 0.5 : 0.0,
               duration: const Duration(milliseconds: 250),
-              child: Container(
-                color: Colors.grey[400],
-              ),
+              child: Container(color: Colors.grey[400]),
             ),
 
           // Back button
@@ -151,7 +149,11 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.white,
+                  size: 28,
+                ),
                 onPressed: () => Navigator.pop(context),
               ),
             ),
@@ -248,9 +250,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
         // Bottom dark area
         Expanded(
           flex: 3,
-          child: Container(
-            color: Colors.black.withValues(alpha: 0.5),
-          ),
+          child: Container(color: Colors.black.withValues(alpha: 0.5)),
         ),
       ],
     );
@@ -288,7 +288,10 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
               icon: const Icon(Icons.settings),
               label: const Text('Open Settings'),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
               ),
             ),
             const SizedBox(height: 12),

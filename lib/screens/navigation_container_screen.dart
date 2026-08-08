@@ -68,7 +68,10 @@ class NavigationContainerScreen extends StatelessWidget {
               onTap: (index) {
                 if (index != 1 && selectedIndex == 1) {
                   // Navigating away from Log tab: Clear the queue and selection
-                  final logProvider = Provider.of<LogProvider>(context, listen: false);
+                  final logProvider = Provider.of<LogProvider>(
+                    context,
+                    listen: false,
+                  );
                   logProvider.clearQueue();
                   logProvider.clearSelection();
                 }
@@ -98,7 +101,9 @@ class NavigationContainerScreen extends StatelessWidget {
             ),
             Text('Protein: ${goalsProvider.currentGoals.protein.toInt()}g'),
             Text('Fat: ${goalsProvider.currentGoals.fat.toInt()}g'),
-            Text('${goalsProvider.useNetCarbs ? 'Net Carbs' : 'Carbs'}: ${goalsProvider.currentGoals.carbs.toInt()}g'),
+            Text(
+              '${goalsProvider.useNetCarbs ? 'Net Carbs' : 'Carbs'}: ${goalsProvider.currentGoals.carbs.toInt()}g',
+            ),
           ],
         ),
         actions: [

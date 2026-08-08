@@ -189,7 +189,11 @@ class _WeightScreenState extends State<WeightScreen> {
           IconButton(
             icon: const Icon(Icons.chevron_left, color: Colors.white),
             onPressed: () => _handleDateChanged(
-              DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day - 1),
+              DateTime(
+                _selectedDate.year,
+                _selectedDate.month,
+                _selectedDate.day - 1,
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -215,8 +219,13 @@ class _WeightScreenState extends State<WeightScreen> {
           const SizedBox(width: 12),
           IconButton(
             icon: const Icon(Icons.chevron_right, color: Colors.white),
-            onPressed: () =>
-                _handleDateChanged(DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day + 1)),
+            onPressed: () => _handleDateChanged(
+              DateTime(
+                _selectedDate.year,
+                _selectedDate.month,
+                _selectedDate.day + 1,
+              ),
+            ),
           ),
         ],
       ),

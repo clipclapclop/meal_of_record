@@ -186,8 +186,7 @@ class NasBackupService {
 
   List<NasBackupFile> _parsePropfindResponse(String xmlBody) {
     final document = XmlDocument.parse(xmlBody);
-    final responses = document.findAllElements('response',
-        namespace: 'DAV:');
+    final responses = document.findAllElements('response', namespace: 'DAV:');
 
     final backups = <NasBackupFile>[];
     final pattern = RegExp(r'meal_of_record_.*\.zip$');
@@ -197,31 +196,34 @@ class NasBackupService {
       if (hrefElement.isEmpty) continue;
 
       final href = hrefElement.first.innerText.trim();
-      final name = Uri.decodeFull(href.split('/').where((s) => s.isNotEmpty).lastOrNull ?? '');
+      final name = Uri.decodeFull(
+        href.split('/').where((s) => s.isNotEmpty).lastOrNull ?? '',
+      );
 
       if (!pattern.hasMatch(name)) continue;
 
       int? size;
       DateTime? modified;
 
-      final sizeElements =
-          resp.findAllElements('getcontentlength', namespace: 'DAV:');
+      final sizeElements = resp.findAllElements(
+        'getcontentlength',
+        namespace: 'DAV:',
+      );
       if (sizeElements.isNotEmpty) {
         size = int.tryParse(sizeElements.first.innerText.trim());
       }
 
-      final modElements =
-          resp.findAllElements('getlastmodified', namespace: 'DAV:');
+      final modElements = resp.findAllElements(
+        'getlastmodified',
+        namespace: 'DAV:',
+      );
       if (modElements.isNotEmpty) {
         modified = HttpDate.parse(modElements.first.innerText.trim());
       }
 
-      backups.add(NasBackupFile(
-        name: name,
-        href: href,
-        size: size,
-        modified: modified,
-      ));
+      backups.add(
+        NasBackupFile(name: name, href: href, size: size, modified: modified),
+      );
     }
 
     // Sort newest first
@@ -298,16 +300,12 @@ class NasBackupService {
     final effectivePort = port ?? (useHttps ? 443 : 80);
 
     // Ensure path ends with / before appending filename
-    final normalizedPath =
-        basePath.endsWith('/') ? basePath : '$basePath/';
-    final fullPath = fileName.isEmpty ? normalizedPath : '$normalizedPath$fileName';
+    final normalizedPath = basePath.endsWith('/') ? basePath : '$basePath/';
+    final fullPath = fileName.isEmpty
+        ? normalizedPath
+        : '$normalizedPath$fileName';
 
-    return Uri(
-      scheme: scheme,
-      host: host,
-      port: effectivePort,
-      path: fullPath,
-    );
+    return Uri(scheme: scheme, host: host, port: effectivePort, path: fullPath);
   }
 
   /// Builds a URI from an absolute href path (as returned by PROPFIND).
@@ -319,11 +317,6 @@ class NasBackupService {
     final scheme = useHttps ? 'https' : 'http';
     final effectivePort = port ?? (useHttps ? 443 : 80);
 
-    return Uri(
-      scheme: scheme,
-      host: host,
-      port: effectivePort,
-      path: href,
-    );
+    return Uri(scheme: scheme, host: host, port: effectivePort, path: href);
   }
 }

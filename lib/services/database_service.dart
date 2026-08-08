@@ -18,7 +18,9 @@ import 'package:meal_of_record/services/backup_config_service.dart';
 import 'package:meal_of_record/models/category.dart' as model;
 import 'package:meal_of_record/models/weight.dart' as model;
 import 'package:meal_of_record/services/live_database.dart';
-import 'package:meal_of_record/services/live_database.dart' as live_db show Food;
+import 'package:meal_of_record/services/live_database.dart'
+    as live_db
+    show Food;
 import 'package:meal_of_record/models/daily_macro_stats.dart' as model_stats;
 import 'package:meal_of_record/services/reference_database.dart'
     hide FoodPortion, FoodsCompanion, FoodPortionsCompanion;
@@ -1104,7 +1106,9 @@ class DatabaseService {
     for (final foodData in refFoodsData) {
       if (!liveSourceIds.contains(foodData.id)) {
         final servings = refServingsMap[foodData.id] ?? [];
-        results.add(_mapFoodData(foodData, servings, model.FoodDatabase.reference));
+        results.add(
+          _mapFoodData(foodData, servings, model.FoodDatabase.reference),
+        );
       }
     }
 
@@ -1272,53 +1276,54 @@ class DatabaseService {
     final food = await (_liveDb.select(
       _liveDb.foods,
     )..where((f) => f.sourceBarcode.equals(barcode))).getSingleOrNull();
-    return food == null ? null : _mapFoodData(food, [], model.FoodDatabase.live);
+    return food == null
+        ? null
+        : _mapFoodData(food, [], model.FoodDatabase.live);
   }
 
   // ========== BARCODE OPERATIONS (NEW TABLE) ==========
 
   /// Get all barcodes associated with a food
   Future<List<String>> getBarcodesByFoodId(int foodId) async {
-    final rows = await (_liveDb.select(_liveDb.foodBarcodes)
-          ..where((b) => b.foodId.equals(foodId)))
-        .get();
+    final rows = await (_liveDb.select(
+      _liveDb.foodBarcodes,
+    )..where((b) => b.foodId.equals(foodId))).get();
     return rows.map((r) => r.barcode).toList();
   }
 
   /// Add a barcode to a food. Returns false if already exists on this food.
   Future<bool> addBarcodeToFood(int foodId, String barcode) async {
     // Check if barcode already exists on this food
-    final existing = await (_liveDb.select(_liveDb.foodBarcodes)
-          ..where((b) => b.foodId.equals(foodId) & b.barcode.equals(barcode)))
-        .getSingleOrNull();
+    final existing =
+        await (_liveDb.select(_liveDb.foodBarcodes)..where(
+              (b) => b.foodId.equals(foodId) & b.barcode.equals(barcode),
+            ))
+            .getSingleOrNull();
 
     if (existing != null) {
       return false; // Already exists on this food
     }
 
-    await _liveDb.into(_liveDb.foodBarcodes).insert(
-          FoodBarcodesCompanion.insert(
-            foodId: foodId,
-            barcode: barcode,
-          ),
-        );
+    await _liveDb
+        .into(_liveDb.foodBarcodes)
+        .insert(FoodBarcodesCompanion.insert(foodId: foodId, barcode: barcode));
     BackupConfigService.instance.markDirty();
     return true;
   }
 
   /// Remove a barcode from a food
   Future<void> removeBarcodeFromFood(int foodId, String barcode) async {
-    await (_liveDb.delete(_liveDb.foodBarcodes)
-          ..where((b) => b.foodId.equals(foodId) & b.barcode.equals(barcode)))
-        .go();
+    await (_liveDb.delete(
+      _liveDb.foodBarcodes,
+    )..where((b) => b.foodId.equals(foodId) & b.barcode.equals(barcode))).go();
     BackupConfigService.instance.markDirty();
   }
 
   /// Get all foods that have a specific barcode (searches new table)
   Future<List<model.Food>> getFoodsByBarcode(String barcode) async {
-    final barcodeRows = await (_liveDb.select(_liveDb.foodBarcodes)
-          ..where((b) => b.barcode.equals(barcode)))
-        .get();
+    final barcodeRows = await (_liveDb.select(
+      _liveDb.foodBarcodes,
+    )..where((b) => b.barcode.equals(barcode))).get();
 
     if (barcodeRows.isEmpty) {
       return [];
@@ -1334,11 +1339,16 @@ class DatabaseService {
   /// Check if a barcode is assigned to another food (not the excluded one)
   /// Returns the other food if found, null otherwise
   Future<model.Food?> isBarcodeOnOtherFood(
-      String barcode, int excludeFoodId) async {
-    final barcodeRow = await (_liveDb.select(_liveDb.foodBarcodes)
-          ..where(
-              (b) => b.barcode.equals(barcode) & b.foodId.isNotValue(excludeFoodId)))
-        .getSingleOrNull();
+    String barcode,
+    int excludeFoodId,
+  ) async {
+    final barcodeRow =
+        await (_liveDb.select(_liveDb.foodBarcodes)..where(
+              (b) =>
+                  b.barcode.equals(barcode) &
+                  b.foodId.isNotValue(excludeFoodId),
+            ))
+            .getSingleOrNull();
 
     if (barcodeRow == null) {
       return null;
@@ -1351,7 +1361,9 @@ class DatabaseService {
     final food = await (_liveDb.select(
       _liveDb.foods,
     )..where((f) => f.sourceFdcId.equals(fdcId))).getSingleOrNull();
-    return food == null ? null : _mapFoodData(food, [], model.FoodDatabase.live);
+    return food == null
+        ? null
+        : _mapFoodData(food, [], model.FoodDatabase.live);
   }
 
   Future<void> logPortions(
@@ -2140,7 +2152,9 @@ class DatabaseService {
     }
 
     final servingsMap = await getServingsForFoods(ids, source);
-    final database = source == 'live' ? model.FoodDatabase.live : model.FoodDatabase.reference;
+    final database = source == 'live'
+        ? model.FoodDatabase.live
+        : model.FoodDatabase.reference;
     final Map<int, model.Food> results = {};
 
     for (final foodData in foodsData) {
@@ -2232,10 +2246,11 @@ class DatabaseService {
       _liveDb.recipes,
     )..where((t) => t.id.equals(id))).getSingle();
 
-    final itemsData = await (_liveDb.select(_liveDb.recipeItems)
-          ..where((t) => t.recipeId.equals(id))
-          ..orderBy([(t) => OrderingTerm.asc(t.position)]))
-        .get();
+    final itemsData =
+        await (_liveDb.select(_liveDb.recipeItems)
+              ..where((t) => t.recipeId.equals(id))
+              ..orderBy([(t) => OrderingTerm.asc(t.position)]))
+            .get();
 
     final items = <model.RecipeItem>[];
     for (final item in itemsData) {
@@ -2606,14 +2621,18 @@ class DatabaseService {
         // Add barcode to existing food if not already present
         if (sourceFood.sourceBarcode != null &&
             sourceFood.sourceBarcode!.isNotEmpty) {
-          final existingBarcode = await (_liveDb.select(_liveDb.foodBarcodes)
-                ..where((b) =>
-                    b.foodId.equals(existing.id) &
-                    b.barcode.equals(sourceFood.sourceBarcode!)))
-              .getSingleOrNull();
+          final existingBarcode =
+              await (_liveDb.select(_liveDb.foodBarcodes)..where(
+                    (b) =>
+                        b.foodId.equals(existing.id) &
+                        b.barcode.equals(sourceFood.sourceBarcode!),
+                  ))
+                  .getSingleOrNull();
 
           if (existingBarcode == null) {
-            await _liveDb.into(_liveDb.foodBarcodes).insert(
+            await _liveDb
+                .into(_liveDb.foodBarcodes)
+                .insert(
                   FoodBarcodesCompanion.insert(
                     foodId: existing.id,
                     barcode: sourceFood.sourceBarcode!,
@@ -2669,14 +2688,18 @@ class DatabaseService {
       if (sourceFood.sourceBarcode != null &&
           sourceFood.sourceBarcode!.isNotEmpty) {
         // Check if this barcode is already on this food (shouldn't happen, but be safe)
-        final existingBarcode = await (_liveDb.select(_liveDb.foodBarcodes)
-              ..where((b) =>
-                  b.foodId.equals(foodId) &
-                  b.barcode.equals(sourceFood.sourceBarcode!)))
-            .getSingleOrNull();
+        final existingBarcode =
+            await (_liveDb.select(_liveDb.foodBarcodes)..where(
+                  (b) =>
+                      b.foodId.equals(foodId) &
+                      b.barcode.equals(sourceFood.sourceBarcode!),
+                ))
+                .getSingleOrNull();
 
         if (existingBarcode == null) {
-          await _liveDb.into(_liveDb.foodBarcodes).insert(
+          await _liveDb
+              .into(_liveDb.foodBarcodes)
+              .insert(
                 FoodBarcodesCompanion.insert(
                   foodId: foodId,
                   barcode: sourceFood.sourceBarcode!,
@@ -2739,15 +2762,21 @@ class DatabaseService {
   /// Query only live database foods by name
   Future<List<model.Food>> searchLiveFoodsByName(String query) async {
     if (query.isEmpty) return [];
-    final normalized = query.replaceAll(',', ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+    final normalized = query
+        .replaceAll(',', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
     final lowerCaseQuery = '%${normalized.toLowerCase()}%';
 
     final liveFoodsData =
         await (_liveDb.select(_liveDb.foods)
-              ..where((f) => FunctionCallExpression<String>(
-                'replace',
-                [f.name.lower(), const Constant(','), const Constant(' ')],
-              ).like(lowerCaseQuery))
+              ..where(
+                (f) => FunctionCallExpression<String>('replace', [
+                  f.name.lower(),
+                  const Constant(','),
+                  const Constant(' '),
+                ]).like(lowerCaseQuery),
+              )
               ..where((f) => f.hidden.equals(false)))
             .get();
 
@@ -2783,22 +2812,34 @@ class DatabaseService {
   /// Query only reference database foods by name
   Future<List<model.Food>> searchReferenceFoodsByName(String query) async {
     if (query.isEmpty) return [];
-    final normalized = query.replaceAll(',', ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+    final normalized = query
+        .replaceAll(',', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
     final lowerCaseQuery = '%${normalized.toLowerCase()}%';
 
-    final refFoodsData = await (_referenceDb.select(
-      _referenceDb.foods,
-    )..where((f) => FunctionCallExpression<String>(
-      'replace',
-      [f.name.lower(), const Constant(','), const Constant(' ')],
-    ).like(lowerCaseQuery))).get();
+    final refFoodsData =
+        await (_referenceDb.select(_referenceDb.foods)..where(
+              (f) => FunctionCallExpression<String>('replace', [
+                f.name.lower(),
+                const Constant(','),
+                const Constant(' '),
+              ]).like(lowerCaseQuery),
+            ))
+            .get();
 
     final idsToFetch = refFoodsData.map((f) => f.id).toList();
     final servingsMap = await getServingsForFoods(idsToFetch, 'reference');
 
     final List<model.Food> refFoods = [];
     for (final foodData in refFoodsData) {
-      refFoods.add(_mapFoodData(foodData, servingsMap[foodData.id] ?? [], model.FoodDatabase.reference));
+      refFoods.add(
+        _mapFoodData(
+          foodData,
+          servingsMap[foodData.id] ?? [],
+          model.FoodDatabase.reference,
+        ),
+      );
     }
 
     return refFoods;
@@ -2884,8 +2925,9 @@ class DatabaseService {
         .subtract(Duration(days: lookbackDays))
         .millisecondsSinceEpoch;
 
-    final rows = await _liveDb.customSelect(
-      '''
+    final rows = await _liveDb
+        .customSelect(
+          '''
       SELECT lp.loggedFoodId AS foodId, lp.log_timestamp
       FROM logged_portions lp
       INNER JOIN foods f ON f.id = lp.loggedFoodId
@@ -2899,8 +2941,9 @@ class DatabaseService {
         )
       ORDER BY lp.log_timestamp DESC
       ''',
-      variables: [Variable.withInt(cutoff)],
-    ).get();
+          variables: [Variable.withInt(cutoff)],
+        )
+        .get();
 
     return rows.map((row) {
       return (
@@ -3035,10 +3078,11 @@ class DatabaseService {
   /// This food has 1 calorie per gram, 0 for other macros.
   Future<model.Food> getSystemQuickAddFood() async {
     // Try to find existing system Quick Add food
-    final existingData = await (_liveDb.select(_liveDb.foods)
-          ..where((f) => f.name.equals('Quick Add'))
-          ..where((f) => f.source.equals('system')))
-        .getSingleOrNull();
+    final existingData =
+        await (_liveDb.select(_liveDb.foods)
+              ..where((f) => f.name.equals('Quick Add'))
+              ..where((f) => f.source.equals('system')))
+            .getSingleOrNull();
 
     if (existingData != null) {
       final servings = await getServingsForFood(existingData.id, 'live');
@@ -3046,29 +3090,33 @@ class DatabaseService {
     }
 
     // Create the system Quick Add food
-    final foodId = await _liveDb.into(_liveDb.foods).insert(
-      FoodsCompanion.insert(
-        name: 'Quick Add',
-        source: 'system',
-        caloriesPerGram: 1.0, // 1 cal per gram
-        proteinPerGram: 0.0,
-        fatPerGram: 0.0,
-        carbsPerGram: 0.0,
-        fiberPerGram: 0.0,
-        emoji: const Value('⚡'),
-        hidden: const Value(true),
-      ),
-    );
+    final foodId = await _liveDb
+        .into(_liveDb.foods)
+        .insert(
+          FoodsCompanion.insert(
+            name: 'Quick Add',
+            source: 'system',
+            caloriesPerGram: 1.0, // 1 cal per gram
+            proteinPerGram: 0.0,
+            fatPerGram: 0.0,
+            carbsPerGram: 0.0,
+            fiberPerGram: 0.0,
+            emoji: const Value('⚡'),
+            hidden: const Value(true),
+          ),
+        );
 
     // Add gram serving
-    await _liveDb.into(_liveDb.foodPortions).insert(
-      FoodPortionsCompanion.insert(
-        foodId: foodId,
-        unit: 'g',
-        grams: 1.0,
-        quantity: 1.0,
-      ),
-    );
+    await _liveDb
+        .into(_liveDb.foodPortions)
+        .insert(
+          FoodPortionsCompanion.insert(
+            foodId: foodId,
+            unit: 'g',
+            grams: 1.0,
+            quantity: 1.0,
+          ),
+        );
 
     return model.Food(
       id: foodId,
@@ -3102,17 +3150,17 @@ class DatabaseService {
 
   Future<Set<int>> getFoodIdsWithBarcodes(List<int> foodIds) async {
     if (foodIds.isEmpty) return {};
-    final rows = await (_liveDb.select(_liveDb.foodBarcodes)
-          ..where((t) => t.foodId.isIn(foodIds)))
-        .get();
+    final rows = await (_liveDb.select(
+      _liveDb.foodBarcodes,
+    )..where((t) => t.foodId.isIn(foodIds))).get();
     return rows.map((r) => r.foodId).toSet();
   }
 
   Future<Map<int, int>> getRecipeUsageCounts(List<int> foodIds) async {
     if (foodIds.isEmpty) return {};
-    final rows = await (_liveDb.select(_liveDb.recipeItems)
-          ..where((t) => t.ingredientFoodId.isIn(foodIds)))
-        .get();
+    final rows = await (_liveDb.select(
+      _liveDb.recipeItems,
+    )..where((t) => t.ingredientFoodId.isIn(foodIds))).get();
     final Map<int, int> counts = {for (final id in foodIds) id: 0};
     for (final row in rows) {
       final fid = row.ingredientFoodId;
@@ -3129,9 +3177,9 @@ class DatabaseService {
   /// historically from a "rev on rename" bug). Surfacing them as merge
   /// candidates lets the user consolidate the chain even when macros drifted.
   Future<List<List<model.Food>>> findVersionChainGroups() async {
-    final liveRows = await (_liveDb.select(_liveDb.foods)
-          ..where((f) => f.source.equals('system').not()))
-        .get();
+    final liveRows = await (_liveDb.select(
+      _liveDb.foods,
+    )..where((f) => f.source.equals('system').not())).get();
     if (liveRows.length < 2) return [];
 
     final idToIndex = <int, int>{
@@ -3147,6 +3195,7 @@ class DatabaseService {
       }
       return i;
     }
+
     void union(int a, int b) {
       final ra = find(a), rb = find(b);
       if (ra != rb) parent[ra] = rb;
@@ -3169,22 +3218,26 @@ class DatabaseService {
       // Only keep clusters that actually have an edge — singletons stay out.
       byRoot.putIfAbsent(r, () => []).add(i);
     }
-    final groupIndices =
-        byRoot.values.where((g) => g.length >= 2).toList();
+    final groupIndices = byRoot.values.where((g) => g.length >= 2).toList();
     if (groupIndices.isEmpty) return [];
 
-    final allIds =
-        groupIndices.expand((g) => g.map((i) => liveRows[i].id)).toList();
+    final allIds = groupIndices
+        .expand((g) => g.map((i) => liveRows[i].id))
+        .toList();
     final servingsMap = await getServingsForFoods(allIds, 'live');
 
     return groupIndices
-        .map((g) => g
-            .map((i) => _mapFoodData(
+        .map(
+          (g) => g
+              .map(
+                (i) => _mapFoodData(
                   liveRows[i],
                   servingsMap[liveRows[i].id] ?? [],
                   model.FoodDatabase.live,
-                ))
-            .toList())
+                ),
+              )
+              .toList(),
+        )
         .toList();
   }
 
@@ -3195,17 +3248,20 @@ class DatabaseService {
     // provenance (e.g., 'off' for OpenFoodFacts imports, 'FOUNDATION' for
     // USDA imports) — these are all legitimate merge candidates. Only the
     // 'system' pseudo-foods (Quick Add, Fasted) are excluded.
-    final liveRows = await (_liveDb.select(_liveDb.foods)
-          ..where((f) => f.source.equals('system').not()))
-        .get();
+    final liveRows = await (_liveDb.select(
+      _liveDb.foods,
+    )..where((f) => f.source.equals('system').not())).get();
 
     if (liveRows.length < 2) return [];
 
     final threshold = thresholdPct / 100.0;
     bool macrosMatch(dynamic a, dynamic b) {
       bool within(double x, double y) {
-        return (x - y).abs() <= [x.abs(), y.abs(), 0.001].reduce((m, n) => m > n ? m : n) * threshold;
+        return (x - y).abs() <=
+            [x.abs(), y.abs(), 0.001].reduce((m, n) => m > n ? m : n) *
+                threshold;
       }
+
       return within(a.caloriesPerGram, b.caloriesPerGram) &&
           within(a.proteinPerGram, b.proteinPerGram) &&
           within(a.fatPerGram, b.fatPerGram) &&
@@ -3222,6 +3278,7 @@ class DatabaseService {
       }
       return i;
     }
+
     void union(int a, int b) {
       final ra = find(a), rb = find(b);
       if (ra != rb) parent[ra] = rb;
@@ -3241,38 +3298,44 @@ class DatabaseService {
     final groupIndices = byRoot.values.where((g) => g.length >= 2).toList();
     if (groupIndices.isEmpty) return [];
 
-    final allIds = groupIndices.expand((g) => g.map((i) => liveRows[i].id)).toList();
+    final allIds = groupIndices
+        .expand((g) => g.map((i) => liveRows[i].id))
+        .toList();
     final servingsMap = await getServingsForFoods(allIds, 'live');
 
     return groupIndices
-        .map((g) => g
-            .map((i) => _mapFoodData(
+        .map(
+          (g) => g
+              .map(
+                (i) => _mapFoodData(
                   liveRows[i],
                   servingsMap[liveRows[i].id] ?? [],
                   model.FoodDatabase.live,
-                ))
-            .toList())
+                ),
+              )
+              .toList(),
+        )
         .toList();
   }
 
   Future<MergePredictedCounts> getMergePredictedCounts({
     required int loserId,
   }) async {
-    final logs = await (_liveDb.select(_liveDb.loggedPortions)
-          ..where((t) => t.foodId.equals(loserId)))
-        .get();
-    final recipeItems = await (_liveDb.select(_liveDb.recipeItems)
-          ..where((t) => t.ingredientFoodId.equals(loserId)))
-        .get();
-    final parentChains = await (_liveDb.select(_liveDb.foods)
-          ..where((t) => t.parentId.equals(loserId)))
-        .get();
-    final portions = await (_liveDb.select(_liveDb.foodPortions)
-          ..where((t) => t.foodId.equals(loserId)))
-        .get();
-    final barcodes = await (_liveDb.select(_liveDb.foodBarcodes)
-          ..where((t) => t.foodId.equals(loserId)))
-        .get();
+    final logs = await (_liveDb.select(
+      _liveDb.loggedPortions,
+    )..where((t) => t.foodId.equals(loserId))).get();
+    final recipeItems = await (_liveDb.select(
+      _liveDb.recipeItems,
+    )..where((t) => t.ingredientFoodId.equals(loserId))).get();
+    final parentChains = await (_liveDb.select(
+      _liveDb.foods,
+    )..where((t) => t.parentId.equals(loserId))).get();
+    final portions = await (_liveDb.select(
+      _liveDb.foodPortions,
+    )..where((t) => t.foodId.equals(loserId))).get();
+    final barcodes = await (_liveDb.select(
+      _liveDb.foodBarcodes,
+    )..where((t) => t.foodId.equals(loserId))).get();
     return MergePredictedCounts(
       loggedToRepoint: logs.length,
       recipeToRepoint: recipeItems.length,
@@ -3289,12 +3352,12 @@ class DatabaseService {
     if (keeperId == loserId) {
       throw ArgumentError('keeperId and loserId must differ');
     }
-    final keeper = await (_liveDb.select(_liveDb.foods)
-          ..where((t) => t.id.equals(keeperId)))
-        .getSingleOrNull();
-    final loser = await (_liveDb.select(_liveDb.foods)
-          ..where((t) => t.id.equals(loserId)))
-        .getSingleOrNull();
+    final keeper = await (_liveDb.select(
+      _liveDb.foods,
+    )..where((t) => t.id.equals(keeperId))).getSingleOrNull();
+    final loser = await (_liveDb.select(
+      _liveDb.foods,
+    )..where((t) => t.id.equals(loserId))).getSingleOrNull();
     if (keeper == null || loser == null) {
       throw ArgumentError('keeper or loser not found');
     }
@@ -3302,82 +3365,82 @@ class DatabaseService {
       throw ArgumentError('system foods cannot be merged');
     }
 
-    final sampleTimestampRows = await (_liveDb.select(_liveDb.loggedPortions)
-          ..where((t) => t.foodId.equals(loserId))
-          ..limit(5))
-        .get();
-    final sampleTimestamps =
-        sampleTimestampRows.map((r) => r.logTimestamp).toList();
+    final sampleTimestampRows =
+        await (_liveDb.select(_liveDb.loggedPortions)
+              ..where((t) => t.foodId.equals(loserId))
+              ..limit(5))
+            .get();
+    final sampleTimestamps = sampleTimestampRows
+        .map((r) => r.logTimestamp)
+        .toList();
 
     final result = await _liveDb.transaction(() async {
-      final expectedLogs = (await (_liveDb.select(_liveDb.loggedPortions)
+      final expectedLogs = (await (_liveDb.select(
+        _liveDb.loggedPortions,
+      )..where((t) => t.foodId.equals(loserId))).get()).length;
+      final actualLogs =
+          await (_liveDb.update(_liveDb.loggedPortions)
                 ..where((t) => t.foodId.equals(loserId)))
-              .get())
-          .length;
-      final actualLogs = await (_liveDb.update(_liveDb.loggedPortions)
-            ..where((t) => t.foodId.equals(loserId)))
-          .write(LoggedPortionsCompanion(foodId: Value(keeperId)));
+              .write(LoggedPortionsCompanion(foodId: Value(keeperId)));
       if (actualLogs != expectedLogs) {
         throw MergeIntegrityException(
           'logged_portions: wrote $actualLogs, expected $expectedLogs',
         );
       }
 
-      final expectedRecipe = (await (_liveDb.select(_liveDb.recipeItems)
+      final expectedRecipe = (await (_liveDb.select(
+        _liveDb.recipeItems,
+      )..where((t) => t.ingredientFoodId.equals(loserId))).get()).length;
+      final actualRecipe =
+          await (_liveDb.update(_liveDb.recipeItems)
                 ..where((t) => t.ingredientFoodId.equals(loserId)))
-              .get())
-          .length;
-      final actualRecipe = await (_liveDb.update(_liveDb.recipeItems)
-            ..where((t) => t.ingredientFoodId.equals(loserId)))
-          .write(RecipeItemsCompanion(ingredientFoodId: Value(keeperId)));
+              .write(RecipeItemsCompanion(ingredientFoodId: Value(keeperId)));
       if (actualRecipe != expectedRecipe) {
         throw MergeIntegrityException(
           'recipe_items: wrote $actualRecipe, expected $expectedRecipe',
         );
       }
 
-      final expectedParent = (await (_liveDb.select(_liveDb.foods)
+      final expectedParent = (await (_liveDb.select(
+        _liveDb.foods,
+      )..where((t) => t.parentId.equals(loserId))).get()).length;
+      final actualParent =
+          await (_liveDb.update(_liveDb.foods)
                 ..where((t) => t.parentId.equals(loserId)))
-              .get())
-          .length;
-      final actualParent = await (_liveDb.update(_liveDb.foods)
-            ..where((t) => t.parentId.equals(loserId)))
-          .write(FoodsCompanion(parentId: Value(keeperId)));
+              .write(FoodsCompanion(parentId: Value(keeperId)));
       if (actualParent != expectedParent) {
         throw MergeIntegrityException(
           'foods.parentId: wrote $actualParent, expected $expectedParent',
         );
       }
 
-      final expectedPortions = (await (_liveDb.select(_liveDb.foodPortions)
-                ..where((t) => t.foodId.equals(loserId)))
-              .get())
-          .length;
-      final actualPortions = await (_liveDb.delete(_liveDb.foodPortions)
-            ..where((t) => t.foodId.equals(loserId)))
-          .go();
+      final expectedPortions = (await (_liveDb.select(
+        _liveDb.foodPortions,
+      )..where((t) => t.foodId.equals(loserId))).get()).length;
+      final actualPortions = await (_liveDb.delete(
+        _liveDb.foodPortions,
+      )..where((t) => t.foodId.equals(loserId))).go();
       if (actualPortions != expectedPortions) {
         throw MergeIntegrityException(
           'food_portions: deleted $actualPortions, expected $expectedPortions',
         );
       }
 
-      final expectedBarcodes = (await (_liveDb.select(_liveDb.foodBarcodes)
-                ..where((t) => t.foodId.equals(loserId)))
-              .get())
-          .length;
-      final actualBarcodes = await (_liveDb.delete(_liveDb.foodBarcodes)
-            ..where((t) => t.foodId.equals(loserId)))
-          .go();
+      final expectedBarcodes = (await (_liveDb.select(
+        _liveDb.foodBarcodes,
+      )..where((t) => t.foodId.equals(loserId))).get()).length;
+      final actualBarcodes = await (_liveDb.delete(
+        _liveDb.foodBarcodes,
+      )..where((t) => t.foodId.equals(loserId))).go();
       if (actualBarcodes != expectedBarcodes) {
         throw MergeIntegrityException(
           'food_barcodes: deleted $actualBarcodes, expected $expectedBarcodes',
         );
       }
 
-      final foodDeleted = await (_liveDb.delete(_liveDb.foods)
-            ..where((t) => t.id.equals(loserId)))
-          .go();
+      final foodDeleted = await (_liveDb.delete(
+        _liveDb.foods,
+      )..where((t) => t.id.equals(loserId))).go();
       if (foodDeleted != 1) {
         throw MergeIntegrityException(
           'foods: deleted $foodDeleted, expected 1',
@@ -3396,31 +3459,36 @@ class DatabaseService {
       );
     });
 
-    final orphanLogs = (await (_liveDb.select(_liveDb.loggedPortions)
-              ..where((t) => t.foodId.equals(loserId))
-              ..limit(1))
-            .get())
-        .length;
-    final orphanRecipe = (await (_liveDb.select(_liveDb.recipeItems)
-              ..where((t) => t.ingredientFoodId.equals(loserId))
-              ..limit(1))
-            .get())
-        .length;
-    final orphanParent = (await (_liveDb.select(_liveDb.foods)
-              ..where((t) => t.parentId.equals(loserId))
-              ..limit(1))
-            .get())
-        .length;
-    final orphanPortions = (await (_liveDb.select(_liveDb.foodPortions)
-              ..where((t) => t.foodId.equals(loserId))
-              ..limit(1))
-            .get())
-        .length;
-    final orphanBarcodes = (await (_liveDb.select(_liveDb.foodBarcodes)
-              ..where((t) => t.foodId.equals(loserId))
-              ..limit(1))
-            .get())
-        .length;
+    final orphanLogs =
+        (await (_liveDb.select(_liveDb.loggedPortions)
+                  ..where((t) => t.foodId.equals(loserId))
+                  ..limit(1))
+                .get())
+            .length;
+    final orphanRecipe =
+        (await (_liveDb.select(_liveDb.recipeItems)
+                  ..where((t) => t.ingredientFoodId.equals(loserId))
+                  ..limit(1))
+                .get())
+            .length;
+    final orphanParent =
+        (await (_liveDb.select(_liveDb.foods)
+                  ..where((t) => t.parentId.equals(loserId))
+                  ..limit(1))
+                .get())
+            .length;
+    final orphanPortions =
+        (await (_liveDb.select(_liveDb.foodPortions)
+                  ..where((t) => t.foodId.equals(loserId))
+                  ..limit(1))
+                .get())
+            .length;
+    final orphanBarcodes =
+        (await (_liveDb.select(_liveDb.foodBarcodes)
+                  ..where((t) => t.foodId.equals(loserId))
+                  ..limit(1))
+                .get())
+            .length;
     if (orphanLogs +
             orphanRecipe +
             orphanParent +

@@ -146,7 +146,8 @@ class RecipeProvider extends ChangeNotifier {
       _items.fold(0, (sum, item) => sum + (item.carbs * item.grams));
   double get totalFiber =>
       _items.fold(0, (sum, item) => sum + (item.fiber * item.grams));
-  double get totalNetCarbs => (totalCarbs - totalFiber).clamp(0.0, double.infinity);
+  double get totalNetCarbs =>
+      (totalCarbs - totalFiber).clamp(0.0, double.infinity);
 
   double get caloriesPerPortion =>
       servingsCreated > 0 ? totalCalories / servingsCreated : 0;

@@ -86,7 +86,9 @@ class SearchService {
     final normalizedQuery = _normalizeQuery(query);
 
     // 1. Query live and reference databases separately
-    final liveFoods = await databaseService.searchLiveFoodsByName(normalizedQuery);
+    final liveFoods = await databaseService.searchLiveFoodsByName(
+      normalizedQuery,
+    );
     final referenceFoods = await databaseService.searchReferenceFoodsByName(
       normalizedQuery,
     );
@@ -125,7 +127,8 @@ class SearchService {
     final resultsWithEmoji = limitedResults
         .map(
           (food) => food.copyWith(
-            emoji: (food.emoji == null || food.emoji == '🍴' || food.emoji == '')
+            emoji:
+                (food.emoji == null || food.emoji == '🍴' || food.emoji == '')
                 ? emojiForFoodName(food.name)
                 : food.emoji,
           ),
@@ -165,7 +168,8 @@ class SearchService {
     final resultsWithEmoji = orderedFoods
         .map(
           (food) => food.copyWith(
-            emoji: (food.emoji == null || food.emoji == '🍴' || food.emoji == '')
+            emoji:
+                (food.emoji == null || food.emoji == '🍴' || food.emoji == '')
                 ? emojiForFoodName(food.name)
                 : food.emoji,
           ),
@@ -185,7 +189,8 @@ class SearchService {
     final resultsWithEmoji = offResults
         .map(
           (food) => food.copyWith(
-            emoji: (food.emoji == null || food.emoji == '🍴' || food.emoji == '')
+            emoji:
+                (food.emoji == null || food.emoji == '🍴' || food.emoji == '')
                 ? emojiForFoodName(food.name)
                 : food.emoji,
           ),

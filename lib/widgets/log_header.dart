@@ -58,7 +58,11 @@ class _LogHeaderState extends State<LogHeader> {
                 icon: const Icon(Icons.chevron_left, color: Colors.white),
                 onPressed: () {
                   widget.onDateChanged(
-                    DateTime(widget.date.year, widget.date.month, widget.date.day - 1),
+                    DateTime(
+                      widget.date.year,
+                      widget.date.month,
+                      widget.date.day - 1,
+                    ),
                   );
                 },
               ),
@@ -76,7 +80,11 @@ class _LogHeaderState extends State<LogHeader> {
                 icon: const Icon(Icons.chevron_right, color: Colors.white),
                 onPressed: () {
                   widget.onDateChanged(
-                    DateTime(widget.date.year, widget.date.month, widget.date.day + 1),
+                    DateTime(
+                      widget.date.year,
+                      widget.date.month,
+                      widget.date.day + 1,
+                    ),
                   );
                 },
               ),

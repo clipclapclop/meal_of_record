@@ -29,18 +29,38 @@ class LogProvider extends ChangeNotifier {
   final Set<int> _selectedPortionIds = {};
 
   // Computed getters — logged macros
-  double get loggedCalories => _loggedPortion.fold(0.0, (sum, item) => sum + item.portion.food.calories * item.portion.grams);
-  double get loggedProtein => _loggedPortion.fold(0.0, (sum, item) => sum + item.portion.food.protein * item.portion.grams);
-  double get loggedFat => _loggedPortion.fold(0.0, (sum, item) => sum + item.portion.food.fat * item.portion.grams);
-  double get loggedCarbs => _loggedPortion.fold(0.0, (sum, item) => sum + item.portion.food.carbs * item.portion.grams);
-  double get loggedFiber => _loggedPortion.fold(0.0, (sum, item) => sum + item.portion.food.fiber * item.portion.grams);
+  double get loggedCalories => _loggedPortion.fold(
+    0.0,
+    (sum, item) => sum + item.portion.food.calories * item.portion.grams,
+  );
+  double get loggedProtein => _loggedPortion.fold(
+    0.0,
+    (sum, item) => sum + item.portion.food.protein * item.portion.grams,
+  );
+  double get loggedFat => _loggedPortion.fold(
+    0.0,
+    (sum, item) => sum + item.portion.food.fat * item.portion.grams,
+  );
+  double get loggedCarbs => _loggedPortion.fold(
+    0.0,
+    (sum, item) => sum + item.portion.food.carbs * item.portion.grams,
+  );
+  double get loggedFiber => _loggedPortion.fold(
+    0.0,
+    (sum, item) => sum + item.portion.food.fiber * item.portion.grams,
+  );
 
   // Computed getters — queued macros
-  double get queuedCalories => _logQueue.fold(0.0, (sum, item) => sum + item.food.calories * item.grams);
-  double get queuedProtein => _logQueue.fold(0.0, (sum, item) => sum + item.food.protein * item.grams);
-  double get queuedFat => _logQueue.fold(0.0, (sum, item) => sum + item.food.fat * item.grams);
-  double get queuedCarbs => _logQueue.fold(0.0, (sum, item) => sum + item.food.carbs * item.grams);
-  double get queuedFiber => _logQueue.fold(0.0, (sum, item) => sum + item.food.fiber * item.grams);
+  double get queuedCalories =>
+      _logQueue.fold(0.0, (sum, item) => sum + item.food.calories * item.grams);
+  double get queuedProtein =>
+      _logQueue.fold(0.0, (sum, item) => sum + item.food.protein * item.grams);
+  double get queuedFat =>
+      _logQueue.fold(0.0, (sum, item) => sum + item.food.fat * item.grams);
+  double get queuedCarbs =>
+      _logQueue.fold(0.0, (sum, item) => sum + item.food.carbs * item.grams);
+  double get queuedFiber =>
+      _logQueue.fold(0.0, (sum, item) => sum + item.food.fiber * item.grams);
 
   // Total getters
   double get totalCalories => loggedCalories + queuedCalories;
@@ -50,9 +70,12 @@ class LogProvider extends ChangeNotifier {
   double get totalFiber => loggedFiber + queuedFiber;
 
   // Net carb getters (gross carbs minus fiber, clamped to 0)
-  double get loggedNetCarbs => (loggedCarbs - loggedFiber).clamp(0.0, double.infinity);
-  double get queuedNetCarbs => (queuedCarbs - queuedFiber).clamp(0.0, double.infinity);
-  double get totalNetCarbs => (totalCarbs - totalFiber).clamp(0.0, double.infinity);
+  double get loggedNetCarbs =>
+      (loggedCarbs - loggedFiber).clamp(0.0, double.infinity);
+  double get queuedNetCarbs =>
+      (queuedCarbs - queuedFiber).clamp(0.0, double.infinity);
+  double get totalNetCarbs =>
+      (totalCarbs - totalFiber).clamp(0.0, double.infinity);
 
   List<model.FoodPortion> get logQueue => _logQueue;
   List<model.LoggedPortion> get loggedPortion => _loggedPortion;

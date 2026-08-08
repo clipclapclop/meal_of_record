@@ -96,7 +96,7 @@ class _SearchRibbonState extends State<SearchRibbon> {
                       if (!_clearing) {
                         // Call onChanged first to set the query in SearchProvider
                         widget.onChanged?.call(value);
-                        
+
                         // Then auto-switch from food tab to text tab if needed
                         // This order is important: the query must be set before switching modes
                         // to prevent the _onSearchProviderChanged listener from clearing the text

@@ -94,9 +94,7 @@ class _QuantityEditScreenState extends State<QuantityEditScreen> {
     // Extract suffix if present (e.g., " cal", " g protein")
     final suffixMatch = RegExp(r'(\s+[a-zA-Z].*)$').firstMatch(text);
     final suffix = suffixMatch?.group(0) ?? '';
-    final expression = text
-        .replaceAll(RegExp(r'\s+[a-zA-Z].*$'), '')
-        .trim();
+    final expression = text.replaceAll(RegExp(r'\s+[a-zA-Z].*$'), '').trim();
 
     // Skip if it's already just a number (no math operators)
     if (double.tryParse(expression) != null) return;
@@ -118,8 +116,9 @@ class _QuantityEditScreenState extends State<QuantityEditScreen> {
     // Format result and replace
     final formatted = _formatResult(result);
     setState(() {
-      _quantityController.text =
-          suffix.isNotEmpty ? '$formatted$suffix' : formatted;
+      _quantityController.text = suffix.isNotEmpty
+          ? '$formatted$suffix'
+          : formatted;
     });
   }
 
@@ -131,9 +130,9 @@ class _QuantityEditScreenState extends State<QuantityEditScreen> {
   }
 
   void _showExpressionError() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Invalid expression')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Invalid expression')));
   }
 
   @override
@@ -194,7 +193,10 @@ class _QuantityEditScreenState extends State<QuantityEditScreen> {
                   Center(
                     child: TextButton.icon(
                       onPressed: () {
-                        launchUrl(Uri.parse(_recipeLink!), mode: LaunchMode.externalApplication);
+                        launchUrl(
+                          Uri.parse(_recipeLink!),
+                          mode: LaunchMode.externalApplication,
+                        );
                       },
                       icon: const Icon(Icons.link, size: 18),
                       label: Text(
@@ -231,83 +233,122 @@ class _QuantityEditScreenState extends State<QuantityEditScreen> {
     final currentGrams = _calculateCurrentGrams();
     final food = _food;
 
-    return Consumer4<LogProvider, RecipeProvider, GoalsProvider, NavigationProvider>(
-      builder: (context, logProvider, recipeProvider, goalsProvider, navProvider, _) {
-        final isRecipe = widget.config.context == QuantityEditContext.recipe;
-        final showConsumed = navProvider.showConsumed;
+    return Consumer4<
+      LogProvider,
+      RecipeProvider,
+      GoalsProvider,
+      NavigationProvider
+    >(
+      builder:
+          (
+            context,
+            logProvider,
+            recipeProvider,
+            goalsProvider,
+            navProvider,
+            _,
+          ) {
+            final isRecipe =
+                widget.config.context == QuantityEditContext.recipe;
+            final showConsumed = navProvider.showConsumed;
 
-        final servings =
-            (isRecipe &&
-                widget.config.recipeServings != null &&
-                widget.config.recipeServings! > 0)
-            ? widget.config.recipeServings!
-            : 1.0;
+            final servings =
+                (isRecipe &&
+                    widget.config.recipeServings != null &&
+                    widget.config.recipeServings! > 0)
+                ? widget.config.recipeServings!
+                : 1.0;
 
-        final divisor = (isRecipe && _isPerServing) ? servings : 1.0;
+            final divisor = (isRecipe && _isPerServing) ? servings : 1.0;
 
-        final useNetCarbs = goalsProvider.useNetCarbs;
+            final useNetCarbs = goalsProvider.useNetCarbs;
 
-        // 1. Item Macros
-        final itemValues = QuantityEditUtils.calculatePortionMacros(
-          food,
-          currentGrams,
-          divisor,
-          useNetCarbs: useNetCarbs,
-        );
+            // 1. Item Macros
+            final itemValues = QuantityEditUtils.calculatePortionMacros(
+              food,
+              currentGrams,
+              divisor,
+              useNetCarbs: useNetCarbs,
+            );
 
-        // 2. Parent Macros (Projected)
-        final parentValues = QuantityEditUtils.calculateParentProjectedMacros(
-          totalCalories: isRecipe
-              ? recipeProvider.totalCalories
-              : logProvider.totalCalories,
-          totalProtein: isRecipe
-              ? recipeProvider.totalProtein
-              : logProvider.totalProtein,
-          totalFat: isRecipe ? recipeProvider.totalFat : logProvider.totalFat,
-          totalCarbs: isRecipe
-              ? recipeProvider.totalCarbs
-              : (useNetCarbs ? logProvider.totalNetCarbs : logProvider.totalCarbs),
-          totalFiber: isRecipe
-              ? recipeProvider.totalFiber
-              : logProvider.totalFiber,
-          food: food,
-          currentGrams: currentGrams,
-          originalGrams: widget.config.originalGrams,
-          divisor: divisor,
-        );
+            // 2. Parent Macros (Projected)
+            final parentValues =
+                QuantityEditUtils.calculateParentProjectedMacros(
+                  totalCalories: isRecipe
+                      ? recipeProvider.totalCalories
+                      : logProvider.totalCalories,
+                  totalProtein: isRecipe
+                      ? recipeProvider.totalProtein
+                      : logProvider.totalProtein,
+                  totalFat: isRecipe
+                      ? recipeProvider.totalFat
+                      : logProvider.totalFat,
+                  totalCarbs: isRecipe
+                      ? recipeProvider.totalCarbs
+                      : (useNetCarbs
+                            ? logProvider.totalNetCarbs
+                            : logProvider.totalCarbs),
+                  totalFiber: isRecipe
+                      ? recipeProvider.totalFiber
+                      : logProvider.totalFiber,
+                  food: food,
+                  currentGrams: currentGrams,
+                  originalGrams: widget.config.originalGrams,
+                  divisor: divisor,
+                );
 
-        final dailyGoals = _getGoals(goalsProvider);
-        Map<String, double> portionTargets = dailyGoals;
+            final dailyGoals = _getGoals(goalsProvider);
+            Map<String, double> portionTargets = dailyGoals;
 
-        if (!showConsumed && !isRecipe) {
-          final og = widget.config.originalGrams;
-          portionTargets = {
-            'Calories': (dailyGoals['Calories']! - logProvider.totalCalories + food.calories * og).clamp(0, double.infinity),
-            'Protein': (dailyGoals['Protein']! - logProvider.totalProtein + food.protein * og).clamp(0, double.infinity),
-            'Fat': (dailyGoals['Fat']! - logProvider.totalFat + food.fat * og).clamp(0, double.infinity),
-            'Carbs': (dailyGoals['Carbs']! - (useNetCarbs ? logProvider.totalNetCarbs : logProvider.totalCarbs) + (useNetCarbs ? food.netCarbs : food.carbs) * og).clamp(0, double.infinity),
-            'Fiber': (dailyGoals['Fiber']! - logProvider.totalFiber + food.fiber * og).clamp(0, double.infinity),
-          };
-        }
+            if (!showConsumed && !isRecipe) {
+              final og = widget.config.originalGrams;
+              portionTargets = {
+                'Calories':
+                    (dailyGoals['Calories']! -
+                            logProvider.totalCalories +
+                            food.calories * og)
+                        .clamp(0, double.infinity),
+                'Protein':
+                    (dailyGoals['Protein']! -
+                            logProvider.totalProtein +
+                            food.protein * og)
+                        .clamp(0, double.infinity),
+                'Fat':
+                    (dailyGoals['Fat']! - logProvider.totalFat + food.fat * og)
+                        .clamp(0, double.infinity),
+                'Carbs':
+                    (dailyGoals['Carbs']! -
+                            (useNetCarbs
+                                ? logProvider.totalNetCarbs
+                                : logProvider.totalCarbs) +
+                            (useNetCarbs ? food.netCarbs : food.carbs) * og)
+                        .clamp(0, double.infinity),
+                'Fiber':
+                    (dailyGoals['Fiber']! -
+                            logProvider.totalFiber +
+                            food.fiber * og)
+                        .clamp(0, double.infinity),
+              };
+            }
 
-        return Column(
-          children: [
-            _buildChartSection(
-              isRecipe ? "Recipe's Macros" : "Day's Macros",
-              parentValues,
-              isRecipe ? null : dailyGoals,
-              showConsumed,
-            ),
-            const SizedBox(height: 6),
-            _buildChartSection(
-              isRecipe ? "Ingredient's Macros" : "Portion's Macros",
-              itemValues,
-              isRecipe ? null : portionTargets,
-              showConsumed,
-            ),
-          ],
-        );
-      },
+            return Column(
+              children: [
+                _buildChartSection(
+                  isRecipe ? "Recipe's Macros" : "Day's Macros",
+                  parentValues,
+                  isRecipe ? null : dailyGoals,
+                  showConsumed,
+                ),
+                const SizedBox(height: 6),
+                _buildChartSection(
+                  isRecipe ? "Ingredient's Macros" : "Portion's Macros",
+                  itemValues,
+                  isRecipe ? null : portionTargets,
+                  showConsumed,
+                ),
+              ],
+            );
+          },
     );
   }
 
@@ -484,7 +525,10 @@ class _QuantityEditScreenState extends State<QuantityEditScreen> {
         .replaceAll(RegExp(r'\s+[a-zA-Z].*$'), '')
         .trim();
     final quantity = MathEvaluator.evaluate(text) ?? 0.0;
-    final useNetCarbs = Provider.of<GoalsProvider>(context, listen: false).useNetCarbs;
+    final useNetCarbs = Provider.of<GoalsProvider>(
+      context,
+      listen: false,
+    ).useNetCarbs;
     return QuantityEditUtils.calculateGrams(
       quantity: quantity,
       food: _food,
@@ -577,7 +621,13 @@ class _QuantityEditScreenState extends State<QuantityEditScreen> {
     );
   }
 
-  Widget _buildMiniBar(String label, double value, double target, Color color, bool showConsumed) {
+  Widget _buildMiniBar(
+    String label,
+    double value,
+    double target,
+    Color color,
+    bool showConsumed,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2.0),
       child: HorizontalMiniBarChart(
@@ -634,7 +684,10 @@ class _QuantityEditScreenState extends State<QuantityEditScreen> {
       // Dump-only recipe: compute proportionally-scaled ingredient list
       final quantity = grams / recipe.totalGrams;
       final logProvider = Provider.of<LogProvider>(context, listen: false);
-      portions = logProvider.dumpRecipePortionsAsList(recipe, quantity: quantity);
+      portions = logProvider.dumpRecipePortionsAsList(
+        recipe,
+        quantity: quantity,
+      );
     } else if (recipe != null) {
       // Normal recipe: share the single portion
       portions = [FoodPortion(food: _food, grams: grams, unit: _selectedUnit)];
@@ -667,7 +720,9 @@ class _QuantityEditScreenState extends State<QuantityEditScreen> {
     // Calculate remaining (subtract original contribution when editing)
     final goal = _getGoalForTarget(goalsProvider, _selectedTargetIndex);
     final total = _getTotalForTarget(logProvider, _selectedTargetIndex);
-    final originalContribution = _getFoodMacroPerGram(_food, _selectedTargetIndex) * widget.config.originalGrams;
+    final originalContribution =
+        _getFoodMacroPerGram(_food, _selectedTargetIndex) *
+        widget.config.originalGrams;
     final remaining = goal - total + originalContribution;
 
     // Check if already at/over target
@@ -693,7 +748,9 @@ class _QuantityEditScreenState extends State<QuantityEditScreen> {
     setState(() {
       final suffix = _getTargetSuffix();
       final valueText = remaining.toStringAsFixed(1);
-      _quantityController.text = suffix != null ? '$valueText $suffix' : valueText;
+      _quantityController.text = suffix != null
+          ? '$valueText $suffix'
+          : valueText;
     });
   }
 
@@ -716,7 +773,10 @@ class _QuantityEditScreenState extends State<QuantityEditScreen> {
   }
 
   double _getTotalForTarget(LogProvider provider, int targetIndex) {
-    final useNetCarbs = Provider.of<GoalsProvider>(context, listen: false).useNetCarbs;
+    final useNetCarbs = Provider.of<GoalsProvider>(
+      context,
+      listen: false,
+    ).useNetCarbs;
     switch (targetIndex) {
       case 1:
         return provider.totalCalories;
@@ -734,7 +794,10 @@ class _QuantityEditScreenState extends State<QuantityEditScreen> {
   }
 
   double _getFoodMacroPerGram(Food food, int targetIndex) {
-    final useNetCarbs = Provider.of<GoalsProvider>(context, listen: false).useNetCarbs;
+    final useNetCarbs = Provider.of<GoalsProvider>(
+      context,
+      listen: false,
+    ).useNetCarbs;
     switch (targetIndex) {
       case 1:
         return food.calories;
@@ -793,10 +856,16 @@ class _QuantityEditScreenState extends State<QuantityEditScreen> {
         final recipe = await DatabaseService.instance.getRecipeById(_food.id);
         if (!mounted) return;
 
-        final recipeProvider = Provider.of<RecipeProvider>(context, listen: false);
+        final recipeProvider = Provider.of<RecipeProvider>(
+          context,
+          listen: false,
+        );
         recipeProvider.loadFromRecipe(recipe);
 
-        final result = await Navigator.pushNamed(context, AppRouter.recipeEditRoute);
+        final result = await Navigator.pushNamed(
+          context,
+          AppRouter.recipeEditRoute,
+        );
 
         if (result == true && mounted) {
           // Reload food from database to get latest changes
@@ -815,13 +884,16 @@ class _QuantityEditScreenState extends State<QuantityEditScreen> {
             });
 
             // Refresh the food in the log queue to propagate name/image changes
-            final logProvider = Provider.of<LogProvider>(context, listen: false);
+            final logProvider = Provider.of<LogProvider>(
+              context,
+              listen: false,
+            );
             await logProvider.refreshFoodInQueue(_food.id, updatedFood);
 
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Recipe updated')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Recipe updated')));
             }
           }
         }

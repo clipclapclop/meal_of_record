@@ -12,7 +12,10 @@ class RecipeItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final useNetCarbs = Provider.of<GoalsProvider>(context, listen: false).useNetCarbs;
+    final useNetCarbs = Provider.of<GoalsProvider>(
+      context,
+      listen: false,
+    ).useNetCarbs;
     final calories = item.calories * item.grams;
     final protein = item.protein * item.grams;
     final fat = item.fat * item.grams;

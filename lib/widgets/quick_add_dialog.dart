@@ -65,9 +65,9 @@ class _QuickAddScreenState extends State<QuickAddScreen> {
 
     final goal = goalsProvider.currentGoals.calories;
     if (goal <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No calorie goal set')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No calorie goal set')));
       return;
     }
 
@@ -112,8 +112,8 @@ class _QuickAddScreenState extends State<QuickAddScreen> {
     });
 
     try {
-      final quickAddFood =
-          await DatabaseService.instance.getSystemQuickAddFood();
+      final quickAddFood = await DatabaseService.instance
+          .getSystemQuickAddFood();
 
       final portion = FoodPortion(
         food: quickAddFood,
@@ -127,10 +127,7 @@ class _QuickAddScreenState extends State<QuickAddScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
         setState(() => _isLoading = false);
       }
@@ -166,8 +163,9 @@ class _QuickAddScreenState extends State<QuickAddScreen> {
                     suffixText: 'cal',
                     errorText: _error,
                   ),
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   autofocus: true,
                   onSubmitted: (_) => _submit(),
                 ),
@@ -177,11 +175,10 @@ class _QuickAddScreenState extends State<QuickAddScreen> {
                     child: Text(
                       '= ${_formatResult(preview)} cal',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withValues(alpha: 0.6),
-                          ),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
                     ),
                   ),
                 const SizedBox(height: 8),

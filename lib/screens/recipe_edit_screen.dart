@@ -124,19 +124,18 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
 
     final result = MathEvaluator.evaluate(text);
     if (result == null || result.isInfinite || result.isNaN) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid expression')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Invalid expression')));
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _weightFocusNode.requestFocus();
       });
       return;
     }
 
-    final formatted =
-        result == result.roundToDouble()
-            ? result.toStringAsFixed(0)
-            : result.toStringAsFixed(2);
+    final formatted = result == result.roundToDouble()
+        ? result.toStringAsFixed(0)
+        : result.toStringAsFixed(2);
     setState(() {
       _weightController.text = formatted;
     });
@@ -242,8 +241,7 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
                   final navigator = Navigator.of(context);
 
                   // Check if this edit would trigger versioning
-                  final wouldVersion =
-                      await provider.wouldTriggerVersioning();
+                  final wouldVersion = await provider.wouldTriggerVersioning();
                   if (!context.mounted) return;
 
                   bool forceUpdateInPlace = false;
@@ -276,13 +274,11 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
                         ),
                         actions: [
                           TextButton(
-                            onPressed: () =>
-                                Navigator.pop(ctx, 'version'),
+                            onPressed: () => Navigator.pop(ctx, 'version'),
                             child: const Text('New Version'),
                           ),
                           TextButton(
-                            onPressed: () =>
-                                Navigator.pop(ctx, 'fix'),
+                            onPressed: () => Navigator.pop(ctx, 'fix'),
                             child: const Text('Fix in Place'),
                           ),
                         ],
@@ -381,112 +377,114 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
           resizeToAvoidBottomInset: false,
           body: Builder(
             builder: (context) {
-              final keyboardHeight =
-                  MediaQuery.of(context).viewInsets.bottom;
-              final showOperatorBar =
-                  _isWeightFocused && keyboardHeight > 0;
+              final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+              final showOperatorBar = _isWeightFocused && keyboardHeight > 0;
               return Stack(
                 children: [
                   SlidableAutoCloseBehavior(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.only(
-                left: 12.0,
-                right: 12.0,
-                top: 8.0,
-                bottom: 8.0 + (showOperatorBar ? 48 + keyboardHeight : 0),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildMetadataFields(provider),
-                  const SizedBox(height: 10),
-                  _buildMacroSummary(provider),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Ingredients',
-                        style: Theme.of(context).textTheme.titleLarge,
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.only(
+                        left: 12.0,
+                        right: 12.0,
+                        top: 8.0,
+                        bottom:
+                            8.0 + (showOperatorBar ? 48 + keyboardHeight : 0),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.add_circle),
-                        onPressed: () async {
-                          final databaseService = DatabaseService.instance;
-                          final offApiService = OffApiService();
-                          final emojiService = emojiForFoodName;
-                          final searchService = SearchService(
-                            databaseService: databaseService,
-                            offApiService: offApiService,
-                            emojiForFoodName: emojiService,
-                            sortingService: FoodSortingService(),
-                          );
-
-                          final item = await Navigator.push<RecipeItem>(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ChangeNotifierProvider(
-                                create: (_) => SearchProvider(
-                                  databaseService: databaseService,
-                                  offApiService: offApiService,
-                                  searchService: searchService,
-                                ),
-                                child: SearchScreen(
-                                  config: SearchConfig(
-                                    context: QuantityEditContext.recipe,
-                                    title: 'Add Ingredient',
-                                    showQueueStats: false,
-                                    onSaveOverride: (portion) {
-                                      Navigator.pop(
-                                        context,
-                                        RecipeItem(
-                                          id: 0,
-                                          food: portion.food,
-                                          grams: portion.grams,
-                                          unit: portion.unit,
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildMetadataFields(provider),
+                          const SizedBox(height: 10),
+                          _buildMacroSummary(provider),
+                          const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Ingredients',
+                                style: Theme.of(context).textTheme.titleLarge,
                               ),
-                            ),
-                          );
+                              IconButton(
+                                icon: const Icon(Icons.add_circle),
+                                onPressed: () async {
+                                  final databaseService =
+                                      DatabaseService.instance;
+                                  final offApiService = OffApiService();
+                                  final emojiService = emojiForFoodName;
+                                  final searchService = SearchService(
+                                    databaseService: databaseService,
+                                    offApiService: offApiService,
+                                    emojiForFoodName: emojiService,
+                                    sortingService: FoodSortingService(),
+                                  );
 
-                          if (item != null && mounted) {
-                            provider.addItem(item);
-                          }
-                        },
+                                  final item = await Navigator.push<RecipeItem>(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          ChangeNotifierProvider(
+                                            create: (_) => SearchProvider(
+                                              databaseService: databaseService,
+                                              offApiService: offApiService,
+                                              searchService: searchService,
+                                            ),
+                                            child: SearchScreen(
+                                              config: SearchConfig(
+                                                context:
+                                                    QuantityEditContext.recipe,
+                                                title: 'Add Ingredient',
+                                                showQueueStats: false,
+                                                onSaveOverride: (portion) {
+                                                  Navigator.pop(
+                                                    context,
+                                                    RecipeItem(
+                                                      id: 0,
+                                                      food: portion.food,
+                                                      grams: portion.grams,
+                                                      unit: portion.unit,
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                    ),
+                                  );
+
+                                  if (item != null && mounted) {
+                                    provider.addItem(item);
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                          const Divider(),
+                          _buildIngredientList(provider),
+                          const SizedBox(height: 10),
+                          TextField(
+                            controller: _linkController,
+                            keyboardType: TextInputType.url,
+                            decoration: const InputDecoration(
+                              labelText: 'Link',
+                              hintText: 'https://...',
+                              prefixIcon: Icon(Icons.link),
+                            ),
+                            onChanged: provider.setLink,
+                          ),
+                          const SizedBox(height: 10),
+                          TextField(
+                            controller: _notesController,
+                            maxLines: 3,
+                            decoration: const InputDecoration(
+                              labelText: 'Notes',
+                              hintText: 'Preparation steps, cooking time...',
+                            ),
+                            onChanged: provider.setNotes,
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  const Divider(),
-                  _buildIngredientList(provider),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: _linkController,
-                    keyboardType: TextInputType.url,
-                    decoration: const InputDecoration(
-                      labelText: 'Link',
-                      hintText: 'https://...',
-                      prefixIcon: Icon(Icons.link),
                     ),
-                    onChanged: provider.setLink,
                   ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: _notesController,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      labelText: 'Notes',
-                      hintText: 'Preparation steps, cooking time...',
-                    ),
-                    onChanged: provider.setNotes,
-                  ),
-                ],
-              ),
-            ),
-          ),
                   if (showOperatorBar)
                     Positioned(
                       left: 0,
@@ -861,7 +859,9 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
             provider.totalCalories,
             provider.totalProtein,
             provider.totalFat,
-            Provider.of<GoalsProvider>(context, listen: false).useNetCarbs ? provider.totalNetCarbs : provider.totalCarbs,
+            Provider.of<GoalsProvider>(context, listen: false).useNetCarbs
+                ? provider.totalNetCarbs
+                : provider.totalCarbs,
             provider.totalFiber,
           ),
           const SizedBox(height: 8),
@@ -872,7 +872,10 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
             provider.caloriesPerPortion,
             provider.totalProtein / provider.servingsCreated,
             provider.totalFat / provider.servingsCreated,
-            (Provider.of<GoalsProvider>(context, listen: false).useNetCarbs ? provider.totalNetCarbs : provider.totalCarbs) / provider.servingsCreated,
+            (Provider.of<GoalsProvider>(context, listen: false).useNetCarbs
+                    ? provider.totalNetCarbs
+                    : provider.totalCarbs) /
+                provider.servingsCreated,
             provider.totalFiber / provider.servingsCreated,
           ),
         ],

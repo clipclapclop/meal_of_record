@@ -48,9 +48,7 @@ class FoodSearchView extends StatelessWidget {
         onPressed: () async {
           final portion = await Navigator.push<model_portion.FoodPortion>(
             context,
-            MaterialPageRoute(
-              builder: (context) => const QuickAddScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => const QuickAddScreen()),
           );
 
           if (portion != null && context.mounted) {
@@ -140,9 +138,7 @@ class FoodSearchView extends StatelessWidget {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (_) => const QrPortionSharingScreen(),
-            ),
+            MaterialPageRoute(builder: (_) => const QrPortionSharingScreen()),
           );
         },
       ),
@@ -155,10 +151,7 @@ class FoodSearchView extends StatelessWidget {
         return SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            icon: const Icon(
-              Icons.no_meals,
-              size: 32,
-            ),
+            icon: const Icon(Icons.no_meals, size: 32),
             label: const Text('Fasted Day', style: TextStyle(fontSize: 18)),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 10),

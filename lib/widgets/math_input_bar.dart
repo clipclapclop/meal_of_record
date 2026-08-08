@@ -10,7 +10,8 @@ class MathInputBar extends StatelessWidget {
     final selection = controller.selection;
     final cursorPos = selection.isValid ? selection.baseOffset : text.length;
 
-    final newText = text.substring(0, cursorPos) + op + text.substring(cursorPos);
+    final newText =
+        text.substring(0, cursorPos) + op + text.substring(cursorPos);
 
     controller.value = TextEditingValue(
       text: newText,
@@ -29,8 +30,10 @@ class MathInputBar extends StatelessWidget {
       return;
     }
 
-    final newOffset = (selection.baseOffset + direction)
-        .clamp(0, controller.text.length);
+    final newOffset = (selection.baseOffset + direction).clamp(
+      0,
+      controller.text.length,
+    );
     controller.selection = TextSelection.collapsed(offset: newOffset);
   }
 
@@ -71,7 +74,11 @@ class MathInputBar extends StatelessWidget {
             child: Center(
               child: Text(
                 label,
-                style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.w500),
+                style: const TextStyle(
+                  fontSize: 22,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ),
