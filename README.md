@@ -4,7 +4,10 @@ Fast, private, convenient macro tracking.
 
 ## Repository
 
-The canonical source and issue tracker are hosted on [Forgejo](https://git.oorangy.com/chad/meal_of_record).
+The canonical source, issue tracker, and releases are hosted on [Forgejo](https://git.oorangy.com/chad/meal_of_record).
+The [GitHub repository](https://github.com/clipclapclop/meal_of_record) is a
+non-authoritative, read-only backup; do not open issues or publish releases
+there. Maintainers can follow the [GitHub backup procedure](docs/github-backup-mirror.md).
 
 ## Documentation
 

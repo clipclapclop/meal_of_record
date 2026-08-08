@@ -54,4 +54,5 @@ nav:
     - Data Integrity and Release Smoke Test: data-integrity.md
     - Android Release Signing: android-release-signing.md
     - Forgejo Android Releases: forgejo-android-release.md
+    - GitHub Backup Mirror: github-backup-mirror.md
   - About: about.md

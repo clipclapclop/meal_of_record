@@ -74,10 +74,11 @@ Give additional scrutiny to schema migrations, backup and restore behavior, pers
 - Historical logged-food snapshots must retain their original nutritional meaning.
 - Backup and restore changes must preserve documented application state and must fail safely on malformed, incomplete, or incompatible input.
 - Releases require a dedicated merged version PR and separate manual authorization through the configured host-owned adapter; ordinary merged PRs are not released.
+- Forgejo remains the canonical source, issue, and release host. GitHub is a non-authoritative backup of `master` and Git tags; preserve its independent `gh-pages` ref and never copy release assets there.
 - Deployment operations remain unsupported. `zapstore.yaml` is retained for metadata only and is not a supported publishing path.
 
 # Evidence
 
 `./scripts/check` is the repository-owned aggregate check. It runs release-adapter unit tests, resolves locked Flutter dependencies, verifies all tracked Dart files are formatted, requires a clean analyzer run, and runs the complete Flutter test suite. Analyzer findings should be fixed rather than hidden merely to satisfy the gate.
 
-The local Forgejo release contract, host setup, exact-revision checks, idempotent recovery behavior, and test-prerelease procedure are documented in `docs/forgejo-android-release.md`.
+The local Forgejo release contract, host setup, exact-revision checks, idempotent recovery behavior, and test-prerelease procedure are documented in `docs/forgejo-android-release.md`. The bounded, non-authoritative GitHub ref backup procedure is documented in `docs/github-backup-mirror.md`.
