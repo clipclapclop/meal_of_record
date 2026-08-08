@@ -146,9 +146,7 @@ void main() {
       expect(painter.value, -50.0);
     });
 
-    testWidgets('zero target: no crash', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('zero target: no crash', (WidgetTester tester) async {
       await tester.pumpWidget(
         const Directionality(
           textDirection: TextDirection.ltr,

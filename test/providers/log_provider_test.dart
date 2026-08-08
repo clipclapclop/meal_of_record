@@ -315,9 +315,15 @@ void main() {
         ],
       );
 
-      logProvider.addFoodToQueue(FoodPortion(food: food1, grams: 100, unit: 'g'));
-      logProvider.addFoodToQueue(FoodPortion(food: food2, grams: 120, unit: 'g'));
-      logProvider.addFoodToQueue(FoodPortion(food: food3, grams: 200, unit: 'g'));
+      logProvider.addFoodToQueue(
+        FoodPortion(food: food1, grams: 100, unit: 'g'),
+      );
+      logProvider.addFoodToQueue(
+        FoodPortion(food: food2, grams: 120, unit: 'g'),
+      );
+      logProvider.addFoodToQueue(
+        FoodPortion(food: food3, grams: 200, unit: 'g'),
+      );
 
       // Apple: 0.52*100=52, Banana: 0.89*120=106.8, Rice: 1.30*200=260
       expect(logProvider.queuedCalories, closeTo(418.8, 0.01));
@@ -366,8 +372,12 @@ void main() {
           FoodServing(id: 1, foodId: 1, unit: 'g', grams: 1.0, quantity: 1.0),
         ],
       );
-      logProvider.addFoodToQueue(FoodPortion(food: food, grams: 100, unit: 'g'));
-      logProvider.addFoodToQueue(FoodPortion(food: food, grams: 200, unit: 'g'));
+      logProvider.addFoodToQueue(
+        FoodPortion(food: food, grams: 100, unit: 'g'),
+      );
+      logProvider.addFoodToQueue(
+        FoodPortion(food: food, grams: 200, unit: 'g'),
+      );
       expect(logProvider.queuedCalories, closeTo(156.0, 0.01));
 
       logProvider.clearQueue();
@@ -389,10 +399,15 @@ void main() {
           FoodServing(id: 1, foodId: 1, unit: 'g', grams: 1.0, quantity: 1.0),
         ],
       );
-      logProvider.addFoodToQueue(FoodPortion(food: food, grams: 100, unit: 'g'));
+      logProvider.addFoodToQueue(
+        FoodPortion(food: food, grams: 100, unit: 'g'),
+      );
       expect(logProvider.queuedCalories, 52.0);
 
-      logProvider.updateFoodInQueue(0, FoodPortion(food: food, grams: 200, unit: 'g'));
+      logProvider.updateFoodInQueue(
+        0,
+        FoodPortion(food: food, grams: 200, unit: 'g'),
+      );
       expect(logProvider.queuedCalories, 104.0);
     });
 
@@ -412,8 +427,7 @@ void main() {
           source: 'off',
           sourceBarcode: null,
           servings: [
-            FoodServing(
-                id: 1, foodId: 0, unit: 'g', grams: 1.0, quantity: 1.0),
+            FoodServing(id: 1, foodId: 0, unit: 'g', grams: 1.0, quantity: 1.0),
           ],
         );
         final offFoodB = Food(
@@ -427,13 +441,13 @@ void main() {
           source: 'off',
           sourceBarcode: null,
           servings: [
-            FoodServing(
-                id: 2, foodId: 0, unit: 'g', grams: 1.0, quantity: 1.0),
+            FoodServing(id: 2, foodId: 0, unit: 'g', grams: 1.0, quantity: 1.0),
           ],
         );
 
-        logProvider
-            .addFoodToQueue(FoodPortion(food: offFoodA, grams: 50, unit: 'g'));
+        logProvider.addFoodToQueue(
+          FoodPortion(food: offFoodA, grams: 50, unit: 'g'),
+        );
 
         // Refresh queue with offFoodB — should NOT replace offFoodA
         await logProvider.refreshFoodInQueue(0, offFoodB);
@@ -461,8 +475,7 @@ void main() {
           source: 'off',
           sourceBarcode: '12345',
           servings: [
-            FoodServing(
-                id: 1, foodId: 0, unit: 'g', grams: 1.0, quantity: 1.0),
+            FoodServing(id: 1, foodId: 0, unit: 'g', grams: 1.0, quantity: 1.0),
           ],
         );
         final offFoodB = Food(
@@ -476,15 +489,16 @@ void main() {
           source: 'off',
           sourceBarcode: '67890',
           servings: [
-            FoodServing(
-                id: 2, foodId: 0, unit: 'g', grams: 1.0, quantity: 1.0),
+            FoodServing(id: 2, foodId: 0, unit: 'g', grams: 1.0, quantity: 1.0),
           ],
         );
 
-        logProvider
-            .addFoodToQueue(FoodPortion(food: offFoodA, grams: 28, unit: 'g'));
-        logProvider
-            .addFoodToQueue(FoodPortion(food: offFoodB, grams: 32, unit: 'g'));
+        logProvider.addFoodToQueue(
+          FoodPortion(food: offFoodA, grams: 28, unit: 'g'),
+        );
+        logProvider.addFoodToQueue(
+          FoodPortion(food: offFoodB, grams: 32, unit: 'g'),
+        );
 
         // Edit food A (now saved with id=99), refresh queue
         final updatedA = Food(
@@ -499,7 +513,12 @@ void main() {
           sourceBarcode: '12345',
           servings: [
             FoodServing(
-                id: 3, foodId: 99, unit: 'g', grams: 1.0, quantity: 1.0),
+              id: 3,
+              foodId: 99,
+              unit: 'g',
+              grams: 1.0,
+              quantity: 1.0,
+            ),
           ],
         );
 
@@ -529,13 +548,30 @@ void main() {
           FoodServing(id: 1, foodId: 1, unit: 'g', grams: 1.0, quantity: 1.0),
         ],
       );
-      logProvider.addFoodToQueue(FoodPortion(food: food, grams: 100, unit: 'g'));
+      logProvider.addFoodToQueue(
+        FoodPortion(food: food, grams: 100, unit: 'g'),
+      );
 
-      expect(logProvider.totalCalories, logProvider.loggedCalories + logProvider.queuedCalories);
-      expect(logProvider.totalProtein, logProvider.loggedProtein + logProvider.queuedProtein);
-      expect(logProvider.totalFat, logProvider.loggedFat + logProvider.queuedFat);
-      expect(logProvider.totalCarbs, logProvider.loggedCarbs + logProvider.queuedCarbs);
-      expect(logProvider.totalFiber, logProvider.loggedFiber + logProvider.queuedFiber);
+      expect(
+        logProvider.totalCalories,
+        logProvider.loggedCalories + logProvider.queuedCalories,
+      );
+      expect(
+        logProvider.totalProtein,
+        logProvider.loggedProtein + logProvider.queuedProtein,
+      );
+      expect(
+        logProvider.totalFat,
+        logProvider.loggedFat + logProvider.queuedFat,
+      );
+      expect(
+        logProvider.totalCarbs,
+        logProvider.loggedCarbs + logProvider.queuedCarbs,
+      );
+      expect(
+        logProvider.totalFiber,
+        logProvider.loggedFiber + logProvider.queuedFiber,
+      );
     });
   });
 }

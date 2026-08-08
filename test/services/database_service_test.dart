@@ -220,58 +220,60 @@ void main() {
       expect(info, matcher.isNull);
     });
 
-    test('should return unit, quantity, and grams from the most recent log',
-        () async {
-      // Arrange
-      const foodId = 1;
-      await liveDatabase
-          .into(liveDatabase.foods)
-          .insert(
-            FoodsCompanion.insert(
-              id: const Value(foodId),
-              name: 'Test Food',
-              source: 'user_created',
-              caloriesPerGram: 1.0,
-              proteinPerGram: 0.0,
-              fatPerGram: 0.0,
-              carbsPerGram: 0.0,
-              fiberPerGram: 0.0,
-            ),
-          );
+    test(
+      'should return unit, quantity, and grams from the most recent log',
+      () async {
+        // Arrange
+        const foodId = 1;
+        await liveDatabase
+            .into(liveDatabase.foods)
+            .insert(
+              FoodsCompanion.insert(
+                id: const Value(foodId),
+                name: 'Test Food',
+                source: 'user_created',
+                caloriesPerGram: 1.0,
+                proteinPerGram: 0.0,
+                fatPerGram: 0.0,
+                carbsPerGram: 0.0,
+                fiberPerGram: 0.0,
+              ),
+            );
 
-      // Insert logs with different timestamps
-      await liveDatabase
-          .into(liveDatabase.loggedPortions)
-          .insert(
-            LoggedPortionsCompanion.insert(
-              foodId: const Value(foodId),
-              logTimestamp: 1000,
-              grams: 100,
-              unit: 'old_unit',
-              quantity: 1.0,
-            ),
-          );
-      await liveDatabase
-          .into(liveDatabase.loggedPortions)
-          .insert(
-            LoggedPortionsCompanion.insert(
-              foodId: const Value(foodId),
-              logTimestamp: 2000,
-              grams: 250,
-              unit: 'slice',
-              quantity: 2.5,
-            ),
-          );
+        // Insert logs with different timestamps
+        await liveDatabase
+            .into(liveDatabase.loggedPortions)
+            .insert(
+              LoggedPortionsCompanion.insert(
+                foodId: const Value(foodId),
+                logTimestamp: 1000,
+                grams: 100,
+                unit: 'old_unit',
+                quantity: 1.0,
+              ),
+            );
+        await liveDatabase
+            .into(liveDatabase.loggedPortions)
+            .insert(
+              LoggedPortionsCompanion.insert(
+                foodId: const Value(foodId),
+                logTimestamp: 2000,
+                grams: 250,
+                unit: 'slice',
+                quantity: 2.5,
+              ),
+            );
 
-      // Act
-      final info = await databaseService.getLastLoggedInfo(foodId);
+        // Act
+        final info = await databaseService.getLastLoggedInfo(foodId);
 
-      // Assert
-      expect(info, matcher.isNotNull);
-      expect(info!.unit, 'slice');
-      expect(info.quantity, 2.5);
-      expect(info.grams, 250);
-    });
+        // Assert
+        expect(info, matcher.isNotNull);
+        expect(info!.unit, 'slice');
+        expect(info.quantity, 2.5);
+        expect(info.grams, 250);
+      },
+    );
 
     test('should work via sourceFdcId for reference foods', () async {
       // Arrange
@@ -583,7 +585,9 @@ void main() {
     test('should add barcode to food', () async {
       // Arrange
       const foodId = 1;
-      await liveDatabase.into(liveDatabase.foods).insert(
+      await liveDatabase
+          .into(liveDatabase.foods)
+          .insert(
             FoodsCompanion.insert(
               id: const Value(foodId),
               name: 'Test Food',
@@ -597,7 +601,10 @@ void main() {
           );
 
       // Act
-      final success = await databaseService.addBarcodeToFood(foodId, '1234567890');
+      final success = await databaseService.addBarcodeToFood(
+        foodId,
+        '1234567890',
+      );
 
       // Assert
       expect(success, isTrue);
@@ -605,35 +612,44 @@ void main() {
       expect(barcodes, contains('1234567890'));
     });
 
-    test('should return false when adding duplicate barcode to same food',
-        () async {
-      // Arrange
-      const foodId = 1;
-      await liveDatabase.into(liveDatabase.foods).insert(
-            FoodsCompanion.insert(
-              id: const Value(foodId),
-              name: 'Test Food',
-              source: 'user_created',
-              caloriesPerGram: 1.0,
-              proteinPerGram: 0.0,
-              fatPerGram: 0.0,
-              carbsPerGram: 0.0,
-              fiberPerGram: 0.0,
-            ),
-          );
-      await databaseService.addBarcodeToFood(foodId, '1234567890');
+    test(
+      'should return false when adding duplicate barcode to same food',
+      () async {
+        // Arrange
+        const foodId = 1;
+        await liveDatabase
+            .into(liveDatabase.foods)
+            .insert(
+              FoodsCompanion.insert(
+                id: const Value(foodId),
+                name: 'Test Food',
+                source: 'user_created',
+                caloriesPerGram: 1.0,
+                proteinPerGram: 0.0,
+                fatPerGram: 0.0,
+                carbsPerGram: 0.0,
+                fiberPerGram: 0.0,
+              ),
+            );
+        await databaseService.addBarcodeToFood(foodId, '1234567890');
 
-      // Act
-      final success = await databaseService.addBarcodeToFood(foodId, '1234567890');
+        // Act
+        final success = await databaseService.addBarcodeToFood(
+          foodId,
+          '1234567890',
+        );
 
-      // Assert
-      expect(success, isFalse);
-    });
+        // Assert
+        expect(success, isFalse);
+      },
+    );
 
     test('should get all barcodes for a food', () async {
       // Arrange
       const foodId = 1;
-      await liveDatabase.into(liveDatabase.foods).insert(
+      await liveDatabase
+          .into(liveDatabase.foods)
+          .insert(
             FoodsCompanion.insert(
               id: const Value(foodId),
               name: 'Test Food',
@@ -660,7 +676,9 @@ void main() {
     test('should return empty list for food with no barcodes', () async {
       // Arrange
       const foodId = 1;
-      await liveDatabase.into(liveDatabase.foods).insert(
+      await liveDatabase
+          .into(liveDatabase.foods)
+          .insert(
             FoodsCompanion.insert(
               id: const Value(foodId),
               name: 'Test Food',
@@ -683,7 +701,9 @@ void main() {
     test('should remove barcode from food', () async {
       // Arrange
       const foodId = 1;
-      await liveDatabase.into(liveDatabase.foods).insert(
+      await liveDatabase
+          .into(liveDatabase.foods)
+          .insert(
             FoodsCompanion.insert(
               id: const Value(foodId),
               name: 'Test Food',
@@ -712,7 +732,9 @@ void main() {
       // Arrange
       const foodId1 = 1;
       const foodId2 = 2;
-      await liveDatabase.into(liveDatabase.foods).insert(
+      await liveDatabase
+          .into(liveDatabase.foods)
+          .insert(
             FoodsCompanion.insert(
               id: const Value(foodId1),
               name: 'Food One',
@@ -724,7 +746,9 @@ void main() {
               fiberPerGram: 0.0,
             ),
           );
-      await liveDatabase.into(liveDatabase.foods).insert(
+      await liveDatabase
+          .into(liveDatabase.foods)
+          .insert(
             FoodsCompanion.insert(
               id: const Value(foodId2),
               name: 'Food Two',
@@ -747,46 +771,52 @@ void main() {
       expect(foods.first.name, 'Food One');
     });
 
-    test('should return multiple foods if same barcode exists on multiple foods',
-        () async {
-      // Arrange
-      const foodId1 = 1;
-      const foodId2 = 2;
-      await liveDatabase.into(liveDatabase.foods).insert(
-            FoodsCompanion.insert(
-              id: const Value(foodId1),
-              name: 'Food One',
-              source: 'user_created',
-              caloriesPerGram: 1.0,
-              proteinPerGram: 0.0,
-              fatPerGram: 0.0,
-              carbsPerGram: 0.0,
-              fiberPerGram: 0.0,
-            ),
-          );
-      await liveDatabase.into(liveDatabase.foods).insert(
-            FoodsCompanion.insert(
-              id: const Value(foodId2),
-              name: 'Food Two',
-              source: 'user_created',
-              caloriesPerGram: 2.0,
-              proteinPerGram: 0.0,
-              fatPerGram: 0.0,
-              carbsPerGram: 0.0,
-              fiberPerGram: 0.0,
-            ),
-          );
-      // Same barcode on both foods
-      await databaseService.addBarcodeToFood(foodId1, '1234567890');
-      await databaseService.addBarcodeToFood(foodId2, '1234567890');
+    test(
+      'should return multiple foods if same barcode exists on multiple foods',
+      () async {
+        // Arrange
+        const foodId1 = 1;
+        const foodId2 = 2;
+        await liveDatabase
+            .into(liveDatabase.foods)
+            .insert(
+              FoodsCompanion.insert(
+                id: const Value(foodId1),
+                name: 'Food One',
+                source: 'user_created',
+                caloriesPerGram: 1.0,
+                proteinPerGram: 0.0,
+                fatPerGram: 0.0,
+                carbsPerGram: 0.0,
+                fiberPerGram: 0.0,
+              ),
+            );
+        await liveDatabase
+            .into(liveDatabase.foods)
+            .insert(
+              FoodsCompanion.insert(
+                id: const Value(foodId2),
+                name: 'Food Two',
+                source: 'user_created',
+                caloriesPerGram: 2.0,
+                proteinPerGram: 0.0,
+                fatPerGram: 0.0,
+                carbsPerGram: 0.0,
+                fiberPerGram: 0.0,
+              ),
+            );
+        // Same barcode on both foods
+        await databaseService.addBarcodeToFood(foodId1, '1234567890');
+        await databaseService.addBarcodeToFood(foodId2, '1234567890');
 
-      // Act
-      final foods = await databaseService.getFoodsByBarcode('1234567890');
+        // Act
+        final foods = await databaseService.getFoodsByBarcode('1234567890');
 
-      // Assert
-      expect(foods.length, 2);
-      expect(foods.map((f) => f.name), containsAll(['Food One', 'Food Two']));
-    });
+        // Assert
+        expect(foods.length, 2);
+        expect(foods.map((f) => f.name), containsAll(['Food One', 'Food Two']));
+      },
+    );
 
     test('should return empty list for unknown barcode', () async {
       // Act
@@ -800,7 +830,9 @@ void main() {
       // Arrange
       const foodId1 = 1;
       const foodId2 = 2;
-      await liveDatabase.into(liveDatabase.foods).insert(
+      await liveDatabase
+          .into(liveDatabase.foods)
+          .insert(
             FoodsCompanion.insert(
               id: const Value(foodId1),
               name: 'Food One',
@@ -812,7 +844,9 @@ void main() {
               fiberPerGram: 0.0,
             ),
           );
-      await liveDatabase.into(liveDatabase.foods).insert(
+      await liveDatabase
+          .into(liveDatabase.foods)
+          .insert(
             FoodsCompanion.insert(
               id: const Value(foodId2),
               name: 'Food Two',
@@ -827,8 +861,10 @@ void main() {
       await databaseService.addBarcodeToFood(foodId1, '1234567890');
 
       // Act - Check if barcode exists on a food other than foodId2
-      final otherFood =
-          await databaseService.isBarcodeOnOtherFood('1234567890', foodId2);
+      final otherFood = await databaseService.isBarcodeOnOtherFood(
+        '1234567890',
+        foodId2,
+      );
 
       // Assert
       expect(otherFood, matcher.isNotNull);
@@ -838,7 +874,9 @@ void main() {
     test('should return null if barcode only exists on same food', () async {
       // Arrange
       const foodId = 1;
-      await liveDatabase.into(liveDatabase.foods).insert(
+      await liveDatabase
+          .into(liveDatabase.foods)
+          .insert(
             FoodsCompanion.insert(
               id: const Value(foodId),
               name: 'Test Food',
@@ -853,8 +891,10 @@ void main() {
       await databaseService.addBarcodeToFood(foodId, '1234567890');
 
       // Act - Check if barcode exists on a food other than foodId (it doesn't)
-      final otherFood =
-          await databaseService.isBarcodeOnOtherFood('1234567890', foodId);
+      final otherFood = await databaseService.isBarcodeOnOtherFood(
+        '1234567890',
+        foodId,
+      );
 
       // Assert
       expect(otherFood, matcher.isNull);
@@ -862,8 +902,10 @@ void main() {
 
     test('should return null if barcode does not exist anywhere', () async {
       // Act
-      final otherFood =
-          await databaseService.isBarcodeOnOtherFood('nonexistent', 1);
+      final otherFood = await databaseService.isBarcodeOnOtherFood(
+        'nonexistent',
+        1,
+      );
 
       // Assert
       expect(otherFood, matcher.isNull);

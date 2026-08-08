@@ -44,9 +44,9 @@ void main() {
           source: 'test',
         ),
       ];
-      when(
-        mockSearchService.searchLocal('apple'),
-      ).thenAnswer((_) async => SearchResults(foods: mockFoods, displayNotes: {}));
+      when(mockSearchService.searchLocal('apple')).thenAnswer(
+        (_) async => SearchResults(foods: mockFoods, displayNotes: {}),
+      );
 
       // Act
       await searchProvider.textSearch('apple');
@@ -75,9 +75,9 @@ void main() {
           ),
         ];
 
-        when(
-          mockSearchService.getAllRecipesAsFoods(),
-        ).thenAnswer((_) async => SearchResults(foods: mockRecipes, displayNotes: {}));
+        when(mockSearchService.getAllRecipesAsFoods()).thenAnswer(
+          (_) async => SearchResults(foods: mockRecipes, displayNotes: {}),
+        );
 
         searchProvider.setSearchMode(SearchMode.recipe);
 
@@ -115,7 +115,9 @@ void main() {
             'Lasagna',
             categoryId: anyNamed('categoryId'),
           ),
-        ).thenAnswer((_) async => SearchResults(foods: mockRecipes, displayNotes: {}));
+        ).thenAnswer(
+          (_) async => SearchResults(foods: mockRecipes, displayNotes: {}),
+        );
 
         // Stub getAllRecipesAsFoods since setSearchMode re-triggers search with empty query
         when(
@@ -189,13 +191,15 @@ void main() {
           ),
         ];
         // First, perform a text search to set the current query
-        when(mockSearchService.searchLocal(query)).thenAnswer((_) async => const SearchResults(foods: [], displayNotes: {}));
+        when(mockSearchService.searchLocal(query)).thenAnswer(
+          (_) async => const SearchResults(foods: [], displayNotes: {}),
+        );
         await searchProvider.textSearch(query);
 
         // Now, stub the OFF search
-        when(
-          mockSearchService.searchOff(query),
-        ).thenAnswer((_) async => SearchResults(foods: mockOffFoods, displayNotes: {}));
+        when(mockSearchService.searchOff(query)).thenAnswer(
+          (_) async => SearchResults(foods: mockOffFoods, displayNotes: {}),
+        );
 
         // Act
         await searchProvider.performOffSearch();
@@ -210,7 +214,9 @@ void main() {
       // Arrange
       const query = 'error_query';
       // Set the current query
-      when(mockSearchService.searchLocal(query)).thenAnswer((_) async => const SearchResults(foods: [], displayNotes: {}));
+      when(mockSearchService.searchLocal(query)).thenAnswer(
+        (_) async => const SearchResults(foods: [], displayNotes: {}),
+      );
       await searchProvider.textSearch(query);
 
       // Stub the OFF search to throw an error
@@ -222,7 +228,10 @@ void main() {
       await searchProvider.performOffSearch();
 
       // Assert
-      expect(searchProvider.errorMessage, contains('Could not reach Open Food Facts'));
+      expect(
+        searchProvider.errorMessage,
+        contains('Could not reach Open Food Facts'),
+      );
       expect(searchProvider.searchResults, isEmpty);
     });
   });
@@ -333,7 +342,10 @@ void main() {
       await searchProvider.barcodeOffSearch('12345');
 
       // Assert
-      expect(searchProvider.errorMessage, contains('Could not reach Open Food Facts'));
+      expect(
+        searchProvider.errorMessage,
+        contains('Could not reach Open Food Facts'),
+      );
       expect(searchProvider.searchResults, isEmpty);
     });
   });

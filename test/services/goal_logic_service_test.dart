@@ -158,8 +158,7 @@ void main() {
       expect(results.last.tdee, closeTo(2000.0, 50.0));
     });
 
-    test('missing intake (intakeIsValid=false) -> TDEE stays near initial',
-        () {
+    test('missing intake (intakeIsValid=false) -> TDEE stays near initial', () {
       final weights = List.generate(30, (_) => 100.0);
       final intakes = List.generate(30, (_) => 0.0); // all zeros
       final intakeIsValid = List.generate(30, (_) => false); // all invalid
@@ -297,9 +296,36 @@ void main() {
       // True TDEE = 2200, intake = 2200, so weight should be stable at 180.
       // Add realistic daily noise (±2 lb water fluctuation).
       final noise = [
-        1.2, -0.8, 0.5, -1.5, 2.0, -0.3, 0.9, -1.1, 1.7, -0.6,
-        0.4, -1.8, 1.0, -0.2, 1.5, -1.3, 0.7, -0.9, 1.1, -1.6,
-        0.3, -0.5, 1.8, -1.0, 0.6, -1.4, 1.3, -0.7, 0.2, -1.2,
+        1.2,
+        -0.8,
+        0.5,
+        -1.5,
+        2.0,
+        -0.3,
+        0.9,
+        -1.1,
+        1.7,
+        -0.6,
+        0.4,
+        -1.8,
+        1.0,
+        -0.2,
+        1.5,
+        -1.3,
+        0.7,
+        -0.9,
+        1.1,
+        -1.6,
+        0.3,
+        -0.5,
+        1.8,
+        -1.0,
+        0.6,
+        -1.4,
+        1.3,
+        -0.7,
+        0.2,
+        -1.2,
       ];
       final weights = List.generate(30, (i) => 180.0 + noise[i]);
       final intakes = List.generate(30, (_) => 2200.0);
@@ -315,22 +341,28 @@ void main() {
       expect(results.last.tdee, closeTo(2248.0, 50.0));
     });
 
-    test('very sparse weights (2x per week) -> still produces reasonable estimate', () {
-      // Only weigh in on days 0, 3, 7, 10, 14, 17, 21, 24, 28
-      // True TDEE = 2000, intake = 2000, stable weight
-      final weighInDays = {0, 3, 7, 10, 14, 17, 21, 24, 28};
-      final weights = List.generate(30, (i) => weighInDays.contains(i) ? 150.0 : 0.0);
-      final intakes = List.generate(30, (_) => 2000.0);
+    test(
+      'very sparse weights (2x per week) -> still produces reasonable estimate',
+      () {
+        // Only weigh in on days 0, 3, 7, 10, 14, 17, 21, 24, 28
+        // True TDEE = 2000, intake = 2000, stable weight
+        final weighInDays = {0, 3, 7, 10, 14, 17, 21, 24, 28};
+        final weights = List.generate(
+          30,
+          (i) => weighInDays.contains(i) ? 150.0 : 0.0,
+        );
+        final intakes = List.generate(30, (_) => 2000.0);
 
-      final results = GoalLogicService.calculateKalmanTDEE(
-        weights: weights,
-        intakes: intakes,
-        initialTDEE: 2000.0,
-        initialWeight: 150.0,
-      );
+        final results = GoalLogicService.calculateKalmanTDEE(
+          weights: weights,
+          intakes: intakes,
+          initialTDEE: 2000.0,
+          initialWeight: 150.0,
+        );
 
-      expect(results.last.tdee, closeTo(2000.0, 50.0));
-    });
+        expect(results.last.tdee, closeTo(2000.0, 50.0));
+      },
+    );
 
     test('wildly wrong initial seed -> corrects within 60 days', () {
       // Seed TDEE = 1000, true TDEE = 2500 (off by 1500 cal)
@@ -445,9 +477,36 @@ void main() {
       // Worst case combo: noisy, sparse, bad seed.
       // True TDEE = 2300, intake = 2300, stable at 190 with noise.
       final noise = [
-        1.5, -1.0, 0.8, -2.0, 1.2, -0.5, 1.8, -1.3, 0.3, -1.7,
-        1.1, -0.9, 2.0, -0.4, 1.4, -1.6, 0.6, -1.1, 1.9, -0.8,
-        0.2, -1.5, 1.0, -0.6, 1.7, -1.2, 0.9, -0.3, 1.3, -1.9,
+        1.5,
+        -1.0,
+        0.8,
+        -2.0,
+        1.2,
+        -0.5,
+        1.8,
+        -1.3,
+        0.3,
+        -1.7,
+        1.1,
+        -0.9,
+        2.0,
+        -0.4,
+        1.4,
+        -1.6,
+        0.6,
+        -1.1,
+        1.9,
+        -0.8,
+        0.2,
+        -1.5,
+        1.0,
+        -0.6,
+        1.7,
+        -1.2,
+        0.9,
+        -0.3,
+        1.3,
+        -1.9,
       ];
       // Only weigh 40% of the days
       final weights = List.generate(30, (i) {
@@ -467,29 +526,32 @@ void main() {
       expect(results.last.tdee, closeTo(2040.0, 50.0));
     });
 
-    test('two identical datasets produce identical results (deterministic)', () {
-      final weights = List.generate(30, (i) => 180.0 + (i % 3) * 0.5);
-      final intakes = List.generate(30, (i) => 2000.0 + (i % 2) * 200.0);
+    test(
+      'two identical datasets produce identical results (deterministic)',
+      () {
+        final weights = List.generate(30, (i) => 180.0 + (i % 3) * 0.5);
+        final intakes = List.generate(30, (i) => 2000.0 + (i % 2) * 200.0);
 
-      final results1 = GoalLogicService.calculateKalmanTDEE(
-        weights: weights,
-        intakes: intakes,
-        initialTDEE: 2100.0,
-        initialWeight: 180.0,
-      );
+        final results1 = GoalLogicService.calculateKalmanTDEE(
+          weights: weights,
+          intakes: intakes,
+          initialTDEE: 2100.0,
+          initialWeight: 180.0,
+        );
 
-      final results2 = GoalLogicService.calculateKalmanTDEE(
-        weights: weights,
-        intakes: intakes,
-        initialTDEE: 2100.0,
-        initialWeight: 180.0,
-      );
+        final results2 = GoalLogicService.calculateKalmanTDEE(
+          weights: weights,
+          intakes: intakes,
+          initialTDEE: 2100.0,
+          initialWeight: 180.0,
+        );
 
-      for (var i = 0; i < results1.length; i++) {
-        expect(results1[i].tdee, results2[i].tdee);
-        expect(results1[i].weight, results2[i].weight);
-      }
-    });
+        for (var i = 0; i < results1.length; i++) {
+          expect(results1[i].tdee, results2[i].tdee);
+          expect(results1[i].weight, results2[i].weight);
+        }
+      },
+    );
   });
 
   group('hasEnoughWeightData', () {
@@ -509,10 +571,7 @@ void main() {
       // 70% of 28 = 19.6, ceil = 20. So 19 is not enough.
       final weights = List.generate(
         19,
-        (i) => Weight(
-          weight: 100.0,
-          date: now.subtract(Duration(days: i)),
-        ),
+        (i) => Weight(weight: 100.0, date: now.subtract(Duration(days: i))),
       );
       expect(
         GoalLogicService.hasEnoughWeightData(weights, windowDays: 28, now: now),
@@ -525,10 +584,7 @@ void main() {
       // 70% of 28 = 19.6, ceil = 20
       final weights = List.generate(
         20,
-        (i) => Weight(
-          weight: 100.0,
-          date: now.subtract(Duration(days: i)),
-        ),
+        (i) => Weight(weight: 100.0, date: now.subtract(Duration(days: i))),
       );
       expect(
         GoalLogicService.hasEnoughWeightData(weights, windowDays: 28, now: now),
@@ -541,10 +597,7 @@ void main() {
       // 70% of 14 = 9.8, ceil = 10
       final weights = List.generate(
         10,
-        (i) => Weight(
-          weight: 100.0,
-          date: now.subtract(Duration(days: i)),
-        ),
+        (i) => Weight(weight: 100.0, date: now.subtract(Duration(days: i))),
       );
       expect(
         GoalLogicService.hasEnoughWeightData(weights, windowDays: 14, now: now),
@@ -556,10 +609,7 @@ void main() {
       final now = DateTime(2024, 1, 15);
       final weights = List.generate(
         9,
-        (i) => Weight(
-          weight: 100.0,
-          date: now.subtract(Duration(days: i)),
-        ),
+        (i) => Weight(weight: 100.0, date: now.subtract(Duration(days: i))),
       );
       expect(
         GoalLogicService.hasEnoughWeightData(weights, windowDays: 14, now: now),
@@ -572,10 +622,7 @@ void main() {
       // 70% of 60 = 42
       final weights = List.generate(
         42,
-        (i) => Weight(
-          weight: 100.0,
-          date: now.subtract(Duration(days: i)),
-        ),
+        (i) => Weight(weight: 100.0, date: now.subtract(Duration(days: i))),
       );
       expect(
         GoalLogicService.hasEnoughWeightData(weights, windowDays: 60, now: now),
@@ -588,17 +635,12 @@ void main() {
       // 9 recent + 10 old (beyond 28 days)
       final recentWeights = List.generate(
         9,
-        (i) => Weight(
-          weight: 100.0,
-          date: now.subtract(Duration(days: i)),
-        ),
+        (i) => Weight(weight: 100.0, date: now.subtract(Duration(days: i))),
       );
       final oldWeights = List.generate(
         10,
-        (i) => Weight(
-          weight: 100.0,
-          date: now.subtract(Duration(days: 30 + i)),
-        ),
+        (i) =>
+            Weight(weight: 100.0, date: now.subtract(Duration(days: 30 + i))),
       );
       expect(
         GoalLogicService.hasEnoughWeightData(
@@ -686,11 +728,8 @@ void main() {
         now: now,
         days: days,
         weight: 180.0,
-        makeStats: (date, i) => DailyMacroStats(
-          date: date,
-          calories: 2700,
-          logCount: 3,
-        ),
+        makeStats: (date, i) =>
+            DailyMacroStats(date: date, calories: 2700, logCount: 3),
       );
 
       final weightMap = maps['weightMap'] as Map<DateTime, double>;
@@ -702,8 +741,6 @@ void main() {
         weightMap: weightMap,
         statsMap: statsMap,
         initialTDEE: 0.0,
-
-
       );
 
       // Seed=0 still moves toward 2700 but undershoots significantly
@@ -739,8 +776,6 @@ void main() {
         weightMap: weightMap,
         statsMap: statsMap,
         initialTDEE: 2000.0,
-
-
       );
 
       expect(estimate, isNotNull);
@@ -756,11 +791,8 @@ void main() {
         now: now,
         days: days,
         weight: 180.0,
-        makeStats: (date, i) => DailyMacroStats(
-          date: date,
-          calories: 2700,
-          logCount: 3,
-        ),
+        makeStats: (date, i) =>
+            DailyMacroStats(date: date, calories: 2700, logCount: 3),
       );
 
       final weightMap = maps['weightMap'] as Map<DateTime, double>;
@@ -772,8 +804,6 @@ void main() {
         weightMap: weightMap,
         statsMap: statsMap,
         initialTDEE: 2000.0,
-
-
       );
 
       final estimateSeed2661 = GoalLogicService.computeTdeeAtDate(
@@ -782,8 +812,6 @@ void main() {
         weightMap: weightMap,
         statsMap: statsMap,
         initialTDEE: 2661.0,
-
-
       );
 
       expect(estimateSeed2000, isNotNull);
@@ -814,18 +842,10 @@ void main() {
         makeStats: (date, i) {
           if (i % 3 == 0) {
             // Every 3rd day: logged something but 0 calories
-            return DailyMacroStats(
-              date: date,
-              calories: 0,
-              logCount: 1,
-            );
+            return DailyMacroStats(date: date, calories: 0, logCount: 1);
           }
           // Other days: normal logging
-          return DailyMacroStats(
-            date: date,
-            calories: 2700,
-            logCount: 3,
-          );
+          return DailyMacroStats(date: date, calories: 2700, logCount: 3);
         },
       );
 
@@ -838,8 +858,6 @@ void main() {
         weightMap: weightMap,
         statsMap: statsMap,
         initialTDEE: 2000.0,
-
-
       );
 
       expect(estimate, isNotNull);
@@ -859,11 +877,8 @@ void main() {
         now: now,
         days: days,
         weight: 180.0,
-        makeStats: (date, i) => DailyMacroStats(
-          date: date,
-          calories: 0,
-          logCount: 1,
-        ),
+        makeStats: (date, i) =>
+            DailyMacroStats(date: date, calories: 0, logCount: 1),
       );
 
       final weightMap = maps['weightMap'] as Map<DateTime, double>;
@@ -875,8 +890,6 @@ void main() {
         weightMap: weightMap,
         statsMap: statsMap,
         initialTDEE: 2000.0,
-
-
       );
 
       expect(estimate, isNotNull);

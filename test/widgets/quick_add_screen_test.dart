@@ -4,9 +4,7 @@ import 'package:meal_of_record/widgets/quick_add_dialog.dart';
 
 void main() {
   Widget createTestWidget() {
-    return const MaterialApp(
-      home: QuickAddScreen(),
-    );
+    return const MaterialApp(home: QuickAddScreen());
   }
 
   group('QuickAddScreen', () {
@@ -30,8 +28,7 @@ void main() {
       expect(find.text('Required'), findsOneWidget);
     });
 
-    testWidgets('shows Invalid expression error for bad input',
-        (tester) async {
+    testWidgets('shows Invalid expression error for bad input', (tester) async {
       await tester.pumpWidget(createTestWidget());
 
       await tester.enterText(find.byType(TextField), '10++');
@@ -70,8 +67,7 @@ void main() {
       expect(find.textContaining('='), findsNothing);
     });
 
-    testWidgets('shows preview with kcal for valid expression',
-        (tester) async {
+    testWidgets('shows preview with kcal for valid expression', (tester) async {
       await tester.pumpWidget(createTestWidget());
 
       await tester.enterText(find.byType(TextField), '100+50');
@@ -134,8 +130,7 @@ void main() {
       expect(textField.controller?.text, '50+50');
     });
 
-    testWidgets('clears error when re-submitting valid input',
-        (tester) async {
+    testWidgets('clears error when re-submitting valid input', (tester) async {
       await tester.pumpWidget(createTestWidget());
 
       // First submit empty to get error
@@ -155,8 +150,9 @@ void main() {
       expect(find.text('Invalid expression'), findsNothing);
     });
 
-    testWidgets('leading negative sign does not trigger preview',
-        (tester) async {
+    testWidgets('leading negative sign does not trigger preview', (
+      tester,
+    ) async {
       await tester.pumpWidget(createTestWidget());
 
       await tester.enterText(find.byType(TextField), '-100');

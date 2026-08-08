@@ -39,7 +39,9 @@ void main() {
     expect(find.byIcon(Icons.restaurant), findsOneWidget);
   });
 
-  testWidgets('clicking text tab calls setSearchMode with text', (tester) async {
+  testWidgets('clicking text tab calls setSearchMode with text', (
+    tester,
+  ) async {
     when(mockProvider.searchMode).thenReturn(SearchMode.recipe);
 
     await tester.pumpWidget(createTestWidget());
@@ -48,8 +50,9 @@ void main() {
     verify(mockProvider.setSearchMode(SearchMode.text)).called(1);
   });
 
-  testWidgets('clicking recipe tab calls setSearchMode with recipe',
-      (tester) async {
+  testWidgets('clicking recipe tab calls setSearchMode with recipe', (
+    tester,
+  ) async {
     when(mockProvider.searchMode).thenReturn(SearchMode.text);
 
     await tester.pumpWidget(createTestWidget());
@@ -58,7 +61,9 @@ void main() {
     verify(mockProvider.setSearchMode(SearchMode.recipe)).called(1);
   });
 
-  testWidgets('clicking food tab calls setSearchMode with food', (tester) async {
+  testWidgets('clicking food tab calls setSearchMode with food', (
+    tester,
+  ) async {
     when(mockProvider.searchMode).thenReturn(SearchMode.text);
 
     await tester.pumpWidget(createTestWidget());
@@ -67,8 +72,9 @@ void main() {
     verify(mockProvider.setSearchMode(SearchMode.food)).called(1);
   });
 
-  testWidgets('scan tab does not call setSearchMode (launches scanner instead)',
-      (tester) async {
+  testWidgets('scan tab does not call setSearchMode (launches scanner instead)', (
+    tester,
+  ) async {
     when(mockProvider.searchMode).thenReturn(SearchMode.text);
 
     await tester.pumpWidget(createTestWidget());
@@ -105,7 +111,9 @@ void main() {
     expect(decoration?.color, isNot(Colors.transparent));
   });
 
-  testWidgets('scan tab is always grey (never visually selected)', (tester) async {
+  testWidgets('scan tab is always grey (never visually selected)', (
+    tester,
+  ) async {
     // Even if searchMode is scan, the scan tab itself doesn't highlight
     // because it immediately launches scanner and returns
     when(mockProvider.searchMode).thenReturn(SearchMode.text);

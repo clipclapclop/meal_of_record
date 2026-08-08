@@ -27,7 +27,9 @@ void main() {
     await refDb.close();
   });
 
-  testWidgets('serving dialog uses UnitSelectField and saves correctly', (tester) async {
+  testWidgets('serving dialog uses UnitSelectField and saves correctly', (
+    tester,
+  ) async {
     await tester.pumpWidget(const MaterialApp(home: FoodEditScreen()));
 
     // Scroll down to Additional Servings section
@@ -64,7 +66,10 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify it's now a text field
-    expect(find.widgetWithText(TextFormField, 'Unit Name (e.g. cup, slice)'), findsOneWidget);
+    expect(
+      find.widgetWithText(TextFormField, 'Unit Name (e.g. cup, slice)'),
+      findsOneWidget,
+    );
 
     // Enter details
     await tester.enterText(
@@ -75,7 +80,7 @@ void main() {
       find.widgetWithText(TextFormField, 'Quantity (e.g. 1.0)'),
       '1.5',
     );
-     await tester.enterText(
+    await tester.enterText(
       find.widgetWithText(TextFormField, 'Weight for Quantity (g)'),
       '250',
     );
@@ -92,7 +97,9 @@ void main() {
     expect(find.text('= 250g'), findsOneWidget);
   });
 
-  testWidgets('editing existing serving uses UnitSelectField with correct value', (tester) async {
+  testWidgets(
+    'editing existing serving uses UnitSelectField with correct value',
+    (tester) async {
       await tester.pumpWidget(const MaterialApp(home: FoodEditScreen()));
 
       // Add a serving first (programmatically or via UI, UI is safer here to rely on prev test)
@@ -101,14 +108,20 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithIcon(IconButton, Icons.add_circle).last);
       await tester.pumpAndSettle();
-      
+
       await tester.tap(find.text('serving').last);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Custom...').last);
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.widgetWithText(TextFormField, 'Unit Name (e.g. cup, slice)'), 'Bowl');
-      await tester.enterText(find.widgetWithText(TextFormField, 'Weight for Quantity (g)'), '100');
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Unit Name (e.g. cup, slice)'),
+        'Bowl',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Weight for Quantity (g)'),
+        '100',
+      );
       await tester.tap(find.text('Save'));
       await tester.pumpAndSettle();
 
@@ -117,9 +130,13 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Edit Serving'), findsOneWidget);
-      
+
       // "Bowl" is custom, so UnitSelectField should show as text field
-      expect(find.widgetWithText(TextFormField, 'Unit Name (e.g. cup, slice)'), findsOneWidget);
+      expect(
+        find.widgetWithText(TextFormField, 'Unit Name (e.g. cup, slice)'),
+        findsOneWidget,
+      );
       expect(find.text('Bowl'), findsOneWidget);
-  });
+    },
+  );
 }

@@ -32,9 +32,7 @@ void main() {
     fat: 0.002,
     carbs: 0.14,
     fiber: 0.024,
-    servings: [
-      FoodServing(foodId: 1, unit: 'g', grams: 1.0, quantity: 1.0),
-    ],
+    servings: [FoodServing(foodId: 1, unit: 'g', grams: 1.0, quantity: 1.0)],
   );
 
   setUp(() {
@@ -57,13 +55,15 @@ void main() {
     when(mockLogProvider.totalCarbs).thenReturn(200.0);
     when(mockLogProvider.totalFiber).thenReturn(20.0);
 
-    when(mockGoalsProvider.currentGoals).thenReturn(MacroGoals(
-      calories: 2000.0,
-      protein: 150.0,
-      fat: 70.0,
-      carbs: 300.0,
-      fiber: 30.0,
-    ));
+    when(mockGoalsProvider.currentGoals).thenReturn(
+      MacroGoals(
+        calories: 2000.0,
+        protein: 150.0,
+        fat: 70.0,
+        carbs: 300.0,
+        fiber: 30.0,
+      ),
+    );
     when(mockGoalsProvider.targetFor(any)).thenReturn(MacroGoals.hardcoded());
     when(mockGoalsProvider.useNetCarbs).thenReturn(false);
 
@@ -81,13 +81,17 @@ void main() {
         ChangeNotifierProvider<LogProvider>.value(value: mockLogProvider),
         ChangeNotifierProvider<RecipeProvider>.value(value: mockRecipeProvider),
         ChangeNotifierProvider<GoalsProvider>.value(value: mockGoalsProvider),
-        ChangeNotifierProvider<NavigationProvider>.value(value: mockNavigationProvider),
+        ChangeNotifierProvider<NavigationProvider>.value(
+          value: mockNavigationProvider,
+        ),
       ],
       child: MaterialApp(home: QuantityEditScreen(config: config)),
     );
   }
 
-  testWidgets('Uses daily goals as target when showConsumed is true', (tester) async {
+  testWidgets('Uses daily goals as target when showConsumed is true', (
+    tester,
+  ) async {
     when(mockNavigationProvider.showConsumed).thenReturn(true);
 
     final config = QuantityEditConfig(
@@ -100,42 +104,49 @@ void main() {
     await tester.pumpWidget(createTestWidget(config));
     await tester.pumpAndSettle();
 
-    final charts = tester.widgetList<HorizontalMiniBarChart>(find.byType(HorizontalMiniBarChart));
-    
+    final charts = tester.widgetList<HorizontalMiniBarChart>(
+      find.byType(HorizontalMiniBarChart),
+    );
+
     // Day's Macros Calories
     final dayChart = charts.first;
     expect(dayChart.target, 2000.0);
-    
+
     // Portion's Macros Calories
     final portionChart = charts.skip(5).first;
     expect(portionChart.target, 2000.0);
   });
 
-  testWidgets('Uses remaining budget as target for portion when showConsumed is false', (tester) async {
-    when(mockNavigationProvider.showConsumed).thenReturn(false);
+  testWidgets(
+    'Uses remaining budget as target for portion when showConsumed is false',
+    (tester) async {
+      when(mockNavigationProvider.showConsumed).thenReturn(false);
 
-    final config = QuantityEditConfig(
-      context: QuantityEditContext.day,
-      food: mockFood,
-      initialUnit: 'g',
-      initialQuantity: 100.0,
-    );
+      final config = QuantityEditConfig(
+        context: QuantityEditContext.day,
+        food: mockFood,
+        initialUnit: 'g',
+        initialQuantity: 100.0,
+      );
 
-    await tester.pumpWidget(createTestWidget(config));
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(createTestWidget(config));
+      await tester.pumpAndSettle();
 
-    final charts = tester.widgetList<HorizontalMiniBarChart>(find.byType(HorizontalMiniBarChart));
-    
-    // Day's Macros Calories Chart should still use daily goal for context
-    final dayChart = charts.first;
-    expect(dayChart.target, 2000.0);
-    
-    // Portion's Macros Calories Chart should use remaining budget (2000 - 1500 = 500)
-    final portionChart = charts.skip(5).first;
-    expect(portionChart.target, 500.0);
-    
-    // Portion's Macros Protein Chart should use remaining budget (150 - 100 = 50)
-    final portionProteinChart = charts.skip(6).first;
-    expect(portionProteinChart.target, 50.0);
-  });
+      final charts = tester.widgetList<HorizontalMiniBarChart>(
+        find.byType(HorizontalMiniBarChart),
+      );
+
+      // Day's Macros Calories Chart should still use daily goal for context
+      final dayChart = charts.first;
+      expect(dayChart.target, 2000.0);
+
+      // Portion's Macros Calories Chart should use remaining budget (2000 - 1500 = 500)
+      final portionChart = charts.skip(5).first;
+      expect(portionChart.target, 500.0);
+
+      // Portion's Macros Protein Chart should use remaining budget (150 - 100 = 50)
+      final portionProteinChart = charts.skip(6).first;
+      expect(portionProteinChart.target, 50.0);
+    },
+  );
 }

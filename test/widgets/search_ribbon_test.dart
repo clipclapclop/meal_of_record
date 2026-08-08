@@ -201,122 +201,111 @@ void main() {
           ChangeNotifierProvider<NavigationProvider>.value(
             value: mockNavigationProvider,
           ),
-          ChangeNotifierProvider<LogProvider>.value(
-            value: mockLogProvider,
-          ),
+          ChangeNotifierProvider<LogProvider>.value(value: mockLogProvider),
           ChangeNotifierProvider<SearchProvider>.value(
             value: mockSearchProvider,
           ),
-          ChangeNotifierProvider<GoalsProvider>.value(
-            value: mockGoalsProvider,
-          ),
+          ChangeNotifierProvider<GoalsProvider>.value(value: mockGoalsProvider),
         ],
         child: MaterialApp(
           home: Scaffold(
-            body: SearchRibbon(
-              isSearchActive: true,
-              onChanged: onChanged,
-            ),
+            body: SearchRibbon(isSearchActive: true, onChanged: onChanged),
           ),
         ),
       );
     }
 
-    testWidgets(
-      'switches from food tab to text tab when user starts typing',
-      (WidgetTester tester) async {
-        // Arrange
-        String? capturedQuery;
-        await tester.pumpWidget(
-          createActiveSearchWidget(
-            initialMode: SearchMode.food,
-            onChanged: (query) {
-              capturedQuery = query;
-            },
-          ),
-        );
+    testWidgets('switches from food tab to text tab when user starts typing', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      String? capturedQuery;
+      await tester.pumpWidget(
+        createActiveSearchWidget(
+          initialMode: SearchMode.food,
+          onChanged: (query) {
+            capturedQuery = query;
+          },
+        ),
+      );
 
-        // Act
-        await tester.enterText(find.byType(TextField), 'apple');
-        await tester.pump();
+      // Act
+      await tester.enterText(find.byType(TextField), 'apple');
+      await tester.pump();
 
-        // Assert
-        verify(mockSearchProvider.setSearchMode(SearchMode.text)).called(1);
-        expect(capturedQuery, 'apple');
-      },
-    );
+      // Assert
+      verify(mockSearchProvider.setSearchMode(SearchMode.text)).called(1);
+      expect(capturedQuery, 'apple');
+    });
 
-    testWidgets(
-      'does not switch mode when already on text tab',
-      (WidgetTester tester) async {
-        // Arrange
-        String? capturedQuery;
-        await tester.pumpWidget(
-          createActiveSearchWidget(
-            initialMode: SearchMode.text,
-            onChanged: (query) {
-              capturedQuery = query;
-            },
-          ),
-        );
+    testWidgets('does not switch mode when already on text tab', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      String? capturedQuery;
+      await tester.pumpWidget(
+        createActiveSearchWidget(
+          initialMode: SearchMode.text,
+          onChanged: (query) {
+            capturedQuery = query;
+          },
+        ),
+      );
 
-        // Act
-        await tester.enterText(find.byType(TextField), 'apple');
-        await tester.pump();
+      // Act
+      await tester.enterText(find.byType(TextField), 'apple');
+      await tester.pump();
 
-        // Assert
-        verifyNever(mockSearchProvider.setSearchMode(any));
-        expect(capturedQuery, 'apple');
-      },
-    );
+      // Assert
+      verifyNever(mockSearchProvider.setSearchMode(any));
+      expect(capturedQuery, 'apple');
+    });
 
-    testWidgets(
-      'does not switch mode when on recipe tab',
-      (WidgetTester tester) async {
-        // Arrange
-        String? capturedQuery;
-        await tester.pumpWidget(
-          createActiveSearchWidget(
-            initialMode: SearchMode.recipe,
-            onChanged: (query) {
-              capturedQuery = query;
-            },
-          ),
-        );
+    testWidgets('does not switch mode when on recipe tab', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      String? capturedQuery;
+      await tester.pumpWidget(
+        createActiveSearchWidget(
+          initialMode: SearchMode.recipe,
+          onChanged: (query) {
+            capturedQuery = query;
+          },
+        ),
+      );
 
-        // Act
-        await tester.enterText(find.byType(TextField), 'apple');
-        await tester.pump();
+      // Act
+      await tester.enterText(find.byType(TextField), 'apple');
+      await tester.pump();
 
-        // Assert
-        verifyNever(mockSearchProvider.setSearchMode(any));
-        expect(capturedQuery, 'apple');
-      },
-    );
+      // Assert
+      verifyNever(mockSearchProvider.setSearchMode(any));
+      expect(capturedQuery, 'apple');
+    });
 
-    testWidgets(
-      'does not switch mode when clearing text on food tab',
-      (WidgetTester tester) async {
-        // Arrange
-        String? capturedQuery;
-        await tester.pumpWidget(
-          createActiveSearchWidget(
-            initialMode: SearchMode.food,
-            onChanged: (query) {
-              capturedQuery = query;
-            },
-          ),
-        );
+    testWidgets('does not switch mode when clearing text on food tab', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      String? capturedQuery;
+      await tester.pumpWidget(
+        createActiveSearchWidget(
+          initialMode: SearchMode.food,
+          onChanged: (query) {
+            capturedQuery = query;
+          },
+        ),
+      );
 
-        // Act - enter empty string
-        await tester.enterText(find.byType(TextField), '');
-        await tester.pump();
+      // Act - enter empty string
+      await tester.enterText(find.byType(TextField), '');
+      await tester.pump();
 
-        // Assert - should not switch mode for empty query
-        verifyNever(mockSearchProvider.setSearchMode(any));
-        // Note: capturedQuery might be null if onChanged isn't called for empty strings
-        expect(capturedQuery, anyOf(isNull, equals('')));
-      },
-    );
+      // Assert - should not switch mode for empty query
+      verifyNever(mockSearchProvider.setSearchMode(any));
+      // Note: capturedQuery might be null if onChanged isn't called for empty strings
+      expect(capturedQuery, anyOf(isNull, equals('')));
+    });
   });
 }

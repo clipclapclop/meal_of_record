@@ -40,11 +40,7 @@ Map<String, dynamic> serializePortions(
     });
   }
 
-  return {
-    'type': 'portions',
-    'foods': foods,
-    'portions': portionsList,
-  };
+  return {'type': 'portions', 'foods': foods, 'portions': portionsList};
 }
 
 List<String> buildChunks(String jsonStr, {int chunkSize = 600}) {
@@ -63,7 +59,12 @@ List<String> buildChunks(String jsonStr, {int chunkSize = 600}) {
 }
 
 void main() {
-  Food makeFood(int id, String name, {String? thumbnail, String source = 'test'}) {
+  Food makeFood(
+    int id,
+    String name, {
+    String? thumbnail,
+    String source = 'test',
+  }) {
     return Food(
       id: id,
       name: name,
@@ -93,7 +94,8 @@ void main() {
       expect((result['foods'] as List).length, 2);
       expect((result['portions'] as List).length, 2);
 
-      final firstPortion = (result['portions'] as List)[0] as Map<String, dynamic>;
+      final firstPortion =
+          (result['portions'] as List)[0] as Map<String, dynamic>;
       expect(firstPortion['food_key'], '1_test');
       expect(firstPortion['grams'], 200);
       expect(firstPortion['unit'], 'g');
@@ -122,7 +124,10 @@ void main() {
         FoodPortion(food: food2, grams: 300, unit: 'g'),
       ];
 
-      final serialized = serializePortions(originalPortions, includeImages: false);
+      final serialized = serializePortions(
+        originalPortions,
+        includeImages: false,
+      );
       final jsonStr = jsonEncode(serialized);
       final decoded = jsonDecode(jsonStr) as Map<String, dynamic>;
 
@@ -136,7 +141,8 @@ void main() {
         foodLookup['${food.id}_${food.source}'] = food;
       }
 
-      final portionsList = (decoded['portions'] as List).cast<Map<String, dynamic>>();
+      final portionsList = (decoded['portions'] as List)
+          .cast<Map<String, dynamic>>();
       final rebuilt = <FoodPortion>[];
       for (final pJson in portionsList) {
         final foodKey = pJson['food_key'] as String;

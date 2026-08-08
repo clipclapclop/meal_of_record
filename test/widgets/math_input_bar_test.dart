@@ -15,9 +15,7 @@ void main() {
 
   Widget createTestWidget(TextEditingController ctrl) {
     return MaterialApp(
-      home: Scaffold(
-        body: MathInputBar(controller: ctrl),
-      ),
+      home: Scaffold(body: MathInputBar(controller: ctrl)),
     );
   }
 

@@ -32,10 +32,12 @@ void main() {
     }
 
     // Mock DB calls
-    when(mockDatabaseService.getWeightsForRange(any, any))
-        .thenAnswer((_) async => weights ?? []);
-    when(mockDatabaseService.getLoggedMacrosForDateRange(any, any))
-        .thenAnswer((_) async => []);
+    when(
+      mockDatabaseService.getWeightsForRange(any, any),
+    ).thenAnswer((_) async => weights ?? []);
+    when(
+      mockDatabaseService.getLoggedMacrosForDateRange(any, any),
+    ).thenAnswer((_) async => []);
 
     final provider = GoalsProvider(
       databaseService: mockDatabaseService,
@@ -112,69 +114,73 @@ void main() {
       expect(result.goals.protein, 200.0);
     });
 
-    test('Multiplier mode: falls back to latest weight if single weight entry', () async {
-      final settings = GoalSettings(
-        anchorWeight: 150.0,
-        maintenanceCaloriesStart: 2000,
-        proteinTarget: 100,
-        fatTarget: 70,
-        carbTarget: 200,
-        fiberTarget: 30,
-        mode: GoalMode.maintain,
-        calculationMode: MacroCalculationMode.proteinCarbs,
-        proteinTargetMode: ProteinTargetMode.percentageOfWeight,
-        proteinMultiplier: 1.5,
-        fixedDelta: 0,
-        lastTargetUpdate: now,
-      );
+    test(
+      'Multiplier mode: falls back to latest weight if single weight entry',
+      () async {
+        final settings = GoalSettings(
+          anchorWeight: 150.0,
+          maintenanceCaloriesStart: 2000,
+          proteinTarget: 100,
+          fatTarget: 70,
+          carbTarget: 200,
+          fiberTarget: 30,
+          mode: GoalMode.maintain,
+          calculationMode: MacroCalculationMode.proteinCarbs,
+          proteinTargetMode: ProteinTargetMode.percentageOfWeight,
+          proteinMultiplier: 1.5,
+          fixedDelta: 0,
+          lastTargetUpdate: now,
+        );
 
-      // Only one weight — Kalman won't run, falls back to latest raw weight.
-      final weights = [
-         Weight(date: now, weight: 180.0),
-      ];
+        // Only one weight — Kalman won't run, falls back to latest raw weight.
+        final weights = [Weight(date: now, weight: 180.0)];
 
-      final provider = await createProvider(
-        now: now,
-        initialSettings: settings,
-        weights: weights,
-      );
+        final provider = await createProvider(
+          now: now,
+          initialSettings: settings,
+          weights: weights,
+        );
 
-      final result = await provider.recalculateTargets(settings);
+        final result = await provider.recalculateTargets(settings);
 
-      // Latest weight is 180. 180 * 1.5 = 270.
-      expect(result.settings.proteinTarget, 270.0);
-    });
+        // Latest weight is 180. 180 * 1.5 = 270.
+        expect(result.settings.proteinTarget, 270.0);
+      },
+    );
 
-    test('Multiplier mode: falls back to Anchor Weight if no weights', () async {
-      final settings = GoalSettings(
-        anchorWeight: 160.0,
-        maintenanceCaloriesStart: 2000,
-        proteinTarget: 100,
-        fatTarget: 70,
-        carbTarget: 200,
-        fiberTarget: 30,
-        mode: GoalMode.maintain,
-        calculationMode: MacroCalculationMode.proteinCarbs,
-        proteinTargetMode: ProteinTargetMode.percentageOfWeight,
-        proteinMultiplier: 0.5,
-        fixedDelta: 0,
-        lastTargetUpdate: now,
-      );
+    test(
+      'Multiplier mode: falls back to Anchor Weight if no weights',
+      () async {
+        final settings = GoalSettings(
+          anchorWeight: 160.0,
+          maintenanceCaloriesStart: 2000,
+          proteinTarget: 100,
+          fatTarget: 70,
+          carbTarget: 200,
+          fiberTarget: 30,
+          mode: GoalMode.maintain,
+          calculationMode: MacroCalculationMode.proteinCarbs,
+          proteinTargetMode: ProteinTargetMode.percentageOfWeight,
+          proteinMultiplier: 0.5,
+          fixedDelta: 0,
+          lastTargetUpdate: now,
+        );
 
-      final provider = await createProvider(
-        now: now,
-        initialSettings: settings,
-        weights: [], // No weights
-      );
+        final provider = await createProvider(
+          now: now,
+          initialSettings: settings,
+          weights: [], // No weights
+        );
 
-      final result = await provider.recalculateTargets(settings);
+        final result = await provider.recalculateTargets(settings);
 
-      // 160 * 0.5 = 80.
-      expect(result.settings.proteinTarget, 80.0);
-    });
+        // 160 * 0.5 = 80.
+        expect(result.settings.proteinTarget, 80.0);
+      },
+    );
 
     test('Changing mode refreshes calculation', () async {
-       final settings = GoalSettings(
+      final settings = GoalSettings(
         anchorWeight: 150.0,
         maintenanceCaloriesStart: 2000,
         proteinTarget: 200, // Fixed
@@ -202,7 +208,7 @@ void main() {
       final newSettings = settings.copyWith(
         proteinTargetMode: ProteinTargetMode.percentageOfWeight,
       );
-      
+
       // We must manually trigger saveSettings which calls recalculate
       await provider.saveSettings(newSettings);
 

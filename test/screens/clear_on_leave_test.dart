@@ -158,7 +158,9 @@ void main() {
     expect(logProvider.logQueue, isEmpty);
   });
 
-  testWidgets('back gesture on SearchScreen is blocked and preserves queue', (tester) async {
+  testWidgets('back gesture on SearchScreen is blocked and preserves queue', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       createTestWidget(const Scaffold(body: Text('Home'))),
     );

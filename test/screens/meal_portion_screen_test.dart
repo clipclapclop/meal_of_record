@@ -52,12 +52,12 @@ void main() {
   });
 
   Widget buildWidget() {
-    return MaterialApp(
-      home: MealPortionScreen(meal: testMeal),
-    );
+    return MaterialApp(home: MealPortionScreen(meal: testMeal));
   }
 
-  testWidgets('renders meal ingredients with correct initial grams', (tester) async {
+  testWidgets('renders meal ingredients with correct initial grams', (
+    tester,
+  ) async {
     await tester.pumpWidget(buildWidget());
 
     expect(find.text('Chicken'), findsOneWidget);
@@ -65,7 +65,9 @@ void main() {
     expect(find.textContaining('500'), findsWidgets); // total weight and input
   });
 
-  testWidgets('entering total grams updates ingredients proportionally', (tester) async {
+  testWidgets('entering total grams updates ingredients proportionally', (
+    tester,
+  ) async {
     await tester.pumpWidget(buildWidget());
 
     // Clear the text field and enter 250 (half of 500)

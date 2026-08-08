@@ -20,6 +20,10 @@ python3 -m unittest discover -s test/release_adapter -p 'test_*.py'
 echo "==> Resolving locked dependencies"
 flutter pub get --enforce-lockfile --offline
 
+echo "==> Checking Dart formatting"
+mapfile -d '' dart_files < <(git ls-files -z -- '*.dart')
+dart format --output=none --set-exit-if-changed "${dart_files[@]}"
+
 echo "==> Analyzing (all findings are fatal)"
 flutter analyze --no-pub
 

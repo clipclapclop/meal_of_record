@@ -78,7 +78,7 @@ void main() {
       emojiForFoodName: emojiForFoodName,
       sortingService: FoodSortingService(),
     );
-    
+
     final router = AppRouter(
       databaseService: databaseService,
       offApiService: offApiService,
@@ -90,7 +90,9 @@ void main() {
         ChangeNotifierProvider<LogProvider>.value(value: mockLogProvider),
         ChangeNotifierProvider<RecipeProvider>.value(value: mockRecipeProvider),
         ChangeNotifierProvider<GoalsProvider>.value(value: mockGoalsProvider),
-        ChangeNotifierProvider<NavigationProvider>.value(value: mockNavigationProvider),
+        ChangeNotifierProvider<NavigationProvider>.value(
+          value: mockNavigationProvider,
+        ),
       ],
       child: MaterialApp(
         onGenerateRoute: router.generateRoute,
@@ -100,7 +102,9 @@ void main() {
     );
   }
 
-  testWidgets('Edit button navigates to FoodEditScreen for regular foods', (tester) async {
+  testWidgets('Edit button navigates to FoodEditScreen for regular foods', (
+    tester,
+  ) async {
     final food = Food(
       id: 1,
       source: 'live',
@@ -128,7 +132,9 @@ void main() {
     expect(find.byType(FoodEditScreen), findsOneWidget);
   });
 
-  testWidgets('Edit button navigates to RecipeEditScreen for recipes', (tester) async {
+  testWidgets('Edit button navigates to RecipeEditScreen for recipes', (
+    tester,
+  ) async {
     final recipePlaceholder = Recipe(
       id: 0,
       name: 'Test Recipe',
@@ -137,9 +143,11 @@ void main() {
       createdTimestamp: DateTime.now().millisecondsSinceEpoch,
       items: [],
     );
-    
+
     // Save recipe to in-memory DB and get ID
-    final actualId = await DatabaseService.instance.saveRecipe(recipePlaceholder);
+    final actualId = await DatabaseService.instance.saveRecipe(
+      recipePlaceholder,
+    );
     final recipe = await DatabaseService.instance.getRecipeById(actualId);
 
     final recipeFood = recipe.toFood(); // source will be 'recipe'
@@ -179,7 +187,7 @@ void main() {
 
     // Verify RecipeEditScreen is shown
     expect(find.byType(RecipeEditScreen), findsOneWidget);
-    
+
     // Verify RecipeProvider was loaded with the recipe
     verify(mockRecipeProvider.loadFromRecipe(any)).called(1);
   });

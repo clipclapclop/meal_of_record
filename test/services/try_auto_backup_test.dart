@@ -57,7 +57,8 @@ void main() {
 
       expect(result, isFalse);
       verifyNever(
-          mockNas.uploadBackup(any, retentionCount: anyNamed('retentionCount')));
+        mockNas.uploadBackup(any, retentionCount: anyNamed('retentionCount')),
+      );
     });
 
     test('force=true skips cooldown check', () async {
@@ -83,10 +84,7 @@ void main() {
       // Will fail at NAS not configured, but we verify it gets past the cooldown
       when(mockConfig.isNasConfigured()).thenAnswer((_) async => false);
 
-      await tryAutoBackup(
-        configService: mockConfig,
-        nasService: mockNas,
-      );
+      await tryAutoBackup(configService: mockConfig, nasService: mockNas);
 
       verify(mockConfig.isNasConfigured()).called(1);
     });
@@ -96,17 +94,15 @@ void main() {
       when(mockConfig.getLastBackupTime()).thenAnswer((_) async => null);
       when(mockConfig.isNasConfigured()).thenAnswer((_) async => false);
 
-      await tryAutoBackup(
-        configService: mockConfig,
-        nasService: mockNas,
-      );
+      await tryAutoBackup(configService: mockConfig, nasService: mockNas);
 
       verify(mockConfig.isNasConfigured()).called(1);
     });
 
     test('returns false and does not throw on exceptions', () async {
-      when(mockConfig.isAutoBackupEnabled())
-          .thenThrow(Exception('prefs error'));
+      when(
+        mockConfig.isAutoBackupEnabled(),
+      ).thenThrow(Exception('prefs error'));
 
       final result = await tryAutoBackup(
         configService: mockConfig,

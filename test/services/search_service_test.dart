@@ -2,8 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:meal_of_record/services/database_service.dart';
 import 'package:meal_of_record/services/search_service.dart';
 import 'package:meal_of_record/models/food.dart' as model;
-import 'package:meal_of_record/services/live_database.dart'
-    hide FoodsCompanion;
+import 'package:meal_of_record/services/live_database.dart' hide FoodsCompanion;
 import 'package:meal_of_record/services/reference_database.dart'
     hide FoodsCompanion;
 import 'package:meal_of_record/services/live_database.dart' as live_db;

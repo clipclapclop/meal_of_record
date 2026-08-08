@@ -25,7 +25,13 @@ import 'package:meal_of_record/providers/navigation_provider.dart';
 
 import 'search_edit_behavior_test.mocks.dart';
 
-@GenerateMocks([LogProvider, SearchProvider, RecipeProvider, GoalsProvider, NavigationProvider])
+@GenerateMocks([
+  LogProvider,
+  SearchProvider,
+  RecipeProvider,
+  GoalsProvider,
+  NavigationProvider,
+])
 void main() {
   setUpAll(() async {
     final liveDb = LiveDatabase(connection: NativeDatabase.memory());

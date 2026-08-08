@@ -96,7 +96,9 @@ void main() {
       expect(find.byType(VerticalMiniBarChart), findsNWidgets(35));
     });
 
-    testWidgets('renders weekday labels matching passed-in dates', (WidgetTester tester) async {
+    testWidgets('renders weekday labels matching passed-in dates', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(buildTestWidget());
 
       // Dates are Wed Feb 4 – Tue Feb 10 → W, T, F, S, S, M, T
@@ -107,18 +109,19 @@ void main() {
       expect(find.text('M'), findsOneWidget);
     });
 
-    testWidgets('renders formatted nutrient values for selected day (defaults to today/day 6)', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(buildTestWidget());
+    testWidgets(
+      'renders formatted nutrient values for selected day (defaults to today/day 6)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildTestWidget());
 
-      // Values come from dailyAmounts[6] (today), not thisAmount
-      expect(find.text('2143 🔥\n of 2143'), findsOneWidget);
-      expect(find.text('143 P\n of 141g'), findsOneWidget);
-      expect(find.text('69 F\n of 71g'), findsOneWidget);
-      expect(find.text('242 C\n of 233g'), findsOneWidget);
-      expect(find.text('26 Fb\n of 30g'), findsOneWidget);
-    });
+        // Values come from dailyAmounts[6] (today), not thisAmount
+        expect(find.text('2143 🔥\n of 2143'), findsOneWidget);
+        expect(find.text('143 P\n of 141g'), findsOneWidget);
+        expect(find.text('69 F\n of 71g'), findsOneWidget);
+        expect(find.text('242 C\n of 233g'), findsOneWidget);
+        expect(find.text('26 Fb\n of 30g'), findsOneWidget);
+      },
+    );
 
     testWidgets('renders "Consumed" and "Remaining" buttons', (
       WidgetTester tester,

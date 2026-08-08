@@ -55,13 +55,15 @@ void main() {
     when(mockLogProvider.queuedCarbs).thenReturn(queuedCarbs);
     when(mockLogProvider.queuedFiber).thenReturn(queuedFiber);
 
-    when(mockGoalsProvider.currentGoals).thenReturn(MacroGoals(
-      calories: goalCal,
-      protein: goalProt,
-      fat: goalFat,
-      carbs: goalCarbs,
-      fiber: goalFiber,
-    ));
+    when(mockGoalsProvider.currentGoals).thenReturn(
+      MacroGoals(
+        calories: goalCal,
+        protein: goalProt,
+        fat: goalFat,
+        carbs: goalCarbs,
+        fiber: goalFiber,
+      ),
+    );
     when(mockGoalsProvider.targetFor(any)).thenReturn(MacroGoals.hardcoded());
     when(mockGoalsProvider.useNetCarbs).thenReturn(false);
 
@@ -79,7 +81,9 @@ void main() {
       providers: [
         ChangeNotifierProvider<LogProvider>.value(value: mockLogProvider),
         ChangeNotifierProvider<GoalsProvider>.value(value: mockGoalsProvider),
-        ChangeNotifierProvider<NavigationProvider>.value(value: mockNavigationProvider),
+        ChangeNotifierProvider<NavigationProvider>.value(
+          value: mockNavigationProvider,
+        ),
       ],
       child: MaterialApp(
         home: Scaffold(
@@ -96,51 +100,60 @@ void main() {
   }
 
   group('Consumed mode', () {
-    testWidgets('Day\'s Macros shows total consumed with goal targets', (tester) async {
+    testWidgets('Day\'s Macros shows total consumed with goal targets', (
+      tester,
+    ) async {
       setupMocks(showConsumed: true);
 
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      final charts = tester.widgetList<HorizontalMiniBarChart>(
-        find.byType(HorizontalMiniBarChart),
-      ).toList();
+      final charts = tester
+          .widgetList<HorizontalMiniBarChart>(
+            find.byType(HorizontalMiniBarChart),
+          )
+          .toList();
 
       // Day's Macros (indices 0-4): consumed = total, target = goals
       expect(charts[0].consumed, 700.0); // totalCalories
-      expect(charts[0].target, 2000.0);  // goal calories
-      expect(charts[1].consumed, 70.0);  // totalProtein
-      expect(charts[1].target, 150.0);   // goal protein
-      expect(charts[2].consumed, 30.0);  // totalFat
-      expect(charts[2].target, 70.0);    // goal fat
+      expect(charts[0].target, 2000.0); // goal calories
+      expect(charts[1].consumed, 70.0); // totalProtein
+      expect(charts[1].target, 150.0); // goal protein
+      expect(charts[2].consumed, 30.0); // totalFat
+      expect(charts[2].target, 70.0); // goal fat
       expect(charts[3].consumed, 150.0); // totalCarbs
-      expect(charts[3].target, 300.0);   // goal carbs
-      expect(charts[4].consumed, 15.0);  // totalFiber
-      expect(charts[4].target, 30.0);    // goal fiber
+      expect(charts[3].target, 300.0); // goal carbs
+      expect(charts[4].consumed, 15.0); // totalFiber
+      expect(charts[4].target, 30.0); // goal fiber
     });
 
-    testWidgets('Queue\'s Macros shows queued consumed with (goals - logged) targets', (tester) async {
-      setupMocks(showConsumed: true);
+    testWidgets(
+      'Queue\'s Macros shows queued consumed with (goals - logged) targets',
+      (tester) async {
+        setupMocks(showConsumed: true);
 
-      await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
 
-      final charts = tester.widgetList<HorizontalMiniBarChart>(
-        find.byType(HorizontalMiniBarChart),
-      ).toList();
+        final charts = tester
+            .widgetList<HorizontalMiniBarChart>(
+              find.byType(HorizontalMiniBarChart),
+            )
+            .toList();
 
-      // Queue's Macros (indices 5-9): consumed = queued, target = goals - logged
-      expect(charts[5].consumed, 200.0);  // queuedCalories
-      expect(charts[5].target, 1500.0);   // 2000 - 500
-      expect(charts[6].consumed, 20.0);   // queuedProtein
-      expect(charts[6].target, 100.0);    // 150 - 50
-      expect(charts[7].consumed, 10.0);   // queuedFat
-      expect(charts[7].target, 50.0);     // 70 - 20
-      expect(charts[8].consumed, 50.0);   // queuedCarbs
-      expect(charts[8].target, 200.0);    // 300 - 100
-      expect(charts[9].consumed, 5.0);    // queuedFiber
-      expect(charts[9].target, 20.0);     // 30 - 10
-    });
+        // Queue's Macros (indices 5-9): consumed = queued, target = goals - logged
+        expect(charts[5].consumed, 200.0); // queuedCalories
+        expect(charts[5].target, 1500.0); // 2000 - 500
+        expect(charts[6].consumed, 20.0); // queuedProtein
+        expect(charts[6].target, 100.0); // 150 - 50
+        expect(charts[7].consumed, 10.0); // queuedFat
+        expect(charts[7].target, 50.0); // 70 - 20
+        expect(charts[8].consumed, 50.0); // queuedCarbs
+        expect(charts[8].target, 200.0); // 300 - 100
+        expect(charts[9].consumed, 5.0); // queuedFiber
+        expect(charts[9].target, 20.0); // 30 - 10
+      },
+    );
 
     testWidgets('All 10 charts have showConsumed=true', (tester) async {
       setupMocks(showConsumed: true);
@@ -148,12 +161,18 @@ void main() {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      final charts = tester.widgetList<HorizontalMiniBarChart>(
-        find.byType(HorizontalMiniBarChart),
-      ).toList();
+      final charts = tester
+          .widgetList<HorizontalMiniBarChart>(
+            find.byType(HorizontalMiniBarChart),
+          )
+          .toList();
 
       for (int i = 0; i < 10; i++) {
-        expect(charts[i].showConsumed, true, reason: "Chart $i should have showConsumed=true");
+        expect(
+          charts[i].showConsumed,
+          true,
+          reason: "Chart $i should have showConsumed=true",
+        );
       }
     });
   });
@@ -165,9 +184,11 @@ void main() {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      final charts = tester.widgetList<HorizontalMiniBarChart>(
-        find.byType(HorizontalMiniBarChart),
-      ).toList();
+      final charts = tester
+          .widgetList<HorizontalMiniBarChart>(
+            find.byType(HorizontalMiniBarChart),
+          )
+          .toList();
 
       // Day's Macros: consumed=700, target=2000, showConsumed=false → displayValue=1300
       expect(charts[0].consumed, 700.0);
@@ -181,9 +202,11 @@ void main() {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      final charts = tester.widgetList<HorizontalMiniBarChart>(
-        find.byType(HorizontalMiniBarChart),
-      ).toList();
+      final charts = tester
+          .widgetList<HorizontalMiniBarChart>(
+            find.byType(HorizontalMiniBarChart),
+          )
+          .toList();
 
       // Queue's Macros: consumed=200, target=1500, showConsumed=false → displayValue=1300
       expect(charts[5].consumed, 200.0);
@@ -197,95 +220,143 @@ void main() {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      final charts = tester.widgetList<HorizontalMiniBarChart>(
-        find.byType(HorizontalMiniBarChart),
-      ).toList();
+      final charts = tester
+          .widgetList<HorizontalMiniBarChart>(
+            find.byType(HorizontalMiniBarChart),
+          )
+          .toList();
 
       for (int i = 0; i < 10; i++) {
-        expect(charts[i].showConsumed, false, reason: "Chart $i should have showConsumed=false");
+        expect(
+          charts[i].showConsumed,
+          false,
+          reason: "Chart $i should have showConsumed=false",
+        );
       }
     });
   });
 
   group('Empty queue', () {
-    testWidgets('Consumed mode: Day\'s shows logged/goals, Queue\'s shows 0/(goals-logged)', (tester) async {
-      setupMocks(
-        showConsumed: true,
-        queuedCal: 0, queuedProt: 0, queuedFat: 0, queuedCarbs: 0, queuedFiber: 0,
-      );
+    testWidgets(
+      'Consumed mode: Day\'s shows logged/goals, Queue\'s shows 0/(goals-logged)',
+      (tester) async {
+        setupMocks(
+          showConsumed: true,
+          queuedCal: 0,
+          queuedProt: 0,
+          queuedFat: 0,
+          queuedCarbs: 0,
+          queuedFiber: 0,
+        );
 
-      await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
 
-      final charts = tester.widgetList<HorizontalMiniBarChart>(
-        find.byType(HorizontalMiniBarChart),
-      ).toList();
+        final charts = tester
+            .widgetList<HorizontalMiniBarChart>(
+              find.byType(HorizontalMiniBarChart),
+            )
+            .toList();
 
-      // Day's = logged (since queued is 0)
-      expect(charts[0].consumed, 500.0); // totalCalories = logged + 0
-      expect(charts[0].target, 2000.0);
+        // Day's = logged (since queued is 0)
+        expect(charts[0].consumed, 500.0); // totalCalories = logged + 0
+        expect(charts[0].target, 2000.0);
 
-      // Queue's = 0/(goals-logged)
-      expect(charts[5].consumed, 0.0);
-      expect(charts[5].target, 1500.0); // 2000 - 500
-    });
+        // Queue's = 0/(goals-logged)
+        expect(charts[5].consumed, 0.0);
+        expect(charts[5].target, 1500.0); // 2000 - 500
+      },
+    );
 
-    testWidgets('Remaining mode: Day\'s shows remaining/goals, Queue\'s shows remaining/remaining', (tester) async {
-      setupMocks(
-        showConsumed: false,
-        queuedCal: 0, queuedProt: 0, queuedFat: 0, queuedCarbs: 0, queuedFiber: 0,
-      );
+    testWidgets(
+      'Remaining mode: Day\'s shows remaining/goals, Queue\'s shows remaining/remaining',
+      (tester) async {
+        setupMocks(
+          showConsumed: false,
+          queuedCal: 0,
+          queuedProt: 0,
+          queuedFat: 0,
+          queuedCarbs: 0,
+          queuedFiber: 0,
+        );
 
-      await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
 
-      final charts = tester.widgetList<HorizontalMiniBarChart>(
-        find.byType(HorizontalMiniBarChart),
-      ).toList();
+        final charts = tester
+            .widgetList<HorizontalMiniBarChart>(
+              find.byType(HorizontalMiniBarChart),
+            )
+            .toList();
 
-      // Day's: consumed=500, target=2000, showConsumed=false → displayValue=1500
-      expect(charts[0].consumed, 500.0);
-      expect(charts[0].target, 2000.0);
+        // Day's: consumed=500, target=2000, showConsumed=false → displayValue=1500
+        expect(charts[0].consumed, 500.0);
+        expect(charts[0].target, 2000.0);
 
-      // Queue's: consumed=0, target=1500, showConsumed=false → displayValue=1500
-      expect(charts[5].consumed, 0.0);
-      expect(charts[5].target, 1500.0);
-    });
+        // Queue's: consumed=0, target=1500, showConsumed=false → displayValue=1500
+        expect(charts[5].consumed, 0.0);
+        expect(charts[5].target, 1500.0);
+      },
+    );
   });
 
   group('Over-budget (logged > goals)', () {
-    testWidgets('Queue target is negative when logged exceeds goals', (tester) async {
+    testWidgets('Queue target is negative when logged exceeds goals', (
+      tester,
+    ) async {
       setupMocks(
         showConsumed: true,
-        loggedCal: 2500, loggedProt: 200, loggedFat: 90, loggedCarbs: 400, loggedFiber: 40,
-        queuedCal: 100, queuedProt: 10, queuedFat: 5, queuedCarbs: 20, queuedFiber: 2,
+        loggedCal: 2500,
+        loggedProt: 200,
+        loggedFat: 90,
+        loggedCarbs: 400,
+        loggedFiber: 40,
+        queuedCal: 100,
+        queuedProt: 10,
+        queuedFat: 5,
+        queuedCarbs: 20,
+        queuedFiber: 2,
       );
 
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      final charts = tester.widgetList<HorizontalMiniBarChart>(
-        find.byType(HorizontalMiniBarChart),
-      ).toList();
+      final charts = tester
+          .widgetList<HorizontalMiniBarChart>(
+            find.byType(HorizontalMiniBarChart),
+          )
+          .toList();
 
       // Queue target = goals - logged = 2000 - 2500 = -500
       expect(charts[5].target, -500.0);
       expect(charts[5].consumed, 100.0);
     });
 
-    testWidgets('Remaining mode: Day\'s shows negative remaining', (tester) async {
+    testWidgets('Remaining mode: Day\'s shows negative remaining', (
+      tester,
+    ) async {
       setupMocks(
         showConsumed: false,
-        loggedCal: 2500, loggedProt: 200, loggedFat: 90, loggedCarbs: 400, loggedFiber: 40,
-        queuedCal: 100, queuedProt: 10, queuedFat: 5, queuedCarbs: 20, queuedFiber: 2,
+        loggedCal: 2500,
+        loggedProt: 200,
+        loggedFat: 90,
+        loggedCarbs: 400,
+        loggedFiber: 40,
+        queuedCal: 100,
+        queuedProt: 10,
+        queuedFat: 5,
+        queuedCarbs: 20,
+        queuedFiber: 2,
       );
 
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      final charts = tester.widgetList<HorizontalMiniBarChart>(
-        find.byType(HorizontalMiniBarChart),
-      ).toList();
+      final charts = tester
+          .widgetList<HorizontalMiniBarChart>(
+            find.byType(HorizontalMiniBarChart),
+          )
+          .toList();
 
       // Day's: consumed=2600, target=2000, showConsumed=false → displayValue = 2000-2600 = -600
       expect(charts[0].consumed, 2600.0);
@@ -295,7 +366,9 @@ void main() {
   });
 
   group('Text rendering spot-check', () {
-    testWidgets('Consumed mode renders correct text for Day\'s calories', (tester) async {
+    testWidgets('Consumed mode renders correct text for Day\'s calories', (
+      tester,
+    ) async {
       setupMocks(showConsumed: true);
 
       await tester.pumpWidget(createTestWidget());
@@ -305,7 +378,9 @@ void main() {
       expect(find.text('🔥 700 / 2000'), findsOneWidget);
     });
 
-    testWidgets('Consumed mode renders correct text for Queue\'s calories', (tester) async {
+    testWidgets('Consumed mode renders correct text for Queue\'s calories', (
+      tester,
+    ) async {
       setupMocks(showConsumed: true);
 
       await tester.pumpWidget(createTestWidget());

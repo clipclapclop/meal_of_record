@@ -38,7 +38,9 @@ void main() {
         MultiProvider(
           providers: [
             ChangeNotifierProvider<RecipeProvider>.value(value: provider),
-            ChangeNotifierProvider<GoalsProvider>.value(value: mockGoalsProvider),
+            ChangeNotifierProvider<GoalsProvider>.value(
+              value: mockGoalsProvider,
+            ),
           ],
           child: const MaterialApp(home: RecipeEditScreen()),
         ),
@@ -56,7 +58,7 @@ void main() {
       // Open dropdown
       await tester.tap(find.text('serving')); // Initial value
       await tester.pumpAndSettle();
-      
+
       // Select Custom...
       await tester.tap(find.text('Custom...'));
       await tester.pumpAndSettle();
@@ -66,7 +68,7 @@ void main() {
         find.widgetWithText(TextFormField, 'Portion Unit Name'),
         'Muffin',
       );
-      
+
       // Verify provider updated
       expect(provider.portionName, 'Muffin');
 

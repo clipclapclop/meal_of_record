@@ -22,14 +22,16 @@ void main() {
     mockDatabaseService = MockDatabaseService();
 
     // Default stubs for calls that happen during initialization
-    when(mockDatabaseService.getWeightsForRange(any, any))
-        .thenAnswer((_) async => []);
-    when(mockDatabaseService.getLoggedMacrosForDateRange(any, any))
-        .thenAnswer((_) async => []);
-    when(mockDatabaseService.getFoodsByIds(any, any))
-        .thenAnswer((_) async => {});
-    when(mockDatabaseService.getRecipesByIds(any))
-        .thenAnswer((_) async => {});
+    when(
+      mockDatabaseService.getWeightsForRange(any, any),
+    ).thenAnswer((_) async => []);
+    when(
+      mockDatabaseService.getLoggedMacrosForDateRange(any, any),
+    ).thenAnswer((_) async => []);
+    when(
+      mockDatabaseService.getFoodsByIds(any, any),
+    ).thenAnswer((_) async => {});
+    when(mockDatabaseService.getRecipesByIds(any)).thenAnswer((_) async => {});
   });
 
   /// Helper: creates a GoalsProvider with a fixed clock and waits for init.
@@ -46,10 +48,12 @@ void main() {
     }
 
     // Stub DB calls that happen during _loadFromPrefs -> checkWeeklyUpdate
-    when(mockDatabaseService.getWeightsForRange(any, any))
-        .thenAnswer((_) async => []);
-    when(mockDatabaseService.getLoggedMacrosForDateRange(any, any))
-        .thenAnswer((_) async => []);
+    when(
+      mockDatabaseService.getWeightsForRange(any, any),
+    ).thenAnswer((_) async => []);
+    when(
+      mockDatabaseService.getLoggedMacrosForDateRange(any, any),
+    ).thenAnswer((_) async => []);
 
     final provider = GoalsProvider(
       databaseService: mockDatabaseService,
@@ -60,11 +64,17 @@ void main() {
   }
 
   /// Helper: builds weight entries for N recent days.
-  List<Weight> buildRecentWeights(DateTime now, int count,
-      {double weight = 100.0}) {
+  List<Weight> buildRecentWeights(
+    DateTime now,
+    int count, {
+    double weight = 100.0,
+  }) {
     return List.generate(
       count,
-      (i) => Weight(weight: weight, date: now.subtract(Duration(days: i))),
+      (i) => Weight(
+        weight: weight,
+        date: now.subtract(Duration(days: i)),
+      ),
     );
   }
 
@@ -110,8 +120,9 @@ void main() {
     test('no weight data -> uses manual maintenance', () async {
       // Monday with old lastUpdate
       final now = DateTime(2024, 1, 15, 10); // Monday
-      when(mockDatabaseService.getWeightsForRange(any, any))
-          .thenAnswer((_) async => []);
+      when(
+        mockDatabaseService.getWeightsForRange(any, any),
+      ).thenAnswer((_) async => []);
 
       final settings = GoalSettings(
         anchorWeight: 150.0,
@@ -130,8 +141,10 @@ void main() {
         enableSmartTargets: true,
       );
 
-      final provider =
-          await createProvider(clock: () => now, initialSettings: settings);
+      final provider = await createProvider(
+        clock: () => now,
+        initialSettings: settings,
+      );
 
       // Cold boot fallback: manual maintenance = 2000
       expect(provider.currentGoals.calories, 2000.0);
@@ -143,8 +156,9 @@ void main() {
       // But only 9 days of data span, so effectiveWindow returns 0.
       final weights = buildRecentWeights(now, 9);
 
-      when(mockDatabaseService.getWeightsForRange(any, any))
-          .thenAnswer((_) async => weights);
+      when(
+        mockDatabaseService.getWeightsForRange(any, any),
+      ).thenAnswer((_) async => weights);
 
       final settings = GoalSettings(
         anchorWeight: 100.0,
@@ -163,49 +177,58 @@ void main() {
         enableSmartTargets: true,
       );
 
-      final provider =
-          await createProvider(clock: () => now, initialSettings: settings);
+      final provider = await createProvider(
+        clock: () => now,
+        initialSettings: settings,
+      );
 
       // Cold boot: not enough data for any tier. Falls back to manual.
       expect(provider.currentGoals.calories, 2200.0);
     });
 
-    test('20 days of data with 60d setting -> falls back to 14d tier', () async {
-      final now = DateTime(2024, 1, 15, 10); // Monday
-      // 20 days of data: effectiveWindow(60, 20) = 14
-      // 70% of 14 = 10. We have enough within 14-day window.
-      final weights = buildRecentWeights(now, 15);
+    test(
+      '20 days of data with 60d setting -> falls back to 14d tier',
+      () async {
+        final now = DateTime(2024, 1, 15, 10); // Monday
+        // 20 days of data: effectiveWindow(60, 20) = 14
+        // 70% of 14 = 10. We have enough within 14-day window.
+        final weights = buildRecentWeights(now, 15);
 
-      when(mockDatabaseService.getWeightsForRange(any, any))
-          .thenAnswer((_) async => weights);
-      when(mockDatabaseService.getLoggedMacrosForDateRange(any, any))
-          .thenAnswer((_) async => []);
+        when(
+          mockDatabaseService.getWeightsForRange(any, any),
+        ).thenAnswer((_) async => weights);
+        when(
+          mockDatabaseService.getLoggedMacrosForDateRange(any, any),
+        ).thenAnswer((_) async => []);
 
-      final settings = GoalSettings(
-        anchorWeight: 100.0,
-        maintenanceCaloriesStart: 2200,
-        proteinTarget: 150,
-        fatTarget: 70,
-        carbTarget: 200,
-        mode: GoalMode.maintain,
-        calculationMode: MacroCalculationMode.proteinCarbs,
-        proteinTargetMode: ProteinTargetMode.fixed,
-        proteinMultiplier: 1.0,
-        fixedDelta: 0,
-        lastTargetUpdate: DateTime(2024, 1, 1),
+        final settings = GoalSettings(
+          anchorWeight: 100.0,
+          maintenanceCaloriesStart: 2200,
+          proteinTarget: 150,
+          fatTarget: 70,
+          carbTarget: 200,
+          mode: GoalMode.maintain,
+          calculationMode: MacroCalculationMode.proteinCarbs,
+          proteinTargetMode: ProteinTargetMode.fixed,
+          proteinMultiplier: 1.0,
+          fixedDelta: 0,
+          lastTargetUpdate: DateTime(2024, 1, 1),
 
-        fiberTarget: 37.0,
-        enableSmartTargets: true,
-        tdeeWindowDays: 60,
-      );
+          fiberTarget: 37.0,
+          enableSmartTargets: true,
+          tdeeWindowDays: 60,
+        );
 
-      final provider =
-          await createProvider(clock: () => now, initialSettings: settings);
+        final provider = await createProvider(
+          clock: () => now,
+          initialSettings: settings,
+        );
 
-      // Should use Kalman (fell back to 14d tier), not manual 2200.
-      // With all-invalid intake, TDEE stays near initial 2200.
-      expect(provider.currentGoals.calories, closeTo(2200.0, 100.0));
-    });
+        // Should use Kalman (fell back to 14d tier), not manual 2200.
+        // With all-invalid intake, TDEE stays near initial 2200.
+        expect(provider.currentGoals.calories, closeTo(2200.0, 100.0));
+      },
+    );
   });
 
   group('GoalsProvider warm start (Kalman)', () {
@@ -220,10 +243,12 @@ void main() {
       final now = clock();
       final weights = buildRecentWeights(now, weightCount, weight: weightValue);
 
-      when(mockDatabaseService.getWeightsForRange(any, any))
-          .thenAnswer((_) async => weights);
-      when(mockDatabaseService.getLoggedMacrosForDateRange(any, any))
-          .thenAnswer((_) async => dtos ?? []);
+      when(
+        mockDatabaseService.getWeightsForRange(any, any),
+      ).thenAnswer((_) async => weights);
+      when(
+        mockDatabaseService.getLoggedMacrosForDateRange(any, any),
+      ).thenAnswer((_) async => dtos ?? []);
 
       return createProvider(clock: clock, initialSettings: settings);
     }
@@ -260,15 +285,17 @@ void main() {
       final dtos = <LoggedMacroDTO>[];
       var d = analysisStart;
       while (!d.isAfter(today)) {
-        dtos.add(LoggedMacroDTO(
-          logTimestamp: d,
-          grams: 100.0,
-          caloriesPerGram: 20.0, // 2000 cal total
-          proteinPerGram: 1.5,
-          fatPerGram: 0.7,
-          carbsPerGram: 2.0,
-          fiberPerGram: 0.38,
-        ));
+        dtos.add(
+          LoggedMacroDTO(
+            logTimestamp: d,
+            grams: 100.0,
+            caloriesPerGram: 20.0, // 2000 cal total
+            proteinPerGram: 1.5,
+            fatPerGram: 0.7,
+            carbsPerGram: 2.0,
+            fiberPerGram: 0.38,
+          ),
+        );
         d = d.add(const Duration(days: 1));
       }
 
@@ -296,103 +323,125 @@ void main() {
       expect(provider.currentGoals.calories, closeTo(2000.0, 100.0));
     });
 
-    test('maintain mode above anchor weight: target < TDEE (deficit to drift down)', () async {
-      // NOTE: createWarmProvider/createProvider reset mocks internally, so we
-      // wire up the GoalsProvider directly to ensure weight data reaches Kalman.
-      final now = DateTime(2024, 1, 15, 10); // Monday
-      // 2 lbs over target, 30-day correction window → deficit = 2*3500/30 ≈ 233 cal/day
-      const correctionWindowDays = 30;
-      const anchorWeight = 100.0;
-      const currentWeight = 102.0; // 2 lbs over
-      const expectedCorrection = (currentWeight - anchorWeight) * 3500 / correctionWindowDays;
+    test(
+      'maintain mode above anchor weight: target < TDEE (deficit to drift down)',
+      () async {
+        // NOTE: createWarmProvider/createProvider reset mocks internally, so we
+        // wire up the GoalsProvider directly to ensure weight data reaches Kalman.
+        final now = DateTime(2024, 1, 15, 10); // Monday
+        // 2 lbs over target, 30-day correction window → deficit = 2*3500/30 ≈ 233 cal/day
+        const correctionWindowDays = 30;
+        const anchorWeight = 100.0;
+        const currentWeight = 102.0; // 2 lbs over
+        const expectedCorrection =
+            (currentWeight - anchorWeight) * 3500 / correctionWindowDays;
 
-      final settings = GoalSettings(
-        anchorWeight: anchorWeight,
-        maintenanceCaloriesStart: 2000,
-        proteinTarget: 150,
-        fatTarget: 70,
-        carbTarget: 200,
-        mode: GoalMode.maintain,
-        calculationMode: MacroCalculationMode.proteinCarbs,
-        proteinTargetMode: ProteinTargetMode.fixed,
-        proteinMultiplier: 1.0,
-        fixedDelta: 0,
-        lastTargetUpdate: DateTime(2024, 1, 1), // old → triggers Monday recalc
-        fiberTarget: 37.0,
-        enableSmartTargets: true,
-        correctionWindowDays: correctionWindowDays,
-      );
+        final settings = GoalSettings(
+          anchorWeight: anchorWeight,
+          maintenanceCaloriesStart: 2000,
+          proteinTarget: 150,
+          fatTarget: 70,
+          carbTarget: 200,
+          mode: GoalMode.maintain,
+          calculationMode: MacroCalculationMode.proteinCarbs,
+          proteinTargetMode: ProteinTargetMode.fixed,
+          proteinMultiplier: 1.0,
+          fixedDelta: 0,
+          lastTargetUpdate: DateTime(
+            2024,
+            1,
+            1,
+          ), // old → triggers Monday recalc
+          fiberTarget: 37.0,
+          enableSmartTargets: true,
+          correctionWindowDays: correctionWindowDays,
+        );
 
-      SharedPreferences.setMockInitialValues({
-        'goal_settings': jsonEncode(settings.toJson()),
-      });
-      final weights = buildRecentWeights(now, 20, weight: currentWeight);
-      when(mockDatabaseService.getWeightsForRange(any, any))
-          .thenAnswer((_) async => weights);
-      when(mockDatabaseService.getLoggedMacrosForDateRange(any, any))
-          .thenAnswer((_) async => []);
+        SharedPreferences.setMockInitialValues({
+          'goal_settings': jsonEncode(settings.toJson()),
+        });
+        final weights = buildRecentWeights(now, 20, weight: currentWeight);
+        when(
+          mockDatabaseService.getWeightsForRange(any, any),
+        ).thenAnswer((_) async => weights);
+        when(
+          mockDatabaseService.getLoggedMacrosForDateRange(any, any),
+        ).thenAnswer((_) async => []);
 
-      final provider = GoalsProvider(
-        databaseService: mockDatabaseService,
-        clock: () => now,
-      );
-      await Future.delayed(Duration.zero);
+        final provider = GoalsProvider(
+          databaseService: mockDatabaseService,
+          clock: () => now,
+        );
+        await Future.delayed(Duration.zero);
 
-      // TDEE stays near 2000 (no valid intake). Target should be below TDEE.
-      expect(provider.currentGoals.calories, lessThan(2000.0));
-      expect(
-        provider.currentGoals.calories,
-        closeTo(2000.0 - expectedCorrection, 100.0),
-      );
-    });
+        // TDEE stays near 2000 (no valid intake). Target should be below TDEE.
+        expect(provider.currentGoals.calories, lessThan(2000.0));
+        expect(
+          provider.currentGoals.calories,
+          closeTo(2000.0 - expectedCorrection, 100.0),
+        );
+      },
+    );
 
-    test('maintain mode below anchor weight: target > TDEE (surplus to drift up)', () async {
-      final now = DateTime(2024, 1, 15, 10); // Monday
-      // 2 lbs under target, 30-day correction window → surplus = 2*3500/30 ≈ 233 cal/day
-      const correctionWindowDays = 30;
-      const anchorWeight = 100.0;
-      const currentWeight = 98.0; // 2 lbs under
-      const expectedCorrection = (currentWeight - anchorWeight) * 3500 / correctionWindowDays; // negative
+    test(
+      'maintain mode below anchor weight: target > TDEE (surplus to drift up)',
+      () async {
+        final now = DateTime(2024, 1, 15, 10); // Monday
+        // 2 lbs under target, 30-day correction window → surplus = 2*3500/30 ≈ 233 cal/day
+        const correctionWindowDays = 30;
+        const anchorWeight = 100.0;
+        const currentWeight = 98.0; // 2 lbs under
+        const expectedCorrection =
+            (currentWeight - anchorWeight) *
+            3500 /
+            correctionWindowDays; // negative
 
-      final settings = GoalSettings(
-        anchorWeight: anchorWeight,
-        maintenanceCaloriesStart: 2000,
-        proteinTarget: 150,
-        fatTarget: 70,
-        carbTarget: 200,
-        mode: GoalMode.maintain,
-        calculationMode: MacroCalculationMode.proteinCarbs,
-        proteinTargetMode: ProteinTargetMode.fixed,
-        proteinMultiplier: 1.0,
-        fixedDelta: 0,
-        lastTargetUpdate: DateTime(2024, 1, 1), // old → triggers Monday recalc
-        fiberTarget: 37.0,
-        enableSmartTargets: true,
-        correctionWindowDays: correctionWindowDays,
-      );
+        final settings = GoalSettings(
+          anchorWeight: anchorWeight,
+          maintenanceCaloriesStart: 2000,
+          proteinTarget: 150,
+          fatTarget: 70,
+          carbTarget: 200,
+          mode: GoalMode.maintain,
+          calculationMode: MacroCalculationMode.proteinCarbs,
+          proteinTargetMode: ProteinTargetMode.fixed,
+          proteinMultiplier: 1.0,
+          fixedDelta: 0,
+          lastTargetUpdate: DateTime(
+            2024,
+            1,
+            1,
+          ), // old → triggers Monday recalc
+          fiberTarget: 37.0,
+          enableSmartTargets: true,
+          correctionWindowDays: correctionWindowDays,
+        );
 
-      SharedPreferences.setMockInitialValues({
-        'goal_settings': jsonEncode(settings.toJson()),
-      });
-      final weights = buildRecentWeights(now, 20, weight: currentWeight);
-      when(mockDatabaseService.getWeightsForRange(any, any))
-          .thenAnswer((_) async => weights);
-      when(mockDatabaseService.getLoggedMacrosForDateRange(any, any))
-          .thenAnswer((_) async => []);
+        SharedPreferences.setMockInitialValues({
+          'goal_settings': jsonEncode(settings.toJson()),
+        });
+        final weights = buildRecentWeights(now, 20, weight: currentWeight);
+        when(
+          mockDatabaseService.getWeightsForRange(any, any),
+        ).thenAnswer((_) async => weights);
+        when(
+          mockDatabaseService.getLoggedMacrosForDateRange(any, any),
+        ).thenAnswer((_) async => []);
 
-      final provider = GoalsProvider(
-        databaseService: mockDatabaseService,
-        clock: () => now,
-      );
-      await Future.delayed(Duration.zero);
+        final provider = GoalsProvider(
+          databaseService: mockDatabaseService,
+          clock: () => now,
+        );
+        await Future.delayed(Duration.zero);
 
-      // TDEE stays near 2000 (no valid intake). Target should be above TDEE.
-      expect(provider.currentGoals.calories, greaterThan(2000.0));
-      expect(
-        provider.currentGoals.calories,
-        closeTo(2000.0 - expectedCorrection, 100.0),
-      );
-    });
+        // TDEE stays near 2000 (no valid intake). Target should be above TDEE.
+        expect(provider.currentGoals.calories, greaterThan(2000.0));
+        expect(
+          provider.currentGoals.calories,
+          closeTo(2000.0 - expectedCorrection, 100.0),
+        );
+      },
+    );
 
     test('lose mode: target = Kalman TDEE - fixedDelta', () async {
       final now = DateTime(2024, 1, 15, 10);
@@ -437,8 +486,9 @@ void main() {
       final now = DateTime(2024, 1, 15, 10);
       final weights = buildRecentWeights(now, 20);
 
-      when(mockDatabaseService.getWeightsForRange(any, any))
-          .thenAnswer((_) async => weights);
+      when(
+        mockDatabaseService.getWeightsForRange(any, any),
+      ).thenAnswer((_) async => weights);
 
       final settings = GoalSettings(
         anchorWeight: 105.0,
@@ -457,8 +507,10 @@ void main() {
         enableSmartTargets: false,
       );
 
-      final provider =
-          await createProvider(clock: () => now, initialSettings: settings);
+      final provider = await createProvider(
+        clock: () => now,
+        initialSettings: settings,
+      );
 
       // Smart targets off: uses manual maintenance = 2000
       expect(provider.currentGoals.calories, 2000.0);
@@ -469,8 +521,9 @@ void main() {
     test('Monday with old lastUpdate -> triggers recalc', () async {
       // Monday
       final now = DateTime(2024, 1, 15, 10);
-      when(mockDatabaseService.getWeightsForRange(any, any))
-          .thenAnswer((_) async => []);
+      when(
+        mockDatabaseService.getWeightsForRange(any, any),
+      ).thenAnswer((_) async => []);
 
       final settings = GoalSettings(
         anchorWeight: 100.0,
@@ -489,8 +542,10 @@ void main() {
         enableSmartTargets: true,
       );
 
-      final provider =
-          await createProvider(clock: () => now, initialSettings: settings);
+      final provider = await createProvider(
+        clock: () => now,
+        initialSettings: settings,
+      );
 
       // Should have triggered recalc and notification
       expect(provider.showUpdateNotification, isTrue);
@@ -498,8 +553,9 @@ void main() {
 
     test('Monday with recent lastUpdate -> no recalc', () async {
       final now = DateTime(2024, 1, 15, 10); // Monday
-      when(mockDatabaseService.getWeightsForRange(any, any))
-          .thenAnswer((_) async => []);
+      when(
+        mockDatabaseService.getWeightsForRange(any, any),
+      ).thenAnswer((_) async => []);
 
       final settings = GoalSettings(
         anchorWeight: 100.0,
@@ -518,49 +574,57 @@ void main() {
         enableSmartTargets: true,
       );
 
-      final provider =
-          await createProvider(clock: () => now, initialSettings: settings);
+      final provider = await createProvider(
+        clock: () => now,
+        initialSettings: settings,
+      );
 
       // lastUpdate is today, no recalc needed
       expect(provider.showUpdateNotification, isFalse);
     });
 
-    test('Tuesday after missed Monday with old lastUpdate -> triggers recalc',
-        () async {
-      // Tuesday Jan 16, lastUpdate is Jan 8 (before Monday Jan 15)
-      final now = DateTime(2024, 1, 16, 10); // Tuesday
-      when(mockDatabaseService.getWeightsForRange(any, any))
-          .thenAnswer((_) async => []);
+    test(
+      'Tuesday after missed Monday with old lastUpdate -> triggers recalc',
+      () async {
+        // Tuesday Jan 16, lastUpdate is Jan 8 (before Monday Jan 15)
+        final now = DateTime(2024, 1, 16, 10); // Tuesday
+        when(
+          mockDatabaseService.getWeightsForRange(any, any),
+        ).thenAnswer((_) async => []);
 
-      final settings = GoalSettings(
-        anchorWeight: 100.0,
-        maintenanceCaloriesStart: 2000,
-        proteinTarget: 150,
-        fatTarget: 70,
-        carbTarget: 200,
-        mode: GoalMode.maintain,
-        calculationMode: MacroCalculationMode.proteinCarbs,
-        proteinTargetMode: ProteinTargetMode.fixed,
-        proteinMultiplier: 1.0,
-        fixedDelta: 0,
-        lastTargetUpdate: DateTime(2024, 1, 8), // before last Monday (Jan 15)
+        final settings = GoalSettings(
+          anchorWeight: 100.0,
+          maintenanceCaloriesStart: 2000,
+          proteinTarget: 150,
+          fatTarget: 70,
+          carbTarget: 200,
+          mode: GoalMode.maintain,
+          calculationMode: MacroCalculationMode.proteinCarbs,
+          proteinTargetMode: ProteinTargetMode.fixed,
+          proteinMultiplier: 1.0,
+          fixedDelta: 0,
+          lastTargetUpdate: DateTime(2024, 1, 8), // before last Monday (Jan 15)
 
-        fiberTarget: 37.0,
-        enableSmartTargets: true,
-      );
+          fiberTarget: 37.0,
+          enableSmartTargets: true,
+        );
 
-      final provider =
-          await createProvider(clock: () => now, initialSettings: settings);
+        final provider = await createProvider(
+          clock: () => now,
+          initialSettings: settings,
+        );
 
-      // Tuesday, but lastUpdate is before last Monday -> triggers recalc
-      expect(provider.showUpdateNotification, isTrue);
-    });
+        // Tuesday, but lastUpdate is before last Monday -> triggers recalc
+        expect(provider.showUpdateNotification, isTrue);
+      },
+    );
 
     test('Wednesday after already-updated Tuesday -> no recalc', () async {
       // Wednesday Jan 17, lastUpdate is Tuesday Jan 16 (after Monday Jan 15)
       final now = DateTime(2024, 1, 17, 10); // Wednesday
-      when(mockDatabaseService.getWeightsForRange(any, any))
-          .thenAnswer((_) async => []);
+      when(
+        mockDatabaseService.getWeightsForRange(any, any),
+      ).thenAnswer((_) async => []);
 
       final settings = GoalSettings(
         anchorWeight: 100.0,
@@ -579,8 +643,10 @@ void main() {
         enableSmartTargets: true,
       );
 
-      final provider =
-          await createProvider(clock: () => now, initialSettings: settings);
+      final provider = await createProvider(
+        clock: () => now,
+        initialSettings: settings,
+      );
 
       // lastUpdate (Tue Jan 16) is after lastMonday (Mon Jan 15) -> no recalc
       expect(provider.showUpdateNotification, isFalse);
@@ -588,54 +654,60 @@ void main() {
   });
 
   group('GoalsProvider intake validity', () {
-    test('day with 0 cal + logCount > 0 -> included as valid (fasted day)',
-        () async {
-      final now = DateTime(2024, 1, 15, 10); // Monday
-      final weights = buildRecentWeights(now, 20);
+    test(
+      'day with 0 cal + logCount > 0 -> included as valid (fasted day)',
+      () async {
+        final now = DateTime(2024, 1, 15, 10); // Monday
+        final weights = buildRecentWeights(now, 20);
 
-      when(mockDatabaseService.getWeightsForRange(any, any))
-          .thenAnswer((_) async => weights);
+        when(
+          mockDatabaseService.getWeightsForRange(any, any),
+        ).thenAnswer((_) async => weights);
 
-      // Create a DTO with 0 grams (fasted day marker)
-      final today = DateTime(now.year, now.month, now.day);
-      final dtos = [
-        LoggedMacroDTO(
-          logTimestamp: today,
-          grams: 0.0,
-          caloriesPerGram: 0.0,
-          proteinPerGram: 0.0,
-          fatPerGram: 0.0,
-          carbsPerGram: 0.0,
-          fiberPerGram: 0.0,
-        ),
-      ];
+        // Create a DTO with 0 grams (fasted day marker)
+        final today = DateTime(now.year, now.month, now.day);
+        final dtos = [
+          LoggedMacroDTO(
+            logTimestamp: today,
+            grams: 0.0,
+            caloriesPerGram: 0.0,
+            proteinPerGram: 0.0,
+            fatPerGram: 0.0,
+            carbsPerGram: 0.0,
+            fiberPerGram: 0.0,
+          ),
+        ];
 
-      when(mockDatabaseService.getLoggedMacrosForDateRange(any, any))
-          .thenAnswer((_) async => dtos);
+        when(
+          mockDatabaseService.getLoggedMacrosForDateRange(any, any),
+        ).thenAnswer((_) async => dtos);
 
-      final settings = GoalSettings(
-        anchorWeight: 100.0,
-        maintenanceCaloriesStart: 2000,
-        proteinTarget: 150,
-        fatTarget: 70,
-        carbTarget: 200,
-        mode: GoalMode.maintain,
-        calculationMode: MacroCalculationMode.proteinCarbs,
-        proteinTargetMode: ProteinTargetMode.fixed,
-        proteinMultiplier: 1.0,
-        fixedDelta: 0,
-        lastTargetUpdate: DateTime(2024, 1, 1),
+        final settings = GoalSettings(
+          anchorWeight: 100.0,
+          maintenanceCaloriesStart: 2000,
+          proteinTarget: 150,
+          fatTarget: 70,
+          carbTarget: 200,
+          mode: GoalMode.maintain,
+          calculationMode: MacroCalculationMode.proteinCarbs,
+          proteinTargetMode: ProteinTargetMode.fixed,
+          proteinMultiplier: 1.0,
+          fixedDelta: 0,
+          lastTargetUpdate: DateTime(2024, 1, 1),
 
-        fiberTarget: 37.0,
-        enableSmartTargets: true,
-      );
+          fiberTarget: 37.0,
+          enableSmartTargets: true,
+        );
 
-      final provider =
-          await createProvider(clock: () => now, initialSettings: settings);
+        final provider = await createProvider(
+          clock: () => now,
+          initialSettings: settings,
+        );
 
-      // Should complete without error; fasted day is valid intake
-      expect(provider.currentGoals.calories, isNotNull);
-    });
+        // Should complete without error; fasted day is valid intake
+        expect(provider.currentGoals.calories, isNotNull);
+      },
+    );
 
     test('partial-day intake (today) excluded from Kalman analysis', () async {
       final now = DateTime(2024, 1, 15, 14); // Monday 2pm
@@ -643,38 +715,44 @@ void main() {
       final yesterday = today.subtract(const Duration(days: 1));
       final weights = buildRecentWeights(now, 20);
 
-      when(mockDatabaseService.getWeightsForRange(any, any))
-          .thenAnswer((_) async => weights);
+      when(
+        mockDatabaseService.getWeightsForRange(any, any),
+      ).thenAnswer((_) async => weights);
 
       // Build stable 2000 cal intake for past 90 days through yesterday
       final analysisStart = yesterday.subtract(const Duration(days: 90));
       final dtos = <LoggedMacroDTO>[];
       var d = analysisStart;
       while (!d.isAfter(yesterday)) {
-        dtos.add(LoggedMacroDTO(
-          logTimestamp: d,
-          grams: 100.0,
-          caloriesPerGram: 20.0, // 2000 cal total
-          proteinPerGram: 1.5,
-          fatPerGram: 0.7,
-          carbsPerGram: 2.0,
-          fiberPerGram: 0.38,
-        ));
+        dtos.add(
+          LoggedMacroDTO(
+            logTimestamp: d,
+            grams: 100.0,
+            caloriesPerGram: 20.0, // 2000 cal total
+            proteinPerGram: 1.5,
+            fatPerGram: 0.7,
+            carbsPerGram: 2.0,
+            fiberPerGram: 0.38,
+          ),
+        );
         d = d.add(const Duration(days: 1));
       }
       // Add today's partial intake: only 300 cal logged so far
-      dtos.add(LoggedMacroDTO(
-        logTimestamp: today,
-        grams: 100.0,
-        caloriesPerGram: 3.0, // 300 cal
-        proteinPerGram: 0.5,
-        fatPerGram: 0.2,
-        carbsPerGram: 0.5,
-        fiberPerGram: 0.1,
-      ));
+      dtos.add(
+        LoggedMacroDTO(
+          logTimestamp: today,
+          grams: 100.0,
+          caloriesPerGram: 3.0, // 300 cal
+          proteinPerGram: 0.5,
+          fatPerGram: 0.2,
+          carbsPerGram: 0.5,
+          fiberPerGram: 0.1,
+        ),
+      );
 
-      when(mockDatabaseService.getLoggedMacrosForDateRange(any, any))
-          .thenAnswer((_) async => dtos);
+      when(
+        mockDatabaseService.getLoggedMacrosForDateRange(any, any),
+      ).thenAnswer((_) async => dtos);
 
       final settings = GoalSettings(
         anchorWeight: 100.0,
@@ -693,8 +771,10 @@ void main() {
         enableSmartTargets: true,
       );
 
-      final provider =
-          await createProvider(clock: () => now, initialSettings: settings);
+      final provider = await createProvider(
+        clock: () => now,
+        initialSettings: settings,
+      );
 
       // Today's 300 cal partial log should NOT distort TDEE.
       // With stable weight + 2000 cal intake through yesterday, TDEE ~ 2000.
@@ -707,11 +787,13 @@ void main() {
       final now = DateTime(2024, 1, 15, 10);
       final weights = buildRecentWeights(now, 20);
 
-      when(mockDatabaseService.getWeightsForRange(any, any))
-          .thenAnswer((_) async => weights);
+      when(
+        mockDatabaseService.getWeightsForRange(any, any),
+      ).thenAnswer((_) async => weights);
       // No DTOs at all = all days have logCount == 0
-      when(mockDatabaseService.getLoggedMacrosForDateRange(any, any))
-          .thenAnswer((_) async => []);
+      when(
+        mockDatabaseService.getLoggedMacrosForDateRange(any, any),
+      ).thenAnswer((_) async => []);
 
       final settings = GoalSettings(
         anchorWeight: 100.0,
@@ -730,8 +812,10 @@ void main() {
         enableSmartTargets: true,
       );
 
-      final provider =
-          await createProvider(clock: () => now, initialSettings: settings);
+      final provider = await createProvider(
+        clock: () => now,
+        initialSettings: settings,
+      );
 
       // All intake excluded -> TDEE stays near initial 2000
       expect(provider.currentGoals.calories, closeTo(2000.0, 100.0));
@@ -741,45 +825,48 @@ void main() {
   group('GoalsProvider Lifecycle and Timezone', () {
     test('AppLifecycleState.resumed triggers checkWeeklyUpdate', () async {
       var now = DateTime(2024, 1, 15, 10); // Monday
-      
+
       final settings = GoalSettings.defaultSettings().copyWith(
         isSet: true,
         lastTargetUpdate: DateTime(2024, 1, 15),
       );
-      
+
       // Use the helper which already stubs everything
-      final provider = await createProvider(clock: () => now, initialSettings: settings);
-      
+      final provider = await createProvider(
+        clock: () => now,
+        initialSettings: settings,
+      );
+
       // Wait for any initial background tasks to settle
       await Future.delayed(const Duration(milliseconds: 100));
       expect(provider.isLoading, isFalse);
       expect(provider.showUpdateNotification, isFalse);
-      
+
       // Simulate time jumping to next Monday
       now = DateTime(2024, 1, 22, 10);
-      
+
       // Now simulate resume
       provider.didChangeAppLifecycleState(AppLifecycleState.resumed);
-      
+
       // Wait for the async checkWeeklyUpdate to finish
       // Since it's triggered by an observer, we wait a bit
       await Future.delayed(const Duration(milliseconds: 100));
-      
+
       expect(provider.showUpdateNotification, isTrue);
     });
 
     test('recalculateTargets unifies lastTargetUpdate to current time', () async {
       final monday = DateTime(2024, 1, 15, 10);
       final provider = await createProvider(clock: () => monday);
-      
+
       final settings = GoalSettings.defaultSettings().copyWith(
         mode: GoalMode.lose,
         fixedDelta: 500,
         enableSmartTargets: false, // Manual mode
       );
-      
+
       await provider.saveSettings(settings);
-      
+
       // In old code, this would have been next Monday. In new code, it's today.
       expect(provider.settings.lastTargetUpdate, monday);
     });
@@ -800,34 +887,39 @@ void main() {
       while (!d.isAfter(today)) {
         // Only add weight entries for last 20 days
         if (d.isAfter(today.subtract(const Duration(days: 20)))) {
-          weights
-              .add(Weight(weight: 200.0 - (i * 2.0), date: d)); // extreme loss
+          weights.add(
+            Weight(weight: 200.0 - (i * 2.0), date: d),
+          ); // extreme loss
         }
         d = d.add(const Duration(days: 1));
         i++;
       }
 
-      when(mockDatabaseService.getWeightsForRange(any, any))
-          .thenAnswer((_) async => weights);
+      when(
+        mockDatabaseService.getWeightsForRange(any, any),
+      ).thenAnswer((_) async => weights);
 
       // Very high intake DTOs
       final dtos = <LoggedMacroDTO>[];
       d = analysisStart;
       while (!d.isAfter(today)) {
-        dtos.add(LoggedMacroDTO(
-          logTimestamp: d,
-          grams: 1000.0,
-          caloriesPerGram: 10.0, // 10000 cal/day
-          proteinPerGram: 1.0,
-          fatPerGram: 1.0,
-          carbsPerGram: 1.0,
-          fiberPerGram: 0.1,
-        ));
+        dtos.add(
+          LoggedMacroDTO(
+            logTimestamp: d,
+            grams: 1000.0,
+            caloriesPerGram: 10.0, // 10000 cal/day
+            proteinPerGram: 1.0,
+            fatPerGram: 1.0,
+            carbsPerGram: 1.0,
+            fiberPerGram: 0.1,
+          ),
+        );
         d = d.add(const Duration(days: 1));
       }
 
-      when(mockDatabaseService.getLoggedMacrosForDateRange(any, any))
-          .thenAnswer((_) async => dtos);
+      when(
+        mockDatabaseService.getLoggedMacrosForDateRange(any, any),
+      ).thenAnswer((_) async => dtos);
 
       final settings = GoalSettings(
         anchorWeight: 200.0,
@@ -846,13 +938,20 @@ void main() {
         enableSmartTargets: true,
       );
 
-      final provider =
-          await createProvider(clock: () => now, initialSettings: settings);
+      final provider = await createProvider(
+        clock: () => now,
+        initialSettings: settings,
+      );
 
       // TDEE should be clamped to max 6000
-      expect(provider.settings.maintenanceCaloriesStart, lessThanOrEqualTo(6000.0));
       expect(
-          provider.settings.maintenanceCaloriesStart, greaterThanOrEqualTo(800.0));
+        provider.settings.maintenanceCaloriesStart,
+        lessThanOrEqualTo(6000.0),
+      );
+      expect(
+        provider.settings.maintenanceCaloriesStart,
+        greaterThanOrEqualTo(800.0),
+      );
     });
   });
 
@@ -978,7 +1077,14 @@ void main() {
         (jsonDecode(raw!) as List).map((e) => Map<String, dynamic>.from(e)),
       );
       // Add an 8th entry
-      list.add({'date': '2024-01-16', 'calories': 2000.0, 'protein': 150.0, 'fat': 70.0, 'carbs': 200.0, 'fiber': 37.0});
+      list.add({
+        'date': '2024-01-16',
+        'calories': 2000.0,
+        'protein': 150.0,
+        'fat': 70.0,
+        'carbs': 200.0,
+        'fiber': 37.0,
+      });
       expect(list.length, 8);
 
       // Persist the 8-entry list
@@ -997,25 +1103,30 @@ void main() {
       );
       await Future.delayed(Duration.zero);
 
-      raw = (await SharedPreferences.getInstance()).getString('target_snapshots');
+      raw = (await SharedPreferences.getInstance()).getString(
+        'target_snapshots',
+      );
       final finalList = List<Map<String, dynamic>>.from(
         (jsonDecode(raw!) as List).map((e) => Map<String, dynamic>.from(e)),
       );
       expect(finalList.length, lessThanOrEqualTo(7));
     });
 
-    test('targetFor with date before all snapshots falls back to currentGoals', () async {
-      final now = DateTime(2024, 1, 15);
-      final provider = await createProvider(
-        clock: () => now,
-        initialSettings: snapshotSettings(),
-      );
+    test(
+      'targetFor with date before all snapshots falls back to currentGoals',
+      () async {
+        final now = DateTime(2024, 1, 15);
+        final provider = await createProvider(
+          clock: () => now,
+          initialSettings: snapshotSettings(),
+        );
 
-      // Query a date well before any snapshot
-      final oldDate = DateTime(2023, 1, 1);
-      final result = provider.targetFor(oldDate);
-      expect(result.calories, provider.currentGoals.calories);
-    });
+        // Query a date well before any snapshot
+        final oldDate = DateTime(2023, 1, 1);
+        final result = provider.targetFor(oldDate);
+        expect(result.calories, provider.currentGoals.calories);
+      },
+    );
   });
 
   group('GoalsProvider Onboarding', () {
@@ -1044,24 +1155,26 @@ void main() {
       expect(prefs.getBool('has_seen_welcome'), true);
     });
 
-    test('existing users with goals set should have hasSeenWelcome = true',
-        () async {
-      final settings = GoalSettings.defaultSettings().copyWith(isSet: true);
-      SharedPreferences.setMockInitialValues({
-        'goal_settings': jsonEncode(settings.toJson()),
-      });
+    test(
+      'existing users with goals set should have hasSeenWelcome = true',
+      () async {
+        final settings = GoalSettings.defaultSettings().copyWith(isSet: true);
+        SharedPreferences.setMockInitialValues({
+          'goal_settings': jsonEncode(settings.toJson()),
+        });
 
-      final provider = GoalsProvider(
-        databaseService: mockDatabaseService,
-        clock: () => DateTime(2024, 1, 15),
-      );
-      await Future.delayed(Duration.zero);
+        final provider = GoalsProvider(
+          databaseService: mockDatabaseService,
+          clock: () => DateTime(2024, 1, 15),
+        );
+        await Future.delayed(Duration.zero);
 
-      expect(provider.isGoalsSet, true);
-      expect(provider.hasSeenWelcome, true);
+        expect(provider.isGoalsSet, true);
+        expect(provider.hasSeenWelcome, true);
 
-      final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getBool('has_seen_welcome'), true);
-    });
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getBool('has_seen_welcome'), true);
+      },
+    );
   });
 }

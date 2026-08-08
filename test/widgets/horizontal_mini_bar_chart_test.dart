@@ -143,9 +143,7 @@ void main() {
     expect(find.text('P 110 / 100g'), findsOneWidget);
   });
 
-  testWidgets('Zero consumed shows 0', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('Zero consumed shows 0', (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(

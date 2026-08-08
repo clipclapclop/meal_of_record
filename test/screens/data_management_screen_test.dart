@@ -24,10 +24,16 @@ void main() {
     when(mockConfigService.getRetentionCount()).thenAnswer((_) async => 7);
     when(mockConfigService.getLastBackupTime()).thenAnswer((_) async => null);
     when(mockConfigService.isNasConfigured()).thenAnswer((_) async => false);
-    when(mockConfigService.isLocalBackupEnabled()).thenAnswer((_) async => false);
+    when(
+      mockConfigService.isLocalBackupEnabled(),
+    ).thenAnswer((_) async => false);
     when(mockConfigService.getLocalBackupPath()).thenAnswer((_) async => null);
-    when(mockConfigService.getLocalBackupLastTime()).thenAnswer((_) async => null);
-    when(mockConfigService.getLocalBackupScheduledTime()).thenAnswer((_) async => null);
+    when(
+      mockConfigService.getLocalBackupLastTime(),
+    ).thenAnswer((_) async => null);
+    when(
+      mockConfigService.getLocalBackupScheduledTime(),
+    ).thenAnswer((_) async => null);
   });
 
   Widget createSubject() {
@@ -64,30 +70,34 @@ void main() {
 
     testWidgets('shows NAS address when configured', (tester) async {
       when(mockConfigService.isNasConfigured()).thenAnswer((_) async => true);
-      when(mockConfigService.getNasHost())
-          .thenAnswer((_) async => '192.168.1.100');
+      when(
+        mockConfigService.getNasHost(),
+      ).thenAnswer((_) async => '192.168.1.100');
       when(mockConfigService.getNasPort()).thenAnswer((_) async => 5006);
-      when(mockConfigService.getNasPath())
-          .thenAnswer((_) async => '/backups/meal_of_record');
+      when(
+        mockConfigService.getNasPath(),
+      ).thenAnswer((_) async => '/backups/meal_of_record');
       when(mockConfigService.getNasUseHttps()).thenAnswer((_) async => true);
-      when(mockConfigService.getNasAllowSelfSigned())
-          .thenAnswer((_) async => false);
-      when(mockConfigService.getNasCredentials())
-          .thenAnswer((_) async => ('user', 'pass'));
+      when(
+        mockConfigService.getNasAllowSelfSigned(),
+      ).thenAnswer((_) async => false);
+      when(
+        mockConfigService.getNasCredentials(),
+      ).thenAnswer((_) async => ('user', 'pass'));
 
       await tester.pumpWidget(createSubject());
       await tester.pumpAndSettle();
 
-      expect(find.text('192.168.1.100:5006/backups/meal_of_record'),
-          findsOneWidget);
+      expect(
+        find.text('192.168.1.100:5006/backups/meal_of_record'),
+        findsOneWidget,
+      );
       expect(find.text('HTTPS'), findsOneWidget);
       expect(find.text('Edit Settings'), findsOneWidget);
       expect(find.text('Test Connection'), findsOneWidget);
     });
 
-    testWidgets('hides Backup to NAS card when not configured', (
-      tester,
-    ) async {
+    testWidgets('hides Backup to NAS card when not configured', (tester) async {
       await tester.pumpWidget(createSubject());
       await tester.pumpAndSettle();
 
@@ -97,25 +107,26 @@ void main() {
 
     testWidgets('shows Backup to NAS cards when configured', (tester) async {
       when(mockConfigService.isNasConfigured()).thenAnswer((_) async => true);
-      when(mockConfigService.getNasHost())
-          .thenAnswer((_) async => '192.168.1.100');
+      when(
+        mockConfigService.getNasHost(),
+      ).thenAnswer((_) async => '192.168.1.100');
       when(mockConfigService.getNasPort()).thenAnswer((_) async => null);
-      when(mockConfigService.getNasPath())
-          .thenAnswer((_) async => '/backups/meal_of_record');
+      when(
+        mockConfigService.getNasPath(),
+      ).thenAnswer((_) async => '/backups/meal_of_record');
       when(mockConfigService.getNasUseHttps()).thenAnswer((_) async => true);
-      when(mockConfigService.getNasAllowSelfSigned())
-          .thenAnswer((_) async => false);
-      when(mockConfigService.getNasCredentials())
-          .thenAnswer((_) async => ('user', 'pass'));
+      when(
+        mockConfigService.getNasAllowSelfSigned(),
+      ).thenAnswer((_) async => false);
+      when(
+        mockConfigService.getNasCredentials(),
+      ).thenAnswer((_) async => ('user', 'pass'));
 
       await tester.pumpWidget(createSubject());
       await tester.pumpAndSettle();
 
       // Scroll down so the NAS action cards are visible in the viewport
-      await tester.scrollUntilVisible(
-        find.text('Backup to NAS'),
-        200,
-      );
+      await tester.scrollUntilVisible(find.text('Backup to NAS'), 200);
       await tester.pumpAndSettle();
 
       expect(find.text('Backup to NAS'), findsOneWidget);
@@ -124,22 +135,21 @@ void main() {
 
     testWidgets('shows self-signed certificate note', (tester) async {
       when(mockConfigService.isNasConfigured()).thenAnswer((_) async => true);
-      when(mockConfigService.getNasHost())
-          .thenAnswer((_) async => 'nas.local');
+      when(mockConfigService.getNasHost()).thenAnswer((_) async => 'nas.local');
       when(mockConfigService.getNasPort()).thenAnswer((_) async => null);
-      when(mockConfigService.getNasPath())
-          .thenAnswer((_) async => '/backups');
+      when(mockConfigService.getNasPath()).thenAnswer((_) async => '/backups');
       when(mockConfigService.getNasUseHttps()).thenAnswer((_) async => true);
-      when(mockConfigService.getNasAllowSelfSigned())
-          .thenAnswer((_) async => true);
-      when(mockConfigService.getNasCredentials())
-          .thenAnswer((_) async => ('user', 'pass'));
+      when(
+        mockConfigService.getNasAllowSelfSigned(),
+      ).thenAnswer((_) async => true);
+      when(
+        mockConfigService.getNasCredentials(),
+      ).thenAnswer((_) async => ('user', 'pass'));
 
       await tester.pumpWidget(createSubject());
       await tester.pumpAndSettle();
 
-      expect(
-          find.text('HTTPS (self-signed certificate)'), findsOneWidget);
+      expect(find.text('HTTPS (self-signed certificate)'), findsOneWidget);
     });
   });
 }

@@ -152,7 +152,9 @@ void main() {
           MultiProvider(
             providers: [
               ChangeNotifierProvider<LogProvider>.value(value: mockLogProvider),
-              ChangeNotifierProvider<GoalsProvider>.value(value: mockGoalsProvider),
+              ChangeNotifierProvider<GoalsProvider>.value(
+                value: mockGoalsProvider,
+              ),
             ],
             child: MaterialApp(
               home: Scaffold(
@@ -233,98 +235,85 @@ void main() {
       expect(find.text('1.0 g'), findsOneWidget);
     });
 
-    testWidgets(
-      'resets serving state when reused for a different OFF result',
-      (tester) async {
-        final firstFood = model.Food(
-          id: 0,
-          name: 'First OFF food',
-          calories: 1,
-          protein: 0,
-          fat: 0,
-          carbs: 0,
-          fiber: 0,
-          source: 'off',
-          sourceBarcode: '111',
-          servings: [
-            model_unit.FoodServing(
-              foodId: 0,
-              unit: 'g',
-              grams: 1,
-              quantity: 1,
-            ),
-            model_unit.FoodServing(
-              foodId: 0,
-              unit: 'bottle',
-              grams: 500,
-              quantity: 1,
-            ),
-          ],
-        );
-        final secondFood = model.Food(
-          id: 0,
-          name: 'Second OFF food',
-          calories: 2,
-          protein: 0,
-          fat: 0,
-          carbs: 0,
-          fiber: 0,
-          source: 'off',
-          sourceBarcode: '222',
-          servings: [
-            model_unit.FoodServing(
-              foodId: 0,
-              unit: 'g',
-              grams: 1,
-              quantity: 1,
-            ),
-            model_unit.FoodServing(
-              foodId: 0,
-              unit: 'bar',
-              grams: 42,
-              quantity: 1,
-            ),
-          ],
-        );
-        model_unit.FoodServing? tappedServing;
+    testWidgets('resets serving state when reused for a different OFF result', (
+      tester,
+    ) async {
+      final firstFood = model.Food(
+        id: 0,
+        name: 'First OFF food',
+        calories: 1,
+        protein: 0,
+        fat: 0,
+        carbs: 0,
+        fiber: 0,
+        source: 'off',
+        sourceBarcode: '111',
+        servings: [
+          model_unit.FoodServing(foodId: 0, unit: 'g', grams: 1, quantity: 1),
+          model_unit.FoodServing(
+            foodId: 0,
+            unit: 'bottle',
+            grams: 500,
+            quantity: 1,
+          ),
+        ],
+      );
+      final secondFood = model.Food(
+        id: 0,
+        name: 'Second OFF food',
+        calories: 2,
+        protein: 0,
+        fat: 0,
+        carbs: 0,
+        fiber: 0,
+        source: 'off',
+        sourceBarcode: '222',
+        servings: [
+          model_unit.FoodServing(foodId: 0, unit: 'g', grams: 1, quantity: 1),
+          model_unit.FoodServing(
+            foodId: 0,
+            unit: 'bar',
+            grams: 42,
+            quantity: 1,
+          ),
+        ],
+      );
+      model_unit.FoodServing? tappedServing;
 
-        Widget buildTile(model.Food food) {
-          return ChangeNotifierProvider<GoalsProvider>.value(
-            value: mockGoalsProvider,
-            child: MaterialApp(
-              home: Scaffold(
-                body: SearchResultTile(
-                  key: const ValueKey('reused-list-position'),
-                  food: food,
-                  onTap: (serving) => tappedServing = serving,
-                ),
+      Widget buildTile(model.Food food) {
+        return ChangeNotifierProvider<GoalsProvider>.value(
+          value: mockGoalsProvider,
+          child: MaterialApp(
+            home: Scaffold(
+              body: SearchResultTile(
+                key: const ValueKey('reused-list-position'),
+                food: food,
+                onTap: (serving) => tappedServing = serving,
               ),
             ),
-          );
-        }
-
-        await tester.pumpWidget(buildTile(firstFood));
-        expect(find.textContaining('bottle'), findsOneWidget);
-
-        await tester.tap(
-          find.byType(DropdownButton<model_unit.FoodServing>),
+          ),
         );
-        await tester.pumpAndSettle();
-        await tester.tap(find.textContaining(' g').last);
-        await tester.pumpAndSettle();
+      }
 
-        await tester.pumpWidget(buildTile(secondFood));
-        await tester.pump();
+      await tester.pumpWidget(buildTile(firstFood));
+      expect(find.textContaining('bottle'), findsOneWidget);
 
-        expect(find.text('Second OFF food'), findsOneWidget);
-        expect(find.textContaining('bar'), findsOneWidget);
-        expect(find.textContaining('bottle'), findsNothing);
+      await tester.tap(find.byType(DropdownButton<model_unit.FoodServing>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.textContaining(' g').last);
+      await tester.pumpAndSettle();
 
-        await tester.tap(find.byType(ListTile));
-        expect(tappedServing?.unit, 'bar');
-        expect(tappedServing?.grams, 42);
-      },
-    );
+      await tester.pumpWidget(buildTile(secondFood));
+      await tester.pump();
+
+      expect(find.text('Second OFF food'), findsOneWidget);
+      expect(find.textContaining('bar'), findsOneWidget);
+      expect(find.textContaining('bottle'), findsNothing);
+
+      await tester.tap(find.byType(ListTile));
+      expect(tappedServing?.unit, 'bar');
+      expect(tappedServing?.grams, 42);
+    });
 
     testWidgets('displays note and isUpdate icon correctly', (tester) async {
       final food = model.Food(

@@ -12,7 +12,6 @@ import 'package:provider/provider.dart';
 import 'portion_widget_test.mocks.dart';
 
 @GenerateMocks([GoalsProvider])
-
 void main() {
   late MockGoalsProvider mockGoalsProvider;
 

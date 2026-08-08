@@ -83,9 +83,7 @@ void main() {
           ChangeNotifierProvider<RecipeProvider>.value(
             value: mockRecipeProvider,
           ),
-          ChangeNotifierProvider<GoalsProvider>.value(
-            value: mockGoalsProvider,
-          ),
+          ChangeNotifierProvider<GoalsProvider>.value(value: mockGoalsProvider),
           ChangeNotifierProvider<NavigationProvider>.value(
             value: mockNavigationProvider,
           ),
@@ -132,21 +130,20 @@ void main() {
       );
     }
 
-    testWidgets(
-      'single barcode result auto-opens QuantityEditScreen',
-      (tester) async {
-        final food = makeFood();
+    testWidgets('single barcode result auto-opens QuantityEditScreen', (
+      tester,
+    ) async {
+      final food = makeFood();
 
-        when(mockSearchProvider.isBarcodeSearch).thenReturn(true);
-        when(mockSearchProvider.searchResults).thenReturn([food]);
-        when(mockSearchProvider.lastScannedBarcode).thenReturn('123');
+      when(mockSearchProvider.isBarcodeSearch).thenReturn(true);
+      when(mockSearchProvider.searchResults).thenReturn([food]);
+      when(mockSearchProvider.lastScannedBarcode).thenReturn('123');
 
-        await tester.pumpWidget(buildWidget());
-        await tester.pumpAndSettle();
+      await tester.pumpWidget(buildWidget());
+      await tester.pumpAndSettle();
 
-        expect(find.byType(QuantityEditScreen), findsOneWidget);
-      },
-    );
+      expect(find.byType(QuantityEditScreen), findsOneWidget);
+    });
 
     testWidgets(
       'barcode result opens with default serving when no last-logged info',
@@ -185,10 +182,31 @@ void main() {
         final elevatedButtons = find.byType(ElevatedButton);
         expect(elevatedButtons, findsNWidgets(4));
 
-        expect(find.descendant(of: elevatedButtons, matching: find.text('Scan Again')), findsOneWidget);
-        expect(find.descendant(of: elevatedButtons, matching: find.text('Search Open Food Facts')), findsOneWidget);
-        expect(find.descendant(of: elevatedButtons, matching: find.text('Create Food')), findsOneWidget);
-        expect(find.descendant(of: elevatedButtons, matching: find.text('Cancel')), findsOneWidget);
+        expect(
+          find.descendant(
+            of: elevatedButtons,
+            matching: find.text('Scan Again'),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: elevatedButtons,
+            matching: find.text('Search Open Food Facts'),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: elevatedButtons,
+            matching: find.text('Create Food'),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: elevatedButtons, matching: find.text('Cancel')),
+          findsOneWidget,
+        );
       },
     );
 
@@ -229,21 +247,20 @@ void main() {
       },
     );
 
-    testWidgets(
-      'barcode search clears state after handling single result',
-      (tester) async {
-        final food = makeFood();
+    testWidgets('barcode search clears state after handling single result', (
+      tester,
+    ) async {
+      final food = makeFood();
 
-        when(mockSearchProvider.isBarcodeSearch).thenReturn(true);
-        when(mockSearchProvider.searchResults).thenReturn([food]);
-        when(mockSearchProvider.lastScannedBarcode).thenReturn('789');
+      when(mockSearchProvider.isBarcodeSearch).thenReturn(true);
+      when(mockSearchProvider.searchResults).thenReturn([food]);
+      when(mockSearchProvider.lastScannedBarcode).thenReturn('789');
 
-        await tester.pumpWidget(buildWidget());
-        await tester.pumpAndSettle();
+      await tester.pumpWidget(buildWidget());
+      await tester.pumpAndSettle();
 
-        verify(mockSearchProvider.clearBarcodeSearchState()).called(1);
-      },
-    );
+      verify(mockSearchProvider.clearBarcodeSearchState()).called(1);
+    });
 
     testWidgets(
       'barcode result opens with last-logged unit and quantity when available',
@@ -251,29 +268,33 @@ void main() {
         const foodId = 42;
 
         // Insert food row into the live DB
-        await liveDb.into(liveDb.foods).insert(
-          FoodsCompanion.insert(
-            id: const Value(foodId),
-            name: 'Test Banana',
-            source: 'live',
-            caloriesPerGram: 0.89,
-            proteinPerGram: 0.011,
-            fatPerGram: 0.003,
-            carbsPerGram: 0.23,
-            fiberPerGram: 0.026,
-          ),
-        );
+        await liveDb
+            .into(liveDb.foods)
+            .insert(
+              FoodsCompanion.insert(
+                id: const Value(foodId),
+                name: 'Test Banana',
+                source: 'live',
+                caloriesPerGram: 0.89,
+                proteinPerGram: 0.011,
+                fatPerGram: 0.003,
+                carbsPerGram: 0.23,
+                fiberPerGram: 0.026,
+              ),
+            );
 
         // Insert a logged portion with unit 'g' and quantity 250
-        await liveDb.into(liveDb.loggedPortions).insert(
-          LoggedPortionsCompanion.insert(
-            foodId: const Value(foodId),
-            logTimestamp: 1000,
-            grams: 250,
-            unit: 'g',
-            quantity: 250,
-          ),
-        );
+        await liveDb
+            .into(liveDb.loggedPortions)
+            .insert(
+              LoggedPortionsCompanion.insert(
+                foodId: const Value(foodId),
+                logTimestamp: 1000,
+                grams: 250,
+                unit: 'g',
+                quantity: 250,
+              ),
+            );
 
         final food = makeFood(); // id=42, servings: piece, g
 
@@ -296,15 +317,17 @@ void main() {
       'barcode result falls back to default serving when last-logged unit not in servings',
       (tester) async {
         // Insert a logged portion with a unit that doesn't exist in food's servings
-        await liveDb.into(liveDb.loggedPortions).insert(
-          LoggedPortionsCompanion.insert(
-            foodId: const Value(42),
-            logTimestamp: 3000, // newer than the previous test's entry
-            grams: 500,
-            unit: 'cup', // not in makeFood()'s servings
-            quantity: 2,
-          ),
-        );
+        await liveDb
+            .into(liveDb.loggedPortions)
+            .insert(
+              LoggedPortionsCompanion.insert(
+                foodId: const Value(42),
+                logTimestamp: 3000, // newer than the previous test's entry
+                grams: 500,
+                unit: 'cup', // not in makeFood()'s servings
+                quantity: 2,
+              ),
+            );
 
         final food = makeFood(); // id=42, servings: piece, g
 

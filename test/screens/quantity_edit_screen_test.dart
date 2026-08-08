@@ -74,7 +74,9 @@ void main() {
         ChangeNotifierProvider<LogProvider>.value(value: mockLogProvider),
         ChangeNotifierProvider<RecipeProvider>.value(value: mockRecipeProvider),
         ChangeNotifierProvider<GoalsProvider>.value(value: mockGoalsProvider),
-        ChangeNotifierProvider<NavigationProvider>.value(value: mockNavigationProvider),
+        ChangeNotifierProvider<NavigationProvider>.value(
+          value: mockNavigationProvider,
+        ),
       ],
       child: MaterialApp(home: QuantityEditScreen(config: config)),
     );
@@ -193,7 +195,7 @@ void main() {
         food: mockFood,
         initialUnit: 'g',
         initialQuantity: 100.0,
-        );
+      );
 
       await tester.pumpWidget(createTestWidget(config));
 
@@ -230,9 +232,13 @@ void main() {
       MultiProvider(
         providers: [
           ChangeNotifierProvider<LogProvider>.value(value: mockLogProvider),
-          ChangeNotifierProvider<RecipeProvider>.value(value: mockRecipeProvider),
+          ChangeNotifierProvider<RecipeProvider>.value(
+            value: mockRecipeProvider,
+          ),
           ChangeNotifierProvider<GoalsProvider>.value(value: mockGoalsProvider),
-          ChangeNotifierProvider<NavigationProvider>.value(value: mockNavigationProvider),
+          ChangeNotifierProvider<NavigationProvider>.value(
+            value: mockNavigationProvider,
+          ),
         ],
         child: MaterialApp(
           home: Builder(

@@ -199,8 +199,9 @@ void main() {
       expect(liveCopy!.source, 'FOUNDATION');
 
       // Verify the log entry points to the live copy
-      final logRow =
-          await liveDatabase.select(liveDatabase.loggedPortions).getSingle();
+      final logRow = await liveDatabase
+          .select(liveDatabase.loggedPortions)
+          .getSingle();
       expect(logRow.foodId, liveCopy.id);
     });
 
@@ -217,14 +218,18 @@ void main() {
         database: model.FoodDatabase.live,
       );
       final savedId = await databaseService.saveFood(food);
-      final savedFood = food.copyWith(id: savedId, database: model.FoodDatabase.live);
+      final savedFood = food.copyWith(
+        id: savedId,
+        database: model.FoodDatabase.live,
+      );
 
       await databaseService.logPortions([
         model_portion.FoodPortion(food: savedFood, grams: 200, unit: 'g'),
       ], DateTime.now());
 
-      final logRow =
-          await liveDatabase.select(liveDatabase.loggedPortions).getSingle();
+      final logRow = await liveDatabase
+          .select(liveDatabase.loggedPortions)
+          .getSingle();
       expect(logRow.foodId, savedId);
     });
 
@@ -253,8 +258,9 @@ void main() {
       );
       expect(liveCopy.source, 'off');
 
-      final logRow =
-          await liveDatabase.select(liveDatabase.loggedPortions).getSingle();
+      final logRow = await liveDatabase
+          .select(liveDatabase.loggedPortions)
+          .getSingle();
       expect(logRow.foodId, liveCopy.id);
     });
   });
@@ -262,7 +268,9 @@ void main() {
   group('searchLiveFoodsByName parentIds fix', () {
     test('Hidden child does not hide parent from search', () async {
       // Insert parent
-      await liveDatabase.into(liveDatabase.foods).insert(
+      await liveDatabase
+          .into(liveDatabase.foods)
+          .insert(
             FoodsCompanion.insert(
               id: const Value(1),
               name: 'Celery',
@@ -276,7 +284,9 @@ void main() {
           );
 
       // Insert hidden child pointing to parent
-      await liveDatabase.into(liveDatabase.foods).insert(
+      await liveDatabase
+          .into(liveDatabase.foods)
+          .insert(
             FoodsCompanion.insert(
               id: const Value(2),
               name: 'Celery',
@@ -299,7 +309,9 @@ void main() {
 
     test('Visible live child hides parent', () async {
       // Insert parent
-      await liveDatabase.into(liveDatabase.foods).insert(
+      await liveDatabase
+          .into(liveDatabase.foods)
+          .insert(
             FoodsCompanion.insert(
               id: const Value(1),
               name: 'Celery',
@@ -313,7 +325,9 @@ void main() {
           );
 
       // Insert visible child with source='live' (a real versioned update)
-      await liveDatabase.into(liveDatabase.foods).insert(
+      await liveDatabase
+          .into(liveDatabase.foods)
+          .insert(
             FoodsCompanion.insert(
               id: const Value(2),
               name: 'Celery',
@@ -336,7 +350,9 @@ void main() {
 
     test('Non-live child with parentId does not suppress parent', () async {
       // Insert "Strawberries" (id=1, source=FOUNDATION)
-      await liveDatabase.into(liveDatabase.foods).insert(
+      await liveDatabase
+          .into(liveDatabase.foods)
+          .insert(
             FoodsCompanion.insert(
               id: const Value(1),
               name: 'Strawberries',
@@ -351,7 +367,9 @@ void main() {
 
       // Insert "Celery" (id=2, parentId=1, source=off) — coincidental
       // parentId collision from ID reuse across databases
-      await liveDatabase.into(liveDatabase.foods).insert(
+      await liveDatabase
+          .into(liveDatabase.foods)
+          .insert(
             FoodsCompanion.insert(
               id: const Value(2),
               name: 'Celery',
@@ -367,15 +385,18 @@ void main() {
 
       // Strawberries should appear — Celery's parentId=1 doesn't count
       // because Celery's source is 'off', not 'live'
-      final results =
-          await databaseService.searchLiveFoodsByName('Strawberries');
+      final results = await databaseService.searchLiveFoodsByName(
+        'Strawberries',
+      );
       expect(results.length, 1);
       expect(results.first.name, 'Strawberries');
     });
 
     test('Live child with parentId does suppress parent', () async {
       // Insert parent "Apple" (id=1)
-      await liveDatabase.into(liveDatabase.foods).insert(
+      await liveDatabase
+          .into(liveDatabase.foods)
+          .insert(
             FoodsCompanion.insert(
               id: const Value(1),
               name: 'Apple',
@@ -389,7 +410,9 @@ void main() {
           );
 
       // Insert updated version "Apple" (id=2, parentId=1, source=live)
-      await liveDatabase.into(liveDatabase.foods).insert(
+      await liveDatabase
+          .into(liveDatabase.foods)
+          .insert(
             FoodsCompanion.insert(
               id: const Value(2),
               name: 'Apple',
@@ -444,7 +467,10 @@ void main() {
         database: model.FoodDatabase.live,
       );
       final savedId = await databaseService.saveFood(food);
-      final savedFood = food.copyWith(id: savedId, database: model.FoodDatabase.live);
+      final savedFood = food.copyWith(
+        id: savedId,
+        database: model.FoodDatabase.live,
+      );
 
       // Log it to make it referenced
       await databaseService.logPortions([
@@ -454,9 +480,9 @@ void main() {
       await databaseService.deleteFood(savedId);
 
       // Row should still exist but be hidden
-      final row = await (liveDatabase.select(liveDatabase.foods)
-            ..where((t) => t.id.equals(savedId)))
-          .getSingleOrNull();
+      final row = await (liveDatabase.select(
+        liveDatabase.foods,
+      )..where((t) => t.id.equals(savedId))).getSingleOrNull();
       expect(row, matcher.isNotNull);
       expect(row!.hidden, isTrue);
     });
@@ -474,7 +500,10 @@ void main() {
         database: model.FoodDatabase.live,
       );
       final savedId = await databaseService.saveFood(food);
-      final savedFood = food.copyWith(id: savedId, database: model.FoodDatabase.live);
+      final savedFood = food.copyWith(
+        id: savedId,
+        database: model.FoodDatabase.live,
+      );
 
       await databaseService.logPortions([
         model_portion.FoodPortion(food: savedFood, grams: 100, unit: 'g'),
@@ -517,15 +546,16 @@ void main() {
         database: model.FoodDatabase.live,
       );
       final savedId = await databaseService.saveFood(food);
-      final savedFood = food.copyWith(id: savedId, database: model.FoodDatabase.live);
+      final savedFood = food.copyWith(
+        id: savedId,
+        database: model.FoodDatabase.live,
+      );
 
       await databaseService.logPortions([
         model_portion.FoodPortion(food: savedFood, grams: 100, unit: 'g'),
       ], DateTime.now());
 
-      final notes = await databaseService.getFoodsUsageNotes([
-        savedFood,
-      ]);
+      final notes = await databaseService.getFoodsUsageNotes([savedFood]);
       expect(notes[savedId], 'Logged');
     });
 
@@ -542,16 +572,23 @@ void main() {
         database: model.FoodDatabase.live,
       );
       final savedId = await databaseService.saveFood(food);
-      final savedFood = food.copyWith(id: savedId, database: model.FoodDatabase.live);
+      final savedFood = food.copyWith(
+        id: savedId,
+        database: model.FoodDatabase.live,
+      );
 
       // Create a recipe and add this food as ingredient
-      final recipeId = await liveDatabase.into(liveDatabase.recipes).insert(
+      final recipeId = await liveDatabase
+          .into(liveDatabase.recipes)
+          .insert(
             RecipesCompanion.insert(
               name: 'Test Recipe',
               createdTimestamp: DateTime.now().millisecondsSinceEpoch,
             ),
           );
-      await liveDatabase.into(liveDatabase.recipeItems).insert(
+      await liveDatabase
+          .into(liveDatabase.recipeItems)
+          .insert(
             RecipeItemsCompanion.insert(
               recipeId: recipeId,
               ingredientFoodId: Value(savedId),
@@ -577,7 +614,10 @@ void main() {
         database: model.FoodDatabase.live,
       );
       final savedId = await databaseService.saveFood(food);
-      final savedFood = food.copyWith(id: savedId, database: model.FoodDatabase.live);
+      final savedFood = food.copyWith(
+        id: savedId,
+        database: model.FoodDatabase.live,
+      );
 
       // Log it
       await databaseService.logPortions([
@@ -585,13 +625,17 @@ void main() {
       ], DateTime.now());
 
       // Add to recipe
-      final recipeId = await liveDatabase.into(liveDatabase.recipes).insert(
+      final recipeId = await liveDatabase
+          .into(liveDatabase.recipes)
+          .insert(
             RecipesCompanion.insert(
               name: 'Pastry',
               createdTimestamp: DateTime.now().millisecondsSinceEpoch,
             ),
           );
-      await liveDatabase.into(liveDatabase.recipeItems).insert(
+      await liveDatabase
+          .into(liveDatabase.recipeItems)
+          .insert(
             RecipeItemsCompanion.insert(
               recipeId: recipeId,
               ingredientFoodId: Value(savedId),
@@ -617,7 +661,10 @@ void main() {
         database: model.FoodDatabase.live,
       );
       final savedId = await databaseService.saveFood(food);
-      final savedFood = food.copyWith(id: savedId, database: model.FoodDatabase.live);
+      final savedFood = food.copyWith(
+        id: savedId,
+        database: model.FoodDatabase.live,
+      );
 
       final notes = await databaseService.getFoodsUsageNotes([savedFood]);
       expect(notes[savedId], matcher.isNull);
@@ -625,48 +672,54 @@ void main() {
   });
 
   group('SearchResults displayNotes preserve usageNote', () {
-    test('searchLocal returns displayNotes separately from food.usageNote',
-        () async {
-      // Create food with a user-entered usageNote
-      await liveDatabase.into(liveDatabase.foods).insert(
-            FoodsCompanion.insert(
-              id: const Value(1),
-              name: 'Apple',
-              source: 'user',
-              caloriesPerGram: 0.52,
-              proteinPerGram: 0.003,
-              fatPerGram: 0.002,
-              carbsPerGram: 0.14,
-              fiberPerGram: 0.024,
-              usageNote: const Value('My Note'),
-            ),
-          );
+    test(
+      'searchLocal returns displayNotes separately from food.usageNote',
+      () async {
+        // Create food with a user-entered usageNote
+        await liveDatabase
+            .into(liveDatabase.foods)
+            .insert(
+              FoodsCompanion.insert(
+                id: const Value(1),
+                name: 'Apple',
+                source: 'user',
+                caloriesPerGram: 0.52,
+                proteinPerGram: 0.003,
+                fatPerGram: 0.002,
+                carbsPerGram: 0.14,
+                fiberPerGram: 0.024,
+                usageNote: const Value('My Note'),
+              ),
+            );
 
-      // Log it so it gets a display note
-      await liveDatabase.into(liveDatabase.loggedPortions).insert(
-            LoggedPortionsCompanion.insert(
-              foodId: const Value(1),
-              logTimestamp: DateTime.now().millisecondsSinceEpoch,
-              grams: 100,
-              unit: 'g',
-              quantity: 100,
-            ),
-          );
+        // Log it so it gets a display note
+        await liveDatabase
+            .into(liveDatabase.loggedPortions)
+            .insert(
+              LoggedPortionsCompanion.insert(
+                foodId: const Value(1),
+                logTimestamp: DateTime.now().millisecondsSinceEpoch,
+                grams: 100,
+                unit: 'g',
+                quantity: 100,
+              ),
+            );
 
-      final searchService = SearchService(
-        databaseService: databaseService,
-        offApiService: FakeOffApiService(),
-        emojiForFoodName: (name) => '🍎',
-        sortingService: FoodSortingService(),
-      );
+        final searchService = SearchService(
+          databaseService: databaseService,
+          offApiService: FakeOffApiService(),
+          emojiForFoodName: (name) => '🍎',
+          sortingService: FoodSortingService(),
+        );
 
-      final results = await searchService.searchLocal('Apple');
+        final results = await searchService.searchLocal('Apple');
 
-      expect(results.foods.length, 1);
-      // displayNotes should have the usage status
-      expect(results.displayNotes[1], 'Logged');
-      // food.usageNote should still be the user-entered value
-      expect(results.foods.first.usageNote, 'My Note');
-    });
+        expect(results.foods.length, 1);
+        // displayNotes should have the usage status
+        expect(results.displayNotes[1], 'Logged');
+        // food.usageNote should still be the user-entered value
+        expect(results.foods.first.usageNote, 'My Note');
+      },
+    );
   });
 }

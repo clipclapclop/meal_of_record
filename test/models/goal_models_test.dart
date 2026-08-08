@@ -73,7 +73,9 @@ void main() {
     });
 
     test('tdeeWindowDays roundtrips through JSON', () {
-      final settings = GoalSettings.defaultSettings().copyWith(tdeeWindowDays: 60);
+      final settings = GoalSettings.defaultSettings().copyWith(
+        tdeeWindowDays: 60,
+      );
       final json = settings.toJson();
       final decoded = GoalSettings.fromJson(json);
       expect(decoded.tdeeWindowDays, 60);

@@ -120,16 +120,10 @@ void main() {
     await tester.pumpAndSettle();
 
     // Enter custom unit name
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Unit'),
-      'Slice',
-    );
+    await tester.enterText(find.widgetWithText(TextFormField, 'Unit'), 'Slice');
 
     // Enter grams for the serving
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Grams'),
-      '30',
-    );
+    await tester.enterText(find.widgetWithText(TextFormField, 'Grams'), '30');
 
     // Scroll down to see Calories field (pushed down by barcode section)
     await tester.drag(find.byType(ListView), const Offset(0, -300));
@@ -263,6 +257,7 @@ void main() {
           matching: find.byType(TextFormField),
         );
       }
+
       await tester.enterText(findMacroField('Calories'), '100');
 
       // Save
@@ -274,14 +269,17 @@ void main() {
       expect(savedFood.name, 'Barcode Test Food');
 
       // Verify barcode was saved
-      final barcodes =
-          await DatabaseService.instance.getBarcodesByFoodId(savedFood.id);
+      final barcodes = await DatabaseService.instance.getBarcodesByFoodId(
+        savedFood.id,
+      );
       expect(barcodes, contains('1234567890123'));
     });
 
     testWidgets('loads existing barcodes when editing food', (tester) async {
       // First create a food with barcodes
-      final foodId = await liveDb.into(liveDb.foods).insert(
+      final foodId = await liveDb
+          .into(liveDb.foods)
+          .insert(
             live_db.FoodsCompanion.insert(
               name: 'Existing Food',
               source: 'user_created',
@@ -307,7 +305,9 @@ void main() {
         fat: 0.0,
         carbs: 0.0,
         fiber: 0.0,
-        servings: [const FoodServing(foodId: 0, unit: 'g', grams: 1.0, quantity: 1.0)],
+        servings: [
+          const FoodServing(foodId: 0, unit: 'g', grams: 1.0, quantity: 1.0),
+        ],
       );
 
       await tester.pumpWidget(
@@ -333,7 +333,9 @@ void main() {
       await scrollToBarcodes(tester);
 
       // Count ListTiles before (should be 0 for barcodes)
-      final listTileCountBefore = tester.widgetList(find.byType(ListTile)).length;
+      final listTileCountBefore = tester
+          .widgetList(find.byType(ListTile))
+          .length;
 
       // Find and tap Add button without entering anything
       final addButton = find.byIcon(Icons.add);
@@ -342,15 +344,15 @@ void main() {
       await tester.pumpAndSettle();
 
       // No new ListTile should be added (no barcode added)
-      final listTileCountAfter = tester.widgetList(find.byType(ListTile)).length;
+      final listTileCountAfter = tester
+          .widgetList(find.byType(ListTile))
+          .length;
       expect(listTileCountAfter, listTileCountBefore);
     });
 
     testWidgets('duplicate barcode is not added', (tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: FoodEditScreen(initialBarcode: '1234567890'),
-        ),
+        const MaterialApp(home: FoodEditScreen(initialBarcode: '1234567890')),
       );
       await scrollToBarcodes(tester);
 
@@ -373,7 +375,9 @@ void main() {
   });
 
   group('Math expression support', () {
-    testWidgets('evaluates expression in Calories field on blur', (tester) async {
+    testWidgets('evaluates expression in Calories field on blur', (
+      tester,
+    ) async {
       await tester.pumpWidget(const MaterialApp(home: FoodEditScreen()));
 
       // Switch to 100g mode for simplicity
@@ -403,7 +407,9 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verify the Calories field was evaluated
-      final caloriesField = tester.widget<TextFormField>(findMacroField('Calories'));
+      final caloriesField = tester.widget<TextFormField>(
+        findMacroField('Calories'),
+      );
       expect(caloriesField.controller!.text, '150');
     });
 

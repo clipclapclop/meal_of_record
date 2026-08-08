@@ -6,7 +6,8 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:provider/provider.dart';
 import 'package:meal_of_record/screens/goal_settings_screen.dart';
-import 'package:meal_of_record/providers/goals_provider.dart' show GoalsProvider, TargetRecalcResult;
+import 'package:meal_of_record/providers/goals_provider.dart'
+    show GoalsProvider, TargetRecalcResult;
 import 'package:meal_of_record/models/goal_settings.dart';
 import 'package:meal_of_record/models/macro_goals.dart';
 import 'package:meal_of_record/providers/weight_provider.dart';
@@ -35,7 +36,13 @@ void main() {
     // Stub weight provider
     when(mockWeightProvider.getWeightForDate(any)).thenReturn(null);
     when(mockWeightProvider.saveWeight(any, any)).thenAnswer((_) async {});
-    when(mockGoalsProvider.recalculateTargets(any, isInitialSetup: anyNamed('isInitialSetup'), updateTdeeEstimate: anyNamed('updateTdeeEstimate'))).thenAnswer(
+    when(
+      mockGoalsProvider.recalculateTargets(
+        any,
+        isInitialSetup: anyNamed('isInitialSetup'),
+        updateTdeeEstimate: anyNamed('updateTdeeEstimate'),
+      ),
+    ).thenAnswer(
       (invocation) async => TargetRecalcResult(
         settings: GoalSettings.defaultSettings(),
         goals: MacroGoals.hardcoded(),
@@ -129,12 +136,14 @@ void main() {
     await tester.tap(saveButton);
     await tester.pumpAndSettle();
 
-    final savedSettings = verify(
-      mockGoalsProvider.saveSettings(
-        captureAny,
-        isInitialSetup: anyNamed('isInitialSetup'),
-      ),
-    ).captured.single as GoalSettings;
+    final savedSettings =
+        verify(
+              mockGoalsProvider.saveSettings(
+                captureAny,
+                isInitialSetup: anyNamed('isInitialSetup'),
+              ),
+            ).captured.single
+            as GoalSettings;
     expect(savedSettings.anchorWeight, 155.5);
     verify(mockNavigationProvider.changeTab(0)).called(1);
   });
@@ -189,10 +198,7 @@ void main() {
       500.0,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.drag(
-      find.byType(Scrollable).first,
-      const Offset(0, -100),
-    );
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -100));
     await tester.pumpAndSettle();
     await tester.tap(saveButton);
     await tester.pump();
@@ -217,29 +223,32 @@ void main() {
     (tester) async {
       // Select Multiplier mode
       final settings = GoalSettings.defaultSettings().copyWith(
-      proteinTargetMode: ProteinTargetMode.percentageOfWeight,
-      proteinMultiplier: 1.0,
-      anchorWeight: 155.5,
-    );
-    when(mockGoalsProvider.settings).thenReturn(settings);
-    when(mockWeightProvider.recentWeights).thenReturn([]);
+        proteinTargetMode: ProteinTargetMode.percentageOfWeight,
+        proteinMultiplier: 1.0,
+        anchorWeight: 155.5,
+      );
+      when(mockGoalsProvider.settings).thenReturn(settings);
+      when(mockWeightProvider.recentWeights).thenReturn([]);
 
-    await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<GoalsProvider>.value(value: mockGoalsProvider),
-          ChangeNotifierProvider<WeightProvider>.value(
-            value: mockWeightProvider,
-          ),
-        ],
-        child: const MaterialApp(home: GoalSettingsScreen()),
-      ),
-    );
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider<GoalsProvider>.value(
+              value: mockGoalsProvider,
+            ),
+            ChangeNotifierProvider<WeightProvider>.value(
+              value: mockWeightProvider,
+            ),
+          ],
+          child: const MaterialApp(home: GoalSettingsScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
 
-    // Verify "Estimated Target:" is NOT present
-    expect(find.textContaining('Estimated Target:'), findsNothing);
-  });
+      // Verify "Estimated Target:" is NOT present
+      expect(find.textContaining('Estimated Target:'), findsNothing);
+    },
+  );
 
   testWidgets(
     'Switching to Maintain mode sets target weight to latest raw weight',
@@ -263,7 +272,9 @@ void main() {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
-            ChangeNotifierProvider<GoalsProvider>.value(value: mockGoalsProvider),
+            ChangeNotifierProvider<GoalsProvider>.value(
+              value: mockGoalsProvider,
+            ),
             ChangeNotifierProvider<WeightProvider>.value(
               value: mockWeightProvider,
             ),
