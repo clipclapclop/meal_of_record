@@ -121,7 +121,7 @@ class _RecipeSearchViewState extends State<RecipeSearchView> {
                     children: [
                       Icon(Icons.restaurant_menu, size: 64, color: Colors.grey),
                       SizedBox(height: 10),
-                      const Text(
+                      Text(
                         'No recipes found',
                         style: TextStyle(fontSize: 18, color: Colors.grey),
                       ),

@@ -207,7 +207,6 @@ void main() {
     expect(find.byType(SearchScreen), findsOneWidget);
 
     // Tap on the food result to open QuantityEditScreen
-    print('Tapping SearchResultTile...');
     // SearchResultTile shows " Apple" (with leading space because emoji is null in mockFood)
     // We need to import SearchResultTile to use it directly, or find by text.
     // For this test, we'll assume SearchResultTile is the widget displaying the food.
@@ -221,18 +220,15 @@ void main() {
     await tester.tap(find.byType(SearchResultTile));
     await tester.pumpAndSettle();
 
-    print('Looking for QuantityEditScreen...');
     expect(find.byType(QuantityEditScreen), findsOneWidget);
 
     // Tap Add in QuantityEditScreen
-    print('Tapping Add button in QuantityEditScreen...');
     final addButton = find.widgetWithText(ElevatedButton, 'Add');
     await tester.ensureVisible(addButton);
     await tester.tap(addButton);
     await tester.pumpAndSettle();
 
     // EXPECTATION: Both screens should be popped, and we should be back at "Open Search"
-    print('addedPortion: $addedPortion');
     expect(addedPortion, isNotNull);
     expect(find.byType(QuantityEditScreen), findsNothing);
     expect(find.byType(SearchScreen), findsNothing);

@@ -9,8 +9,9 @@ class FoodPortion {
 
   double get quantity {
     if (unit == 'g') return grams;
-    if (food.servings.isEmpty)
+    if (food.servings.isEmpty) {
       return grams; // Fallback to grams if no servings defined
+    }
 
     final serving = food.servings.firstWhere(
       (s) => s.unit == unit,

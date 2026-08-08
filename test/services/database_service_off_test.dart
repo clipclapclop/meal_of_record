@@ -148,7 +148,7 @@ void main() {
       );
 
       // Wrapper object but same barcode (simulating re-scan)
-      final offFoodA_Rescan = model.Food(
+      final offFoodARescan = model.Food(
         id: 0,
         source: 'off',
         name: 'OFF Food A', // Same name
@@ -175,7 +175,7 @@ void main() {
       ], DateTime.now());
 
       await databaseService.logPortions([
-        model_portion.FoodPortion(food: offFoodA_Rescan, grams: 100, unit: 'g'),
+        model_portion.FoodPortion(food: offFoodARescan, grams: 100, unit: 'g'),
       ], DateTime.now());
 
       // Assert

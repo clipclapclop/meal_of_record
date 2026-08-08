@@ -20,8 +20,8 @@ python3 -m unittest discover -s test/release_adapter -p 'test_*.py'
 echo "==> Resolving locked dependencies"
 flutter pub get --enforce-lockfile --offline
 
-echo "==> Analyzing (errors are fatal; existing warnings are reported)"
-flutter analyze --no-pub --no-fatal-infos --no-fatal-warnings
+echo "==> Analyzing (all findings are fatal)"
+flutter analyze --no-pub
 
 echo "==> Running Flutter tests"
 flutter test --no-pub

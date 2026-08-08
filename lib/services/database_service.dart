@@ -18,6 +18,7 @@ import 'package:meal_of_record/services/backup_config_service.dart';
 import 'package:meal_of_record/models/category.dart' as model;
 import 'package:meal_of_record/models/weight.dart' as model;
 import 'package:meal_of_record/services/live_database.dart';
+import 'package:meal_of_record/services/live_database.dart' as live_db show Food;
 import 'package:meal_of_record/models/daily_macro_stats.dart' as model_stats;
 import 'package:meal_of_record/services/reference_database.dart'
     hide FoodPortion, FoodsCompanion, FoodPortionsCompanion;
@@ -1367,7 +1368,7 @@ class DatabaseService {
       if (food.database != model.FoodDatabase.live) {
         // Reference, OFF, or Foundation - check if we already have a live copy
         // For OFF items, check by barcode
-        var existing;
+        live_db.Food? existing;
 
         if (food.source == 'off') {
           if (food.sourceBarcode != null) {

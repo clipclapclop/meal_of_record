@@ -78,6 +78,6 @@ Give additional scrutiny to schema migrations, backup and restore behavior, pers
 
 # Evidence
 
-`./scripts/check` is the repository-owned aggregate check. It runs release-adapter unit tests, resolves locked Flutter dependencies, runs analysis with errors fatal, and runs the complete Flutter test suite. Existing nonfatal analyzer findings are tracked separately and should not be hidden merely to satisfy the gate.
+`./scripts/check` is the repository-owned aggregate check. It runs release-adapter unit tests, resolves locked Flutter dependencies, requires a clean analyzer run, and runs the complete Flutter test suite. Analyzer findings should be fixed rather than hidden merely to satisfy the gate.
 
 The local Forgejo release contract, host setup, exact-revision checks, idempotent recovery behavior, and test-prerelease procedure are documented in `docs/forgejo-android-release.md`.

@@ -77,8 +77,6 @@ void main() {
 
       // 5. Check the latest version
       final latestFood = await databaseService.getFoodById(foodIdV2, 'live');
-      print('Latest Food ID: ${latestFood?.id}');
-      print('Latest Food Image: ${latestFood?.thumbnail}');
 
       expect(
         latestFood?.thumbnail,
@@ -89,9 +87,6 @@ void main() {
       // 6. Check the old version (log entry)
       final logs = await databaseService.getLoggedPortionsForDate(logDate);
       final loggedFood = logs.first.portion.food;
-
-      print('Logged Food ID: ${loggedFood.id}');
-      print('Logged Food Image: ${loggedFood.thumbnail}');
 
       // Per user request: Old version should NOT be updated
       expect(

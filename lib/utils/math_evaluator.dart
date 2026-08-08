@@ -83,10 +83,14 @@ class _Parser {
       // (
       _eatChar();
       x = _parseExpression();
-      if (_char == 41) _eatChar(); // )
+      if (_char == 41) {
+        _eatChar(); // )
+      }
     } else if ((_char >= 48 && _char <= 57) || _char == 46) {
       // 0-9 or .
-      while ((_char >= 48 && _char <= 57) || _char == 46) _eatChar();
+      while ((_char >= 48 && _char <= 57) || _char == 46) {
+        _eatChar();
+      }
       x = double.parse(_text.substring(startPos, _pos));
     } else {
       throw FormatException('Unexpected character');
